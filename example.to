@@ -1,0 +1,140 @@
+// Primitives and Casting
+
+// side note - ints and floats are arbitrary precision. no binary rounding hanky panky in the floats.
+int n = 3;
+float x = n.; // 3.0
+str s = `n`; // "3"
+
+n + 2; // 5
+n + 2.; // error - no implicit casts
+n. + 2.; // 5.0
+n + "test"; // error again, same reason
+`n` + "test"; // "3test"
+2 == 2.0; // error
+2. == 2.0; // true
+
+comp z = 3 - 2i; // complex numbers are a primitive type
+type(3); // int
+type(2i); // comp
+// current inconsistency - implicit casting needs to occur in complex number creation, hmm...
+
+// Declaration
+
+int n1;
+type(n1); // int
+n1 == 0; // error - not yet instantiated
+n1 == 0.0; // error - wrong types
+n1 = 5;
+int n1; // error - already declared
+float n1; // error again
+float x1, x2; // multiple declaration is fine
+
+// Arrays
+
+int[3] ns = [1,2,3];
+ns[1]; // 2
+type(ns); // int[3]
+
+// Lists
+
+str{} l = {"a","b","c"};
+str first : str{} rest = l;
+first; // "a"
+rest; // {"b","c"}
+l:; // "a"
+:l; // {"b","c"}
+type(l); // str{}
+l := "Z";
+l; // {"Z","a","b","c"}
+_:l = l; // _ diposes of value, as in Haskell
+l; // {"a","b","c"}
+l{0}; // error - linked lists don't have indexing
+
+// Strings as Char Lists
+
+char head;
+str tail;
+head : tail = "test"; // str is secretly char{}, as in Haskell
+head; // 't'
+tail; // "est"
+char{} letters = {'t','e','k','o'};
+letters; // "teko"
+type(letters); // str
+
+// Tuples
+
+tup alice = ("Alice",35);
+alice(0); // "Alice"
+(str alice_name, int alice_age) = alice;
+alice_name; // "Alice"
+type(alice); // tup
+
+// Structs
+
+struct person = (str name, int age);
+person bob = person("Bob",42);
+bob; // (name = "Bob", age = 42)
+bob(0); // "Bob"
+bob.name; // "Bob"
+(str bob_name, int bob_age) = bob;
+bob_name; // "Bob"
+bob.json(); // {"name":"Bob","age":42}
+is(bob,tup); // true
+is(bob,person); // true
+person <: tup; // true
+
+// Dictionaries
+
+{str:int} ages = {"Bob":42,"Alice":35};
+ages{"Bob"}; // 42
+ages{"Carol"} = 16;
+type(ages); // {str:int}
+
+// Function declarations
+
+int plusone(int n) {
+    return n + 1;
+};
+type(plusone); // int(int)
+
+int plustwo(int n);
+type(plustwo); // int(int)
+plustwo.args; // (int n)
+
+void greet(str name, str greeting ? "Hello,") { // default argument like Python
+    println(greeting, name); // printing can take multiple arguments as in Python
+};
+type(greet); // void(str, str)
+
+void greet(str name) { // error - no overloading
+    ...
+};
+
+// Classes and Inheritance
+
+abstract class Pet { // abstract type as in Java
+    private: // visibility sections as in C++
+    str name; 
+
+    public:
+    str getName() { return self.name; };
+    void speak();
+};
+
+class Dog sub Pet {
+    public:
+    Dog(str name) {
+        self.name = name;
+    };
+    speak = { print("Arf!"); };
+};
+
+void call(<? sub Pet> pet) { // Java-inspired type generics, clearly.
+    println("Here",pet.getName());
+}
+
+willis = Dog("Willis");
+willis.getName(); // "Willis"
+willis.name; // error - access prohibited
+is(willis,Pet); // true
+call(willis); // >> Here Willis

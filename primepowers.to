@@ -1,0 +1,28 @@
+// an example of Teko "in the wild"
+
+int{} prime_powers_up_to(int n) {
+    int{} primes = {2,3,5,7,11,13,17,19,23,29,31,37}; // some low primes to get started
+    int{} out = {};
+    for( int prime in primes ) {
+        int exp = 1;
+        while( prime^exp <= n ) { // this function basically finds all prime powers below a limit
+            out := prime^exp;
+            exp++;
+         }
+
+    } 
+    return out;
+};
+
+int{} pps = prime_powers_up_to(10^8);
+while (pps != {}) {
+    pp1:rest = pps;
+    while (rest != {}} {
+        pp2:rest = rest;
+        float r = pp1./pp2.;
+        if(.97 <= r <= 1.03) { // chained inequalities permitted
+            println(pp1,pp2,r);
+        }
+    }
+    _:pps = pps;
+}
