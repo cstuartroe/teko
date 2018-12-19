@@ -69,10 +69,11 @@ typeof(letters); // str
 
 int<> primes = <2,3,5,7,11,13,17,19>;
 primes; // <7,13,2,19,3,11,5,17> idk yet what order you'd actually see, but point is sets are unordered
-type prime = primes~; // cast set to enumerated type
+enum prime = primes~; // cast set to enumerated type
 prime p = 3;
 prime q = 4; // error
 primes{}; // {7,13,2,19,3,11,5,17} again, no guaranteed order
+is(prime, type); // true - enum <: type
 
 // Dictionaries
 
