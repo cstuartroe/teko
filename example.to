@@ -107,10 +107,23 @@ bob.json(); // {"name":"Bob","age":42}
 
 is(bob,(str,int)); // true
 is(bob,person); // true
+
+struct <: type; // true - structs are a category of type
+person <: type; // true
+person <: struct; // false - struct is the type of person, not a superclass
 person <: (str, int); // true
 typeof(person); // struct
+
 person.labels; // {"name":str, "age":int}
 typeof(person.labels); // {str:type}
+person.order; // {"name","age"} structs are ordered like tuples
+typeof(person.order); // str{}
+
+struct body = (int nose ? 1, int eyes ? 2, int fingers ? 10);
+alice = body();
+alice; // (nose = 1, eyes = 2, fingers = 10)
+carol = body(fingers = 12); // supports keyword arguments
+carol; // (nose = 1, eyes = 2, fingers = 12)
 
 // Control Structures
 
@@ -156,10 +169,16 @@ int plusone(int n) = {
 typeof(plusone); // int(int)
 
 int plustwo(int n);
+
 typeof(plustwo); // int(int)
 plustwo.args; // (int n)
-typeof(plustwo.args); // struct
-plustwo = {return n + 2;};
+typeof(plustwo.args); // struct - indeed, all function arguments are simply structs!
+plustwo.rt; // return type - int
+typeof(plustwo.rt); // type
+is(plustwo.rt, type); // true, obviously
+is(plustwo.args, type); // true - struct <: type
+
+plustwo = {return n + 2;}; // can define function on different line than declaration
 
 void greet(str name, str greeting ? "Hello,") = { // default argument like Python
     println(greeting, name); // printing can take multiple arguments as in Python
