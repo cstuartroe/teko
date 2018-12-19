@@ -209,12 +209,22 @@ class Dog sub Pet {
     speak = { print("Arf!"); };
 };
 
-void call(<? sub Pet> pet) = { // Java-inspired type generics, clearly.
-    println("Here",pet.getName());
-}
-
 willis = Dog("Willis");
 willis.getName(); // "Willis"
 willis.name; // error - access prohibited
+
+void call(Pet pet) = { 
+    println("Here",pet.getName());
+}
+
 is(willis,Pet); // true
 call(willis); // >> Here Willis
+
+void addWillis((? super Dog){} doglist) { // Java-inspired type generics, clearly.
+	doglist := willis;
+}
+
+Pet{} petlist = {};
+int{} intlist = {};
+addWillis(petlist); // fine
+addWillis(intlist); // error
