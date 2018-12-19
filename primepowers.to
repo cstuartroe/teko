@@ -1,9 +1,9 @@
 // an example of Teko "in the wild"
 
-int{} prime_powers_up_to(int n) {
-    int{} primes = {2,3,5,7,11,13,17,19,23,29,31,37}; // some low primes to get started
+int{} prime_powers_up_to(int n) = {
+    int[12] primes = [2,3,5,7,11,13,17,19,23,29,31,37]; // some low primes to get started
     int{} out = {};
-    for( int prime in primes ) {
+    for( int prime in primes{} ) {
         int exp = 1;
         while( prime^exp <= n ) { // this function basically finds all prime powers below a limit
             out := prime^exp;

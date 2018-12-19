@@ -14,14 +14,14 @@ n + "test"; // error again, same reason
 2. == 2.0; // true
 
 comp z = 3 - 2i; // complex numbers are a primitive type
-type(3); // int
-type(2i); // comp
+typeof(3); // int
+typeof(2i); // comp
 // current inconsistency - implicit casting needs to occur in complex number creation, hmm...
 
 // Declaration
 
 int n1;
-type(n1); // int
+typeof(n1); // int
 n1 == 0; // error - not yet instantiated
 n1 == 0.0; // error - wrong types
 n1 = 5;
@@ -33,7 +33,7 @@ float x1, x2; // multiple declaration is fine
 
 int[3] ns = [1,2,3];
 ns[1]; // 2
-type(ns); // int[3]
+typeof(ns); // int[3]
 
 // Lists
 
@@ -43,12 +43,14 @@ first; // "a"
 rest; // {"b","c"}
 l:; // "a"
 :l; // {"b","c"}
-type(l); // str{}
+typeof(l); // str{}
 l := "Z";
 l; // {"Z","a","b","c"}
 _:l = l; // _ diposes of value, as in Haskell
 l; // {"a","b","c"}
 l{0}; // error - linked lists don't have indexing
+
+ns{}; // {1,2,3}
 
 // Strings as Char Lists
 
@@ -59,7 +61,14 @@ head; // 't'
 tail; // "est"
 char{} letters = {'t','e','k','o'};
 letters; // "teko"
-type(letters); // str
+typeof(letters); // str
+
+// Dictionaries
+
+{str:int} ages = {"Bob":42,"Alice":35};
+ages{"Bob"}; // 42
+ages{"Carol"} = 16;
+typeof(ages); // {str:int}
 
 // Tuples
 
@@ -67,10 +76,10 @@ type(letters); // str
 alice(0); // "Alice"
 (str alice_name, int alice_age) = alice;
 alice_name; // "Alice"
-type(alice); // (str, int)
+typeof(alice); // (str, int)
 
 (int,float,str) things;
-type(things(1)); // float
+typeof(things(1)); // float
 things(1); // error - not yet instantiated
 
 // Structs
@@ -84,36 +93,33 @@ bob.name; // "Bob"
 (str bob_name, int bob_age) = bob;
 bob_name; // "Bob"
 bob.json(); // {"name":"Bob","age":42}
-is(bob,tup); // true
+
+is(bob,(str,int)); // true
 is(bob,person); // true
 person <: (str, int); // true
-
-// Dictionaries
-
-{str:int} ages = {"Bob":42,"Alice":35};
-ages{"Bob"}; // 42
-ages{"Carol"} = 16;
-type(ages); // {str:int}
+typeof(person); // struct
+person.labels; // {"name":str, "age":int}
+typeof(person.labels); // {str:type}
 
 // Function declarations
 
-int plusone(int n) {
+int plusone(int n) = {
     return n + 1;
 };
-type(plusone); // int(int)
+typeof(plusone); // int(int)
 
 int plustwo(int n);
-type(plustwo); // int(int)
+typeof(plustwo); // int(int)
 plustwo.args; // (int n)
-type(plustwo.args); // struct
+typeof(plustwo.args); // struct
 plustwo = {return n + 2;};
 
-void greet(str name, str greeting ? "Hello,") { // default argument like Python
+void greet(str name, str greeting ? "Hello,") = { // default argument like Python
     println(greeting, name); // printing can take multiple arguments as in Python
 };
-type(greet); // void(str, str)
+typeof(greet); // void(str, str)
 
-void greet(str name) { // error - no overloading
+void greet(str name) = { // error - no overloading
     ...
 };
 
@@ -124,19 +130,19 @@ abstract class Pet { // abstract type as in Java
     str name; 
 
     public:
-    str getName() { return self.name; };
+    str getName() = { return name; };
     void speak();
 };
 
 class Dog sub Pet {
     public:
-    Dog(str name) {
-        self.name = name;
+    Dog(str _name) = {
+        name = _name;
     };
     speak = { print("Arf!"); };
 };
 
-void call(<? sub Pet> pet) { // Java-inspired type generics, clearly.
+void call(<? sub Pet> pet) = { // Java-inspired type generics, clearly.
     println("Here",pet.getName());
 }
 

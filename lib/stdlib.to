@@ -1,0 +1,11 @@
+bool is(obj a, type t) = {
+    return typeof(a) <: t;
+};
+
+int{} range(int min, int max) = {
+    out = {};
+    for(int i = max - 1; i >= min; i--) {
+        out := i;
+    }
+    return out;
+};
