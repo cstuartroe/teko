@@ -1,0 +1,47 @@
+\documentclass{article} 
+\usepackage{amsthm}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{multicol}
+\setlength\parindent{0pt}
+\usepackage{fancyhdr}
+\usepackage{centernot}
+\usepackage{verbatim}
+\pagestyle{fancy}
+\lhead{Conor Stuart Roe}
+\rhead{\today}
+
+\newtheorem*{theorem}{Theorem}
+\newtheorem*{lemma}{Lemma}
+
+\title{Specification for the Teko Programming Language}
+\author{Conor Stuart Roe}
+\date{\today}
+
+\begin{document}
+\thispagestyle{empty}
+\maketitle
+
+\section{Overview}
+
+Teko is a high-level, statically typed scripting language that is primarily interpreted. It follows an object-oriented and imperative programming paradigm. It is intended to offer a full type system with user-defined classes, class hierarchies, and generics, much like Java, and can be rigorously statically type checked. Its high-level architecture offers a variety of advanced data types, such as complex numbers, bytestrings, maps, and structs as primary types, and other features like asynchronous loops easily available. It follows a typical C family syntax; at a glance, Teko looks most like Java, with some syntactic features inspired by Javascript, C++, or Python. \\
+
+Teko was created in 2018 by Conor Stuart Roe.
+
+\section{Lexical and Syntactic Structure}
+
+Teko is not whitespace-sensitive, except with regard to inline comments. Teko lexical and syntactic structure is defined by the BNF description below. In the below description, equals = indicates definition of a nonterminal, pipe $\|$ indicates options, parentheses () indicate optional elements, and asterisk * indicates occurrence zero or more times. \textsc{Equals}, \textsc{Pipe}, \textsc{Lpar}, \textsc{Rpar}, and \textsc{Asterisk} are used to indicate literal appearance of these characters in a Teko file. Each Teko file consists of a single \textsc{CodeBlock}. \\
+
+\textsc{CodeBlock} = (\textsc{Line};)* \\
+
+\textsc{Line} = \textsc{VariableDeclaration} $\|$ \textsc{Assignment} $\|$ \textsc{Expression} $\|$ \textsc{IfStatement} $\|$ \textsc{ForBlock} $\|$ \textsc{WhileBlock} $\|$ \textsc{EachBlock} $\|$ \textsc{ClassDeclaration} \\
+
+\textsc{VariableDeclaration} = \textsc{Type} \textsc{Label} (\textsc{Equals} \textsc{Expression}) \\
+
+\textsc{Assignment} = \textsc{Label} \textsc{Equals} \textsc{Expression} \\
+
+\textsc{Type} = \textsc{Label} $\|$ \textsc{Type}\{\} $\|$ \textsc{Type}$<>$ $\|$ \textsc{Type}[\textsc{Digits}] $\|$ \{\textsc{Type}:\textsc{Type}\} $\|$ \textsc{Lpar} \textsc{Type} \textsc{Label} (, \textsc{Type} \textsc{Label})* \textsc{Rpar} $\|$ \textsc{Lpar} \textsc{Type}, \textsc{Type} (, \textsc{Type})* \textsc{Rpar} \\
+
+\textsc{IfStatement} = if \textsc{Lpar} \textsc{Expression} \textsc{Rpar} \{ \textsc{CodeBlock} \} (else if \textsc{Lpar} \textsc{Expression} \textsc{Rpar} \{ \textsc{CodeBlock} \})* (else \{ \textsc{CodeBlock} \}) 
+
+\end{document}
