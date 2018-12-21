@@ -159,17 +159,17 @@ As a type-checked interpreted language, Teko is open to a type of issue that bot
 ```
 [ordering.to]
 
-int f1(int n) {
+int f1(int n) = {
     if (n < 0) {
         return n;
     } else {
         return f2(n);
     }
-}
+};
 
-int f2(int n) {
+int f2(int n) = {
     return f1(n-1);
-}
+};
 
 f1(5);
 ```
