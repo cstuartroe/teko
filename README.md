@@ -294,4 +294,4 @@ On a related note, is `2.` two tokens, an integer `2` followed by the existing c
 
 ## Acknowledgements
 
-I want to thank [@iafisher](https://github.com/iafisher) and [@goldfirere](https://github.com/goldfirere/) for their assistance so far in thinking through the design and implementation of Teko.
+I want to thank [@iafisher](https://github.com/iafisher), [@Pierre-vh](https://github.com/Pierre-vh), and [@goldfirere](https://github.com/goldfirere/) for their assistance so far in thinking through the design and implementation of Teko.

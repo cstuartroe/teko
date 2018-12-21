@@ -1,8 +1,8 @@
 // Primitives and Casting
 
-// side note - ints and floats are arbitrary precision. no binary rounding hanky panky in the floats.
+// side note - ints and reals are arbitrary precision. no binary rounding hanky panky in the reals.
 int n = 3;
-float x = n.; // 3.0
+real x = n.; // 3.0
 str s = `n`; // "3"
 bool b = true;
 !b; // false
@@ -28,8 +28,8 @@ n1 == 0; // error - not yet instantiated
 n1 == 0.0; // error - wrong types
 n1 = 5;
 int n1; // error - already declared
-float n1; // error again
-float x1, x2; // multiple declaration is fine
+real n1; // error again
+real x1, x2; // multiple declaration is fine
 
 // Arrays
 
@@ -90,8 +90,8 @@ alice(0); // "Alice"
 alice_name; // "Alice"
 typeof(alice); // (str, int)
 
-(int,float,str) things;
-typeof(things(1)); // float
+(int,real,str) things;
+typeof(things(1)); // real
 things(1); // error - not yet instantiated
 
 // Structs
