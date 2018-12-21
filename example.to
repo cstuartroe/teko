@@ -110,7 +110,7 @@ is(bob,(str,int)); // true
 is(bob,person); // true
 
 struct <: type; // true - structs are a category of type
-person <: type; // true
+person <: type; // false
 person <: struct; // false - struct is the type of person, not a superclass
 person <: (str, int); // true
 typeof(person); // struct
