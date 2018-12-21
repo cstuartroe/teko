@@ -1,0 +1,16 @@
+int f1(int n);
+int f2(int n);
+
+f1 = {
+    if (n < 0) {
+        return n;
+    } else {
+        return f2(n);
+    }
+};
+
+f2 = {
+    return f1(n-1);
+}
+
+f1(5);
