@@ -154,7 +154,7 @@ Yeah, I'd like to build classes, class hierarchies, and generics into Teko at so
 
 ### Function Ordering
 
-As a type-checked interpreted language, Teko is open to a type of issue that both typical compiled languages and typical scripting languages avoid, in different ways. Consider the following equivalent snippets in Teko, Python, and Java:
+As a type-checked interpreted language, Teko is open to a type of issue that both typical compiled languages and typical scripting languages avoid, in different ways. Consider the following equivalent snippets in Teko, Python, Java, and Haskell:
 
 ```
 [ordering.to]
@@ -190,10 +190,10 @@ f1(5)
 ```
 
 ```java
-[ordering.java]
+[Ordering.java]
 
 public class Ordering {
-    int f1(int n) {
+    static int f1(int n) {
         if (n < 0) {
             return n;
         } else {
@@ -201,7 +201,7 @@ public class Ordering {
         }
     }
     
-    int f2(int n) {
+    static int f2(int n) {
         return f1(n-1);
     }
     
@@ -211,9 +211,22 @@ public class Ordering {
 }
 ```
 
-The issue is how f2 gets type-checked in the body of f1, before it has been defined. In Java, all method declarations are put into a symbol table before their bodies are type-checked, so f2's type is known by the time it is type-checked in the body of f1. In Python, the existence and type of f2 isn't considered until f1 is executed. When the definition of f1 is interpreted, f2 is not yet in scope, but by the time f1 is actually executed f2 has been brought into scope, and the type-checker doesn't look it up until then. 
+```haskell
+[Ordering.hs]
 
-For Teko, though, there is a problem. It will attempt to type-check f2 when it is interpreting the definition of f1, but can't yet. Note that this issue is only unavoidable with cyclically referential functions or type definitions. (Are there type definitions in Teko which are also open to this problem?) If f2 did not mention f1, then its declaration could simply be brought above f1. Class definitions, for instance, are not subject to this issue, since subtyping cannot be cyclical.
+module Ordering where
+
+f1 :: Int -> Int
+f1 n | n < 0 = n 
+     | otherwise = f2 n 
+
+f2 :: Int -> Int
+f2 n = f1 (n-1)
+```
+
+The issue is how `f2` gets type-checked in the body of `f1`, before it has been defined. In Java, all method declarations are put into a symbol table before their bodies are type-checked, so `f2`'s type is known by the time it is type-checked in the body of `f1`. In Python, the existence and type of `f2` isn't considered until `f1` is executed. When the definition of `f1` is interpreted, `f2` is not yet in scope, but by the time `f1` is actually executed `f2` has been brought into scope, and the type-checker doesn't look it up until then. The Haskell is a rather interesting case - when compiled, Haskell exhibits a similar behavior to Java. Haskell also has an interpreter, GHCi, which actually rejects the same code when I attempt to define `f1` before `f2`.
+
+For Teko, though, there is a problem. It will attempt to type-check `f2` when it is interpreting the definition of `f1`, but can't yet. Note that this issue is only unavoidable with cyclically referential functions or type definitions. (Are there type definitions in Teko which are also open to this problem?) If `f2` did not mention `f1`, then its declaration could simply be brought above `f1`. Class definitions, for instance, are not subject to this issue, since subtyping cannot be cyclical.
 
 A potential solution to this is Teko's unusual style of function definition, which allows the separation of declaration and body. This gives way to the following solution:
 
@@ -229,11 +242,11 @@ f1 = {
     } else {
         return f2(n);
     }
-}
+};
 
 f2 = {
     return f1(n-1);
-}
+};
 
 f1(5);
 ```
