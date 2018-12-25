@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <set>
+#include "general.cpp"
 
 using namespace std;
 
@@ -18,11 +19,6 @@ set<char> punct {'!','"','#','$','%','&','\'','(',')','*',
                 '}','~'};
 set<string> punct_combos {"==","<=",">=","!=","<:","+=",
                 "-=","*=","/=","%%="};
-
-void compiler_error(string message) {
-    cout << "Teko Compiler Error: " << message << endl;
-    exit (EXIT_FAILURE);
-}
 
 bool in_charset(char c, set<char> charset) {
     return charset.find(c) != charset.end();

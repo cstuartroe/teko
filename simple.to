@@ -1,4 +1,4 @@
-int n1 = 3.; // ignore me plz
-int n2 = n1 + 8.1;
+int n1 = 3; // ignore me plz
+real n2 = n1. + 8.1;
 println(n2);
 str s = "\"Héllo World!\""; // me 2

@@ -2,6 +2,7 @@
 #include <vector>
 #include <fstream>
 #include "tokenize.cpp"
+#include "tagger.cpp"
 
 using namespace std;
 
@@ -30,7 +31,8 @@ int main(int argc, char *argv[])
     t.close();
 
     vector<string> tokens = tokenize(buffer);
-    for(int i = 0; i < tokens.size(); i++) {
-        cout << tokens[i] << endl;
+    vector<Tag> tags = get_tags(tokens);
+    for(int i = 0; i < tags.size(); i++) {
+        cout << tags[i].to_str() << endl;
     }
 }
