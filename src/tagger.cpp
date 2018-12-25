@@ -5,8 +5,10 @@ using namespace std;
 
 enum TagType { LabelType, StringType, IntType, RealType,
 				BoolType, IfType, ElseType, SemicolonType,
-				LParType, RParType, BinOpType, SetterType,
-				ComparisonType };
+				ColonType, CommaType, QMarkType, AttrType, 
+				LParType, RParType, LBracType, RBracType, 
+				BinOpType, SetterType, ComparisonType, 
+				ConversionType };
 
 class Tag {
 protected:
@@ -91,6 +93,38 @@ public:
 	}
 };
 
+class ColonTag : public Tag {
+public:
+	ColonTag() { 
+		type = ColonType; 
+		repr = "ColonTag";
+	}
+};
+
+class CommaTag : public Tag {
+public:
+	CommaTag() { 
+		type = CommaType; 
+		repr = "CommaTag";
+	}
+};
+
+class QMarkTag : public Tag {
+public:
+	QMarkTag() { 
+		type = QMarkType; 
+		repr = "QMarkTag";
+	}
+};
+
+class AttrTag : public Tag {
+public:
+	AttrTag() { 
+		type = AttrType; 
+		repr = "AttrTag";
+	}
+};
+
 class LParTag : public Tag {
 public:
 	LParTag() {
@@ -107,7 +141,23 @@ public:
 	}
 };
 
-enum BinOp { add, sub, mult, divs, exp, mod };
+class LBracTag : public Tag {
+public:
+	LBracTag() {
+		type = LBracType;
+		repr = "LBracTag";
+	}
+};
+
+class RBracTag : public Tag {
+public:
+	RBracTag() {
+		type = RBracType;
+		repr = "RBracTag";
+	}
+};
+
+enum BinOp { add, sub, mult, divs, exp, mod, conj, disj };
 
 class BinOpTag : public Tag {
 	BinOp op;
@@ -123,12 +173,14 @@ public:
 			case divs: opstr = "/"; break;
 			case exp:  opstr = "^"; break;
 			case mod:  opstr = "%%"; break;
+			case conj: opstr = "&&"; break;
+			case disj: opstr = "||"; break;
 		}
 		repr = "BinOpTag " + opstr;
 	}
 };
 
-enum Setter { normal };
+enum Setter { normal, setadd, setsub, setmult, setdivs, setexp, setmod };
 
 class SetterTag : public Tag {
 	Setter s;
@@ -138,7 +190,13 @@ public:
 		s = _s;
 		string sstr;
 		switch (s) {
-			case normal: sstr = "="; break;
+			case normal:  sstr = "=";  break;
+			case setadd:  sstr = "+="; break;
+			case setsub:  sstr = "-="; break;
+			case setmult: sstr = "*="; break;
+			case setdivs: sstr = "/="; break;
+			case setexp:  sstr = "^="; break;
+			case setmod:  sstr = "%%="; break;
 		}
 		repr = "SetterTag " + sstr;
 	}
@@ -154,9 +212,35 @@ public:
 		c = _c;
 		string cstr;
 		switch (c) {
-			case eq: cstr = "=="; break;
+			case eq:  cstr = "=="; break;
+			case neq: cstr = "!="; break;
+			case lt:  cstr = "<";  break;
+			case gt:  cstr = ">";  break;
+			case leq: cstr = "<="; break;
+			case geq: cstr = ">="; break;
+			case subtype: cstr = "<:"; break;
 		}
 		repr = "ComparisonTag " + cstr;
+	}
+};
+
+enum Conversion { toReal, toStr, toArr, toList, toSet };
+
+class ConversionTag : public Tag {
+	Conversion c;
+public:
+	ConversionTag(Conversion _c) {
+		type = ConversionType;
+		c = _c;
+		string cstr;
+		switch (c) {
+			case toReal: cstr = ".";  break;
+			case toStr:  cstr = "$";  break;
+			case toArr:  cstr = "[]"; break;
+			case toList: cstr = "{}"; break;
+			case toSet:  cstr = "<>"; break;
+		}
+		repr = "ConversionTag " + cstr;
 	}
 };
 
@@ -166,11 +250,25 @@ vector<Tag> get_tags(vector<string> tokens) {
 		string token = tokens[i];
 		if (token == ";") {
 			tags.push_back(SemicolonTag()); 
-		} else if (token == "(") {
+		} else if (token == ":") {
+			tags.push_back(ColonTag());
+		} else if (token == ",") {
+			tags.push_back(CommaTag());
+		} else if (token == "?") {
+			tags.push_back(QMarkTag());
+		}
+
+		else if (token == "(") {
 			tags.push_back(LParTag());
 		} else if (token == ")") {
 			tags.push_back(RParTag());
-		} else if (token == "if") {
+		} else if (token == "{") {
+			tags.push_back(LBracTag());
+		} else if (token == "}") {
+			tags.push_back(RBracTag());
+		} 
+
+		else if (token == "if") {
 			tags.push_back(IfTag());
 		} else if (token == "else") {
 			tags.push_back(ElseTag());
@@ -178,14 +276,64 @@ vector<Tag> get_tags(vector<string> tokens) {
 
 		else if (token == "+") {
 			tags.push_back(BinOpTag(add));
+		} else if (token == "-") {
+			tags.push_back(BinOpTag(sub));
+		} else if (token == "*") {
+			tags.push_back(BinOpTag(mult));
+		} else if (token == "/") {
+			tags.push_back(BinOpTag(divs));
+		} else if (token == "^") {
+			tags.push_back(BinOpTag(exp));
+		} else if (token == "%%") {
+			tags.push_back(BinOpTag(mod));
+		} else if (token == "&&") {
+			tags.push_back(BinOpTag(conj));
+		} else if (token == "||") {
+			tags.push_back(BinOpTag(disj));
 		}
 
 		else if (token == "=") {
 			tags.push_back(SetterTag(normal));
-		} 
+		} else if (token == "+=") {
+			tags.push_back(SetterTag(setadd));
+		} else if (token == "-=") {
+			tags.push_back(SetterTag(setsub));
+		} else if (token == "*=") {
+			tags.push_back(SetterTag(setmult));
+		} else if (token == "/=") {
+			tags.push_back(SetterTag(setdivs));
+		} else if (token == "^=") {
+			tags.push_back(SetterTag(setexp));
+		} else if (token == "%%=") {
+			tags.push_back(SetterTag(setmod));
+		}
 
 		else if (token == "==") {
 			tags.push_back(ComparisonTag(eq));
+		} else if (token == "!=") {
+			tags.push_back(ComparisonTag(neq));
+		} else if (token == "<") {
+			tags.push_back(ComparisonTag(lt));
+		} else if (token == ">") {
+			tags.push_back(ComparisonTag(gt));
+		} else if (token == "<=") {
+			tags.push_back(ComparisonTag(leq));
+		} else if (token == ">=") {
+			tags.push_back(ComparisonTag(geq));
+		} else if (token == "<:") {
+			tags.push_back(ComparisonTag(subtype));
+		}
+
+		else if (token == ".") {
+			tags.push_back(ConversionTag(toReal));
+		} else if (token == "$") {
+			tags.push_back(ConversionTag(toStr));
+		} else if (token == "[]") {
+			tags.push_back(ConversionTag(toArr));
+		} else if (token == "{}") {
+			tags.push_back(ConversionTag(toList));
+		} else if (token == "<>") {
+			tags.push_back(ConversionTag(toSet));
 		}
 
 		else if (token == "true") {
@@ -204,6 +352,10 @@ vector<Tag> get_tags(vector<string> tokens) {
 				tags.push_back(RealTag(stof(token)));
 			}
 		} else {
+			if (i > 0 && tokens[i-1] == ".") {
+				tags.pop_back(); // period . gets interpreted as a conversion unless followed by a label
+				tags.push_back(AttrTag());
+			} 
 			tags.push_back(LabelTag(token));
 		}
 	}

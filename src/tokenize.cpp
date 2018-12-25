@@ -18,7 +18,7 @@ set<char> punct {'!','"','#','$','%','&','\'','(',')','*',
                 '?','@','[','\\',']','^','`','|','{','|',
                 '}','~'};
 set<string> punct_combos {"==","<=",">=","!=","<:","+=",
-                "-=","*=","/=","%%="};
+                "-=","*=","/=","^=","%%=","{}","[]","<>"};
 
 bool in_charset(char c, set<char> charset) {
     return charset.find(c) != charset.end();
@@ -88,15 +88,9 @@ void grab_label(string &source, vector<string> &tokens) {
 
 void grab_punct(string &source, vector<string> &tokens) {
     string token = "";
-    while (in_charset(source[0],punct)) {
-        string added = token + source.substr(0,1);
-        if (added.length() > 1 && 
-            punct_combos.find(added) == punct_combos.end()) {
-            tokens.push_back(token);
-            token = source.substr(0,1);
-        } else {
-            token += source[0];
-        }
+    while (in_charset(source[0],punct) && (token.length() == 0 || 
+        punct_combos.find(token + source.substr(0,1)) != punct_combos.end())) {
+        token += source[0];
         source = source.substr(1);
     }
     tokens.push_back(token);
