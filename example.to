@@ -3,7 +3,7 @@
 // side note - ints and reals are arbitrary precision. no binary rounding hanky panky in the reals.
 int n = 3;
 real x = n.; // 3.0
-str s = `n`; // "3"
+str s = n$; // "3"
 bool b = true;
 !b; // false
 
@@ -11,7 +11,7 @@ n + 2; // 5
 n + 2.; // error - no implicit casts
 n. + 2.; // 5.0
 n + "test"; // error again, same reason
-`n` + "test"; // "3test"
+n$ + "test"; // "3test"
 2 == 2.0; // error
 2. == 2.0; // true
 
@@ -33,9 +33,9 @@ real x1, x2; // multiple declaration is fine
 
 // Arrays
 
-int[3] ns = [1,2,3];
+int[] ns = [1,2,3];
 ns[1]; // 2
-typeof(ns); // int[3]
+typeof(ns); // int[]
 
 // Lists
 
@@ -46,24 +46,13 @@ rest; // {"b","c"}
 l:; // "a"
 :l; // {"b","c"}
 typeof(l); // str{}
-l := "Z";
+l = "Z":l;
 l; // {"Z","a","b","c"}
 _:l = l; // _ diposes of value, as in Haskell
 l; // {"a","b","c"}
 l{0}; // error - linked lists don't have indexing
 
 ns{}; // {1,2,3}
-
-// Strings as Char Lists
-
-char head;
-str tail;
-head : tail = "test"; // str is secretly char{}, as in Haskell
-head; // 't'
-tail; // "est"
-char{} letters = {'t','e','k','o'};
-letters; // "teko"
-typeof(letters); // str
 
 // Sets and Enums
 
@@ -114,6 +103,7 @@ person <: type; // false
 person <: struct; // false - struct is the type of person, not a superclass
 person <: (str, int); // true
 typeof(person); // struct
+is(person, type); // true
 
 person.labels; // {"name":str, "age":int}
 typeof(person.labels); // {str:type}
