@@ -142,7 +142,7 @@ alice; // (nose = 1, eyes = 2, fingers = 10)
 carol = body(fingers = 12); // supports keyword arguments
 carol; // (nose = 1, eyes = 2, fingers = 12)
 
-void do_something(int n ? 0, str s, bool b ? true, real{} xs) { ... };
+void do_something(int n ? 0, str s, bool b ? true, real{} xs) = { ... };
 do_something(2,"Hi!",xs = {1.1,2.2});
 ```
 

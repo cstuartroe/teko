@@ -104,7 +104,7 @@ Each Teko file consists of a single \textsc{CodeBlock}. \\ \\
 
 \textsc{Setter} := \code{=} $\|$ \code{+=} $\|$ \code{-=} $\|$ \code{*=} $\|$ \code{/=} $\|$ \code{\^{}=} $\|$ \code{\%=} \\
 
-\textsc{Expression} := \textsc{Primitive} $\|$ \textsc{Composite} $\|$ \textsc{Label} (\textsc{Struct}) ( \code{.} \textsc{Label} (\textsc{Struct}) )* $\|$ \textsc{Expression} \textsc{Converter} $\|$ \textsc{Expression} \textsc{Slice} $\|$ \code{:} \textsc{Expression})
+\textsc{Expression} := \textsc{Primitive} $\|$ \textsc{Composite} $\|$ \textsc{Label} (\textsc{Struct}) ( \code{.} \textsc{Label} (\textsc{Struct}) )* $\|$ \textsc{Expression} \textsc{BinaryOp} \textsc{Expression} $\|$ \textsc{Expression} \textsc{Converter} $\|$ \textsc{Expression} \textsc{Slice} $\|$ \code{:} \textsc{Expression})
 
 \begin{quote} $\bullet$ Expressions are the only syntactic units which evaluate to a value; in fact, in all contexts, expressions must evaluate to an appropriately-typed value. \end{quote}
 
@@ -135,6 +135,8 @@ Each Teko file consists of a single \textsc{CodeBlock}. \\ \\
 \textsc{StructParam} := ( \textsc{Label} \code{=} ) \textsc{Expression}
 
 \begin{quote} $\bullet$ All parameters without equals \code{=} must occur before all parameters with equals. \end{quote}
+
+\textsc{BinaryOp} := \code{+} $\|$ \code{-} $\|$ \code{*} $\|$ \code{/} $\|$ \code{\^} $\|$ \code{\%} $\|$ \code{<:} \\
 
 \textsc{Converter} := \code{.} $\|$ \code{\$} $\|$ \code{[]} $\|$ \code{\{\}} $\|$ \code{<>} \\
 
