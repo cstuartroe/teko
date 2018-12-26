@@ -7,9 +7,13 @@
 \usepackage{fancyhdr}
 \usepackage{centernot}
 \usepackage{verbatim}
+\usepackage{xcolor}
 \pagestyle{fancy}
 \lhead{Conor Stuart Roe}
 \rhead{\today}
+
+\definecolor{light-gray}{gray}{0.95}
+\newcommand{\code}[1]{\colorbox{light-gray}{\texttt{#1}}}
 
 \newtheorem*{theorem}{Theorem}
 \newtheorem*{lemma}{Lemma}
@@ -30,18 +34,74 @@ Teko was created in 2018 by Conor Stuart Roe.
 
 \section{Lexical and Syntactic Structure}
 
-Teko is not whitespace-sensitive, except with regard to inline comments. Teko lexical and syntactic structure is defined by the BNF description below. In the below description, equals = indicates definition of a nonterminal, pipe $\|$ indicates options, parentheses () indicate optional elements, and asterisk * indicates occurrence zero or more times. \textsc{Equals}, \textsc{Pipe}, \textsc{Lpar}, \textsc{Rpar}, and \textsc{Asterisk} are used to indicate literal appearance of these characters in a Teko file. Each Teko file consists of a single \textsc{CodeBlock}. \\
+Teko lexical and syntactic structure are defined by the BNF descriptions below. := indicates definition of a nonterminal, pipe $\|$ indicates options, parentheses () indicate optional elements, and asterisk * indicates occurrence zero or more times. Angle brackets $<>$ may be used to write English descriptions. Literal characters are written with \code{code formatting}. Teko is not whitespace-sensitive, except with regard to parsing strings and line comments.
 
-\textsc{CodeBlock} = (\textsc{Line};)* \\
+\subsection{Lexical Structure}
 
-\textsc{Line} = \textsc{VariableDeclaration} $\|$ \textsc{Assignment} $\|$ \textsc{Expression} $\|$ \textsc{IfStatement} $\|$ \textsc{ForBlock} $\|$ \textsc{WhileBlock} $\|$ \textsc{EachBlock} $\|$ \textsc{ClassDeclaration} \\
+Teko token capture is greedy, so if two adjacent tokens could be mistaken as comprising a single token, they must be separated by whitespace. \\ \\
 
-\textsc{VariableDeclaration} = \textsc{Type} \textsc{Label} (\textsc{Equals} \textsc{Expression}) \\
+\textsc{Label} := \textsc{Alphabetical} ( \textsc{Alphanumeral} )* 
 
-\textsc{Assignment} = \textsc{Label} \textsc{Equals} \textsc{Expression} \\
+\begin{quote} $\bullet$ \textsc{Label}s are any sequence of alphanumeric characters beginning with an alphabetical character, excluding the following reserved words: \code{true}, \code{false}, \code{if}, \code{else}, \code{for}, \code{while}, \code{each}, \code{begin}, \code{let}, \code{class}, \code{in}, \code{return}, \code{public}, \code{protected}, \code{private}, \code{readonly}. \end{quote}
 
-\textsc{Type} = \textsc{Label} $\|$ \textsc{Type}\{\} $\|$ \textsc{Type}$<>$ $\|$ \textsc{Type}[\textsc{Digits}] $\|$ \{\textsc{Type}:\textsc{Type}\} $\|$ \textsc{Lpar} \textsc{Type} \textsc{Label} (, \textsc{Type} \textsc{Label})* \textsc{Rpar} $\|$ \textsc{Lpar} \textsc{Type}, \textsc{Type} (, \textsc{Type})* \textsc{Rpar} \\
+\textsc{Int} := \textsc{Numeral} ( \textsc{Numeral} )* \\
 
-\textsc{IfStatement} = if \textsc{Lpar} \textsc{Expression} \textsc{Rpar} \{ \textsc{CodeBlock} \} (else if \textsc{Lpar} \textsc{Expression} \textsc{Rpar} \{ \textsc{CodeBlock} \})* (else \{ \textsc{CodeBlock} \}) 
+\textsc{Real} := \textsc{Numeral} ( \textsc{Numeral} )* \code{.} ( \textsc{Numeral} )* 
+
+\begin{quote} $\bullet$ \textsc{Real}s may end with a decimal point \code{.}, which implies a fractional part equal to zero. \end{quote}
+
+\textsc{Bool} := \code{true} $\|$ \code{false} \\
+
+\textsc{Char} := \code{\char13} \textsc{CharacterOrEscape} \code{\char13} $\|$ \code{\char13"\char13} $\|$ \code{\char13\textbackslash\char13\char13} \\
+
+\textsc{String} := \code{"} (\textsc{CharacterOrEscape} $\|$ \code{\char13} $\|$ \code{\textbackslash"})* \code{"} \\
+
+\textsc{Alphanumeral} := \textsc{Alphabetical} $\|$ \textsc{Numeral} \\
+
+\textsc{CharacterOrEscape} := \textsc{Alphabetical} $\|$ \textsc{Numeral} $\|$ \textsc{Punct} $\|$ $<$space$>$ $\|$ \code{\textbackslash\textbackslash} $\|$ \code{\textbackslash n} $\|$ \code{\textbackslash t} 
+
+\begin{quote} $\bullet$ Teko characters and strings may not contain literal tab or newline characters. \end{quote}
+
+\textsc{Alphabetical} := (one of) \code{ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz\_} \\
+
+\textsc{Numeral} := (one of) \code{0123456789} \\
+
+\textsc{Punct} := (one of) \code{!\#\$\%\&()*+,-./:;<=>?@]\^{}\{|\}\~} \\
+
+\subsection{Comment Structure}
+
+Teko support C-style line comments, which begin with a double slash \code{//} and end at the next newline. \\
+
+\subsection{Syntactic Structure}
+
+Each Teko file consists of a single \textsc{CodeBlock}. \\ \\
+
+\textsc{CodeBlock} := (\textsc{Line} \code{;} )* \\
+
+\textsc{Line} := \textsc{VariableDeclaration} $\|$ \textsc{Assignment} $\|$ \textsc{Expression} $\|$ \textsc{IfStatement} $\|$ \textsc{WhileBlock} $\|$ \textsc{ForBlock} \\
+
+\textsc{VariableDeclaration} := \code{let} \textsc{Declared} \textsc{Setter} \textsc{Expression} ( \code{,} \textsc{Declared} \textsc{Setter} \textsc{Expression})* $\|$ \textsc{Type} \textsc{Declared} (\textsc{Setter} \textsc{Expression}) ( \code{,} \textsc{Declared} (\textsc{Setter} \textsc{Expression}))* 
+
+\begin{quote} $\bullet$ Teko permits the declaration of variables using the declarator \code{let} in place of a type, but doing so requires that all variables declared in this way be set to a value on the same line, so that type can be inferred. \end{quote}
+
+\textsc{Type} := \textsc{NamedType} $\|$ \textsc{Type} \code{\{\}} $\|$ \textsc{Type} \code{<>} $\|$ \textsc{Type} \code{[]} $\|$ \code{\{} \textsc{Type} \code{:} \textsc{Type} \code{\}} $\|$ \code{(} ( \textsc{Type}, ( \code{,} \textsc{Type})* ) \code{)} $\|$ \textsc{Struct} \\
+
+\textsc{NamedType} := \code{int} $\|$ \code{real} $\|$ \code{bool} $\|$ \code{char} $\|$ \code{str} $\|$ \code{enum} $\|$ \code{comp} $\|$ \code{bits} $\|$ $<$any \textsc{label} assigned to a type$>$ \\
+
+\textsc{Struct} := \code{(} ( \textsc{Type} \textsc{Label} ( \code{,} \textsc{Type} \textsc{Label})* ) \code{)} \\
+
+\textsc{Assignment} := \textsc{Declared} \textsc{Setter} \textsc{Expression} \\
+
+\textsc{Declared} := \textsc{Label} ( \textsc{Struct} ) \\
+
+\textsc{Setter} := \code{=} $\|$ \code{+=} $\|$ \code{-=} $\|$ \code{*=} $\|$ \code{/=} $\|$ \code{\^{}=} $\|$ \code{\%=} \\
+
+\textsc{Expression} := \textsc{Primitive} $\|$ \textsc{Label} $\|$ $\|$ \\
+
+\textsc{IfStatement} := \code{if (} \textsc{Expression} \code{) \{} \textsc{CodeBlock} \code{\}} ( \code{else if (} \textsc{Expression} \code{) \{} \textsc{CodeBlock} \code{\}} )* ( \code{else \{} \textsc{CodeBlock} \code{\}} ) \\
+
+\textsc{WhileBlock} := \code{while (} \textsc{Expression} \code{) \{} \textsc{CodeBlock} \code{\}} \\
+
+\textsc{ForBlock} := \code{for (} \textsc{Type} \textsc{Label} \code{in} \textsc{Expression} \code{) \{} \textsc{CodeBlock} \code{\}}
 
 \end{document}
