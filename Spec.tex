@@ -42,7 +42,7 @@ Teko token capture is greedy, so if two adjacent tokens could be mistaken as com
 
 \textsc{Label} := \textsc{Alphabetical} ( \textsc{Alphanumeral} )* 
 
-\begin{quote} $\bullet$ \textsc{Label}s are any sequence of alphanumeric characters beginning with an alphabetical character, excluding the following reserved words: \code{true}, \code{false}, \code{if}, \code{else}, \code{for}, \code{while}, \code{each}, \code{begin}, \code{let}, \code{class}, \code{in}, \code{return}, \code{public}, \code{protected}, \code{private}, \code{readonly}. \end{quote}
+\begin{quote} $\bullet$ \textsc{Label}s are any sequence of alphanumeric characters beginning with an alphabetical character, excluding the following reserved words: \code{true}, \code{false}, \code{if}, \code{else}, \code{for}, \code{while}, \code{each}, \code{begin}, \code{let}, \code{class}, \code{in}, \code{void},\code{return}, \code{public}, \code{protected}, \code{private}, \code{readonly}, \code{typeof}. \end{quote}
 
 \textsc{Int} := \textsc{Numeral} ( \textsc{Numeral} )* \\
 
@@ -80,23 +80,65 @@ Each Teko file consists of a single \textsc{CodeBlock}. \\ \\
 
 \textsc{Line} := \textsc{VariableDeclaration} $\|$ \textsc{Assignment} $\|$ \textsc{Expression} $\|$ \textsc{IfStatement} $\|$ \textsc{WhileBlock} $\|$ \textsc{ForBlock} \\
 
-\textsc{VariableDeclaration} := \code{let} \textsc{Declared} \textsc{Setter} \textsc{Expression} ( \code{,} \textsc{Declared} \textsc{Setter} \textsc{Expression})* $\|$ \textsc{Type} \textsc{Declared} (\textsc{Setter} \textsc{Expression}) ( \code{,} \textsc{Declared} (\textsc{Setter} \textsc{Expression}))* 
+\textsc{VariableDeclaration} := \code{let} \textsc{Declared} \textsc{SetInit} ( \code{,} \textsc{Declared} \textsc{SetInit})* $\|$ \textsc{Type} \textsc{Declared} (\textsc{SetInit}) ( \code{,} \textsc{Declared} (\textsc{SetInit}))* 
 
 \begin{quote} $\bullet$ Teko permits the declaration of variables using the declarator \code{let} in place of a type, but doing so requires that all variables declared in this way be set to a value on the same line, so that type can be inferred. \end{quote}
 
-\textsc{Type} := \textsc{NamedType} $\|$ \textsc{Type} \code{\{\}} $\|$ \textsc{Type} \code{<>} $\|$ \textsc{Type} \code{[]} $\|$ \code{\{} \textsc{Type} \code{:} \textsc{Type} \code{\}} $\|$ \code{(} ( \textsc{Type}, ( \code{,} \textsc{Type})* ) \code{)} $\|$ \textsc{Struct} \\
+\textsc{Declared} := \textsc{Label} (\textsc{Struct}) 
+
+\begin{quote} $\bullet$ The presence of a struct after the label indicates that the new variable's type is a function with given return type, rather than simply storing a value of the given type. \end{quote}
+
+\textsc{SetInit} := \code{=} \textsc{Expression} $\|$ \code{= \{} \textsc{CodeBlock} \code{\}} 
+
+\begin{quote} $\bullet$ Initial setting of a variable's value differs from later assignments in that updating setters \code{+=}, \code{-=}, \code{*=}, \code{/=}, \code{\^{}=}, and \code{\%=} are not permitted. \end{quote}
+
+\textsc{Type} := \textsc{NamedType} $\|$ \textsc{Type} \code{\{\}} $\|$ \textsc{Type} \code{<>} $\|$ \textsc{Type} \code{[]} $\|$ \code{\{} \textsc{Type} \code{:} \textsc{Type} \code{\}} $\|$ \code{(} ( \textsc{Type}, ( \code{,} \textsc{Type})* ) \code{)} $\|$ \textsc{StructType} \\
 
 \textsc{NamedType} := \code{int} $\|$ \code{real} $\|$ \code{bool} $\|$ \code{char} $\|$ \code{str} $\|$ \code{enum} $\|$ \code{comp} $\|$ \code{bits} $\|$ $<$any \textsc{label} assigned to a type$>$ \\
 
-\textsc{Struct} := \code{(} ( \textsc{Type} \textsc{Label} ( \code{,} \textsc{Type} \textsc{Label})* ) \code{)} \\
+\textsc{StructType} := \code{(} ( \textsc{StructTypeParam} ( \code{,} \textsc{StructTypeParam} )* ) \code{)} \\
 
-\textsc{Assignment} := \textsc{Declared} \textsc{Setter} \textsc{Expression} \\
+\textsc{StructTypeParam} := \textsc{Type} \textsc{Label} ( \code{?} \textsc{Expression} ) \\
 
-\textsc{Declared} := \textsc{Label} ( \textsc{Struct} ) \\
+\textsc{Assignment} := \textsc{Label} \textsc{Setter} \textsc{Expression} $\|$ \textsc{Label} \code{= \{} \textsc{CodeBlock} \code{\}} \\
 
 \textsc{Setter} := \code{=} $\|$ \code{+=} $\|$ \code{-=} $\|$ \code{*=} $\|$ \code{/=} $\|$ \code{\^{}=} $\|$ \code{\%=} \\
 
-\textsc{Expression} := \textsc{Primitive} $\|$ \textsc{Label} $\|$ $\|$ \\
+\textsc{Expression} := \textsc{Primitive} $\|$ \textsc{Composite} $\|$ \textsc{Label} (\textsc{Struct}) ( \code{.} \textsc{Label} (\textsc{Struct}) )* $\|$ \textsc{Expression} \textsc{Converter} $\|$ \textsc{Expression} \textsc{Slice} $\|$ \code{:} \textsc{Expression})
+
+\begin{quote} $\bullet$ Expressions are the only syntactic units which evaluate to a value; in fact, in all contexts, expressions must evaluate to an appropriately-typed value. \end{quote}
+
+\textsc{Primitive} := \textsc{Int} $\|$ \textsc{Real} $\|$ \textsc{Bool} $\|$ \textsc{Char} $\|$ \textsc{String} \\
+
+\textsc{Composite} := \textsc{Array} $\|$ \textsc{List} $\|$ \textsc{Set} $\|$ \textsc{Enum} $\|$ \textsc{Map} $\|$ \textsc{Tuple} \\
+
+\textsc{Array} := \code{[} ( \textsc{Expression} ( \code{,} \textsc{Expression} )* ) \code{]} \\
+
+\textsc{List} := \code{\{} ( \textsc{Expression} ( \code{,} \textsc{Expression} )* ) \code{\}} \\
+
+\textsc{Set} := \code{<} ( \textsc{Expression} ( \code{,} \textsc{Expression} )* ) \code{>}
+
+\begin{quote} $\bullet$ In arrays, lists, and sets, collectively called the iterables, all contained expressions must evaluate to values of the same type, and the type of the iterable is derived from the type of the contained values. \end{quote}
+
+\textsc{Enum} := \code{<} ( \textsc{Label} (\textsc{StructType}) ( \code{,} \textsc{Label} (\textsc{StructType}) )* ) \code{>} \\
+
+\begin{quote} $\bullet$ In an enum, all labels must be undeclared, and their inclusion in the enum declares them. The \textsc{StructType} after a label, if present, allows that enum element to have parameters, much like a paramaterized data type in Haskell. \end{quote}
+
+\textsc{Map} := \code{\{} ( \textsc{MapPair} (\code{,} \textsc{MapPair})* ) \code{\}} \\
+
+\textsc{MapPair} := \textsc{Expression} \code{:} \textsc{Expression} \\
+
+\textsc{Tuple} := \code{(} ( \textsc{Expression} ( \code{,} \textsc{Expression} )* ) \code{)} \\
+
+\textsc{Struct} := \code{(} ( \textsc{StructParam} ( \code{,} \textsc{StructParam} )* ) \code{)} \\
+
+\textsc{StructParam} := ( \textsc{Label} \code{=} ) \textsc{Expression}
+
+\begin{quote} $\bullet$ All parameters without equals \code{=} must occur before all parameters with equals. \end{quote}
+
+\textsc{Converter} := \code{.} $\|$ \code{\$} $\|$ \code{[]} $\|$ \code{\{\}} $\|$ \code{<>} \\
+
+\textsc{Slice} := \code{[} \textsc{Expression} ( \code{:} \textsc{Expression} ) \code{]} \\
 
 \textsc{IfStatement} := \code{if (} \textsc{Expression} \code{) \{} \textsc{CodeBlock} \code{\}} ( \code{else if (} \textsc{Expression} \code{) \{} \textsc{CodeBlock} \code{\}} )* ( \code{else \{} \textsc{CodeBlock} \code{\}} ) \\
 

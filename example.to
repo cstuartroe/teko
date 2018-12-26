@@ -118,37 +118,31 @@ carol; // (nose = 1, eyes = 2, fingers = 12)
 
 // Control Structures
 
-for (int i = 0; i < 10; i++) {
+bool cond1 = ...;
+bool cond2 = ...;
+if (cond1) {
+    ...
+} else if (cond2) {
+    ...
+} else {
+    ...
+}
+
+bool stop = false;
+while (!stop) { // no surprises here
+    ...
+}
+
+int[] nums = [1,4,18,831,12];
+for (int num in nums) {
 	...
 }
 
-int[5] nums = [1,4,18,831,12];
-for (int num in nums) { // error - can't loop through array
-	...
-}
-for (int num in nums{}) { // good - must loop through list
-	...
-}
 for (int i in range(10)) { // see stdlib.to
 	...
 }
 
 each (int num in nums{}) { // async loop - we'll see whether this gets implemented
-	...
-}
-
-bool stop = false;
-while (!stop) { // no surprises here
-	...
-}
-
-bool cond1 = ...;
-bool cond2 = ...;
-if (cond1) {
-	...
-} else if (cond2) {
-	...
-} else {
 	...
 }
 

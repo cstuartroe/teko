@@ -75,7 +75,7 @@ numarray{} + numlist; // {1,2,3,4,0,1,2,3,4}
 
 ### Control Structures
 
-Control structures should look familiar to anyone who writes Java, JS, or C:
+Control structures should mostly  look familiar to anyone who writes Java, JS, or C:
 
 ```
 if ( cond1 ) {
@@ -89,11 +89,11 @@ if ( cond1 ) {
 while (cond) {
     ...
 }
+```
 
-for (int i = 1; i < 10; i++) { 
-    ...
-}
+Although I only have Python-style `for` loops, rather than C-style:
 
+```
 for (int i in numlist) {
     ...
 }
