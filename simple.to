@@ -1,8 +1,0 @@
-int n1 = 3; // ignore me plz
-real n2 = n1. + 8.1;
-println(n2);
-str<> s = "\"Héllo World!\""; // me 2
-str{} l1 = "Za":{"try","this"};
-struct person = (int eyes ? 2, int nose ? 1);
-person alice = person();
-alice.eyes;
