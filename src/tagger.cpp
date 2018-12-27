@@ -1,5 +1,4 @@
 #include <vector>
-#include <set>
 
 using namespace std;
 
@@ -10,137 +9,114 @@ enum TagType { LabelType, StringType, IntType, RealType,
                 RAngleType, BinOpType, SetterType, 
                 ComparisonType, ConversionType };
 
+enum Brace { paren, curly, square, angle };
+enum BinOp { add, sub, mult, divs, exp, mod, conj, disj };
+enum Setter { normal, setadd, setsub, setmult, setdivs, setexp, setmod };
+enum Comparison { eq, neq, lt, gt, leq, geq, subtype };
+enum Conversion { toReal, toStr, toArr, toList, toSet };
+
 class Tag {
-protected:
     TagType type;
     string repr;
+
+    string label;
+    string str_val;
+    int int_val;
+    float real_val;
+    bool bool_val;
+
+    Brace brace;
+    BinOp op;
+    Setter setter;
+    Comparison comp;
+    Conversion conv;
+
+    Tag(TagType _type) {
+        type = _type;
+    }
 public:
     TagType getType() { return type; }
+
     string to_str() { return repr; }
-};
 
-class LabelTag : public Tag {
-    string label;
-public:
-    LabelTag(string _label) { 
-        type = LabelType; 
-        label = _label;
-        repr = "LabelTag " + label;
+    Brace getBrace() {
+        if (type == OpenType || type == CloseType) { return brace; }
+        else { throw runtime_error(repr + " has no attribute brace"); }
     }
-};
 
-class StringTag : public Tag {
-    string val;
-public:
-    StringTag(string _val) { 
-        type = StringType; 
-        val = _val;
-        repr = "StringTag " + val;
+    static Tag LabelTag(string label) {
+        Tag t = Tag(LabelType);
+        t.label = label;
+        t.repr = "LabelTag " + label;
+        return t;
     }
-};
-
-class IntTag : public Tag {
-    int val;
-public:
-    IntTag(int _val) { 
-        type = IntType; 
-        val = _val;
-        repr = "IntTag " + std::to_string(val);
+    static Tag StringTag(string val) {
+        Tag t = Tag(StringType);
+        t.str_val = val;
+        t.repr = "StringTag " + val;
+        return t;
     }
-};
-
-class RealTag : public Tag {
-    float val;
-public:
-    RealTag(float _val) { 
-        type = RealType;
-        val = _val;
-        repr = "RealTag " + std::to_string(val);
+    static Tag IntTag(int val) {
+        Tag t = Tag(IntType);
+        t.int_val = val;
+        t.repr = "IntTag " + std::to_string(val);
+        return t;
     }
-};
-
-class BoolTag : public Tag {
-    bool val;
-public:
-    BoolTag(bool _val) { 
-        type = BoolType; 
-        val = _val;
-        repr = "BoolTag " + std::to_string(val);
+    static Tag RealTag(float val) {
+        Tag t = Tag(RealType);
+        t.real_val = val;
+        t.repr = "RealTag " + std::to_string(val);
+        return t;
     }
-};
-
-class IfTag : public Tag {
-public:
-    IfTag() { 
-        type = IfType; 
-        repr = "IfTag";
+    static Tag BoolTag(bool val) {
+        Tag t = Tag(BoolType);
+        t.bool_val = val;
+        t.repr = "BoollTag " + std::to_string(val);
+        return t;
     }
-};
-
-class ElseTag : public Tag {
-public:
-    ElseTag() {    
-        type = ElseType; 
-        repr = "ElseTag";
+    static Tag IfTag() {
+        Tag t = Tag(IfType);
+        t.repr = "IfTag";
+        return t;
     }
-};
-
-class SemicolonTag : public Tag {
-public:
-    SemicolonTag() { 
-        type = SemicolonType; 
-        repr = "SemicolonTag";
+    static Tag ElseTag() {
+        Tag t = Tag(ElseType);
+        t.repr = "ElseTag";
+        return t;
     }
-};
-
-class ColonTag : public Tag {
-public:
-    ColonTag() { 
-        type = ColonType; 
-        repr = "ColonTag";
+    static Tag SemicolonTag() {
+        Tag t = Tag(SemicolonType);
+        t.repr = "SemicolonTag";
+        return t;
     }
-};
-
-class CommaTag : public Tag {
-public:
-    CommaTag() { 
-        type = CommaType; 
-        repr = "CommaTag";
+    static Tag ColonTag() {
+        Tag t = Tag(ElseType);
+        t.repr = "ColonTag";
+        return t;
     }
-};
-
-class QMarkTag : public Tag {
-public:
-    QMarkTag() { 
-        type = QMarkType; 
-        repr = "QMarkTag";
+    static Tag CommaTag() {
+        Tag t = Tag(CommaType);
+        t.repr = "CommaTag";
+        return t;
     }
-};
-
-class BangTag : public Tag {
-public:
-    BangTag() { 
-        type = BangType; 
-        repr = "BangTag";
+    static Tag QMarkTag() {
+        Tag t = Tag(QMarkType);
+        t.repr = "QMarkTag";
+        return t;
     }
-};
-
-class AttrTag : public Tag {
-public:
-    AttrTag() { 
-        type = AttrType; 
-        repr = "AttrTag";
+    static Tag BangTag() {
+        Tag t = Tag(BangType);
+        t.repr = "BangTag";
+        return t;
     }
-};
-
-enum Brace { paren, curly, square, angle };
-
-class OpenTag : public Tag {
-    Brace b;
-public:
-    OpenTag(Brace _b) {
-        type = OpenType;
-        b = _b;
+    static Tag AttrTag() {
+        Tag t = Tag(AttrType);
+        t.repr = "AttrTag";
+        return t;
+    }
+    static Tag OpenTag(Brace b) {
+        Tag t = Tag(OpenType);
+        t.brace = b;
         string bstr;
         switch (b) {
             case paren:  bstr = "("; break;
@@ -148,17 +124,12 @@ public:
             case square: bstr = "["; break;
             case angle:  bstr = "<"; break;
         }
-        repr = "OpenTag " + bstr;
+        t.repr = "OpenTag " + bstr;
+        return t;
     }
-    Brace getBrace() {return b;}
-};
-
-class CloseTag : public Tag {
-    Brace b;
-public:
-    CloseTag(Brace _b) {
-        type = CloseType;
-        b = _b;
+    static Tag CloseTag(Brace b) {
+        Tag t = Tag(CloseType);
+        t.brace = b;
         string bstr;
         switch (b) {
             case paren:  bstr = ")"; break;
@@ -166,39 +137,22 @@ public:
             case square: bstr = "]"; break;
             case angle:  bstr = ">"; break;
         }
-        repr = "CloseTag " + bstr;
+        t.repr = "CloseTag " + bstr;
+        return t;
     }
-    Brace getBrace() {return b;}
-};
-
-// < and > need their own tag type because
-// they might be braces or comparisons
-// semantics is needed to disambiguate
-
-class LAngleTag : public Tag {
-public:
-    LAngleTag() {
-        type = LAngleType;
-        repr = "LAngleTag";
+    static Tag LAngleTag() {
+        Tag t = Tag(LAngleType);
+        t.repr = "LAngleTag";
+        return t;
     }
-};
-
-class RAngleTag : public Tag {
-public:
-    RAngleTag() {
-        type = RAngleType;
-        repr = "RAngleTag";
+    static Tag RAngleTag() {
+        Tag t = Tag(RAngleType);
+        t.repr = "RAngleTag";
+        return t;
     }
-};
-
-enum BinOp { add, sub, mult, divs, exp, mod, conj, disj };
-
-class BinOpTag : public Tag {
-    BinOp op;
-public:
-    BinOpTag(BinOp _op) {
-        type = BinOpType;
-        op = _op;
+    static Tag BinOpTag(BinOp op) {
+        Tag t = Tag(BinOpType);
+        t.op = op;
         string opstr;
         switch (op) {
             case add:  opstr = "+"; break;
@@ -210,18 +164,12 @@ public:
             case conj: opstr = "&&"; break;
             case disj: opstr = "||"; break;
         }
-        repr = "BinOpTag " + opstr;
+        t.repr = "BinOpTag " + opstr;
+        return t;
     }
-};
-
-enum Setter { normal, setadd, setsub, setmult, setdivs, setexp, setmod };
-
-class SetterTag : public Tag {
-    Setter s;
-public:
-    SetterTag(Setter _s) {
-        type = SetterType;
-        s = _s;
+    static Tag SetterTag(Setter s) {
+        Tag t = Tag(SetterType);
+        t.setter = s;
         string sstr;
         switch (s) {
             case normal:  sstr = "=";  break;
@@ -232,18 +180,12 @@ public:
             case setexp:  sstr = "^="; break;
             case setmod:  sstr = "%%="; break;
         }
-        repr = "SetterTag " + sstr;
+        t.repr = "SetterTag " + sstr;
+        return t;
     }
-};
-
-enum Comparison { eq, neq, lt, gt, leq, geq, subtype };
-
-class ComparisonTag : public Tag {
-    Comparison c;
-public:
-    ComparisonTag(Comparison _c) {
-        type = ComparisonType;
-        c = _c;
+    static Tag ComparisonTag(Comparison c) {
+        Tag t = Tag(ComparisonType);
+        t.comp = c;
         string cstr;
         switch (c) {
             case eq:  cstr = "=="; break;
@@ -254,18 +196,12 @@ public:
             case geq: cstr = ">="; break;
             case subtype: cstr = "<:"; break;
         }
-        repr = "ComparisonTag " + cstr;
+        t.repr = "ComparisonTag " + cstr;
+        return t;
     }
-};
-
-enum Conversion { toReal, toStr, toArr, toList, toSet };
-
-class ConversionTag : public Tag {
-    Conversion c;
-public:
-    ConversionTag(Conversion _c) {
-        type = ConversionType;
-        c = _c;
+    static Tag ConversionTag(Conversion c) {
+        Tag t = Tag(ConversionType);
+        t.conv = c;
         string cstr;
         switch (c) {
             case toReal: cstr = ".";  break;
@@ -274,180 +210,134 @@ public:
             case toList: cstr = "{}"; break;
             case toSet:  cstr = "<>"; break;
         }
-        repr = "ConversionTag " + cstr;
+        t.repr = "ConversionTag " + cstr;
+        return t;
     }
 };
 
-vector<Tag*> get_tags(vector<string> tokens) {
-    vector<Tag*> tags;
+vector<Tag> get_tags(vector<string> tokens) {
+    vector<Tag> tags;
     for (int i = 0; i < tokens.size(); i++) {
         string token = tokens[i];
         if (token == ";") {
-            SemicolonTag st = SemicolonTag();
-            tags.push_back(&st); 
+            tags.push_back(Tag::SemicolonTag()); 
         } else if (token == ":") {
-            ColonTag ct = ColonTag();
-            tags.push_back(&ct);
+            tags.push_back(Tag::ColonTag());
         } else if (token == ",") {
-            CommaTag ct = CommaTag();
-            tags.push_back(&ct);
+            tags.push_back(Tag::CommaTag());
         } else if (token == "?") {
-            QMarkTag qt = QMarkTag();
-            tags.push_back(&qt);
+            tags.push_back(Tag::QMarkTag());
         } else if (token == "!") {
-            BangTag bt = BangTag();
-            tags.push_back(&bt);
+            tags.push_back(Tag::BangTag());
         }
 
         else if (token == "(") {
-            OpenTag ot = OpenTag(paren);
-            tags.push_back(&ot);
+            tags.push_back(Tag::OpenTag(paren));
         } else if (token == ")") {
-            CloseTag ct = CloseTag(paren);
-            tags.push_back(&ct);
+            tags.push_back(Tag::CloseTag(paren));
         } else if (token == "{") {
-            OpenTag ot = OpenTag(curly);
-            tags.push_back(&ot);
+            tags.push_back(Tag::OpenTag(curly));
         } else if (token == "}") {
-            CloseTag ct = CloseTag(curly);
-            tags.push_back(&ct);
+            tags.push_back(Tag::CloseTag(curly));
         } else if (token == "[") {
-            OpenTag ot = OpenTag(square);
-            tags.push_back(&ot);
+            tags.push_back(Tag::OpenTag(square));
         } else if (token == "]") {
-            CloseTag ct = CloseTag(square);
-            tags.push_back(&ct);
+            tags.push_back(Tag::CloseTag(square));
         } 
 
         else if (token == "if") {
-            IfTag it = IfTag();
-            tags.push_back(&it);
+            tags.push_back(Tag::IfTag());
         } else if (token == "else") {
-            ElseTag et = ElseTag();
-            tags.push_back(&et);
+            tags.push_back(Tag::ElseTag());
         } 
 
         else if (token == "+") {
-            BinOpTag bot = BinOpTag(add);
-            tags.push_back(&bot);
+            tags.push_back(Tag::BinOpTag(add));
         } else if (token == "-") {
-            BinOpTag bot = BinOpTag(sub);
-            tags.push_back(&bot);
+            tags.push_back(Tag::BinOpTag(sub));
         } else if (token == "*") {
-            BinOpTag bot = BinOpTag(mult);
-            tags.push_back(&bot);
+            tags.push_back(Tag::BinOpTag(mult));
         } else if (token == "/") {
-            BinOpTag bot = BinOpTag(divs);
-            tags.push_back(&bot);
+            tags.push_back(Tag::BinOpTag(divs));
         } else if (token == "^") {
-            BinOpTag bot = BinOpTag(exp);
-            tags.push_back(&bot);
+            tags.push_back(Tag::BinOpTag(exp));
         } else if (token == "%%") {
-            BinOpTag bot = BinOpTag(mod);
-            tags.push_back(&bot);
+            tags.push_back(Tag::BinOpTag(mod));
         } else if (token == "&&") {
-            BinOpTag bot = BinOpTag(conj);
-            tags.push_back(&bot);
+            tags.push_back(Tag::BinOpTag(conj));
         } else if (token == "||") {
-            BinOpTag bot = BinOpTag(disj);
-            tags.push_back(&bot);
+            tags.push_back(Tag::BinOpTag(disj));
         }
 
         else if (token == "=") {
-            SetterTag st = SetterTag(normal);
-            tags.push_back(&st);
+            tags.push_back(Tag::SetterTag(normal));
         } else if (token == "+=") {
-            SetterTag st = SetterTag(setadd);
-            tags.push_back(&st);
+            tags.push_back(Tag::SetterTag(setadd));
         } else if (token == "-=") {
-            SetterTag st = SetterTag(setsub);
-            tags.push_back(&st);
+            tags.push_back(Tag::SetterTag(setsub));
         } else if (token == "*=") {
-            SetterTag st = SetterTag(setmult);
-            tags.push_back(&st);
+            tags.push_back(Tag::SetterTag(setmult));
         } else if (token == "/=") {
-            SetterTag st = SetterTag(setdivs);
-            tags.push_back(&st);
+            tags.push_back(Tag::SetterTag(setdivs));
         } else if (token == "^=") {
-            SetterTag st = SetterTag(setexp);
-            tags.push_back(&st);
+            tags.push_back(Tag::SetterTag(setexp));
         } else if (token == "%%=") {
-            SetterTag st = SetterTag(setmod);
-            tags.push_back(&st);
+            tags.push_back(Tag::SetterTag(setmod));
         }
 
         else if (token == "==") {
-            ComparisonTag ct = ComparisonTag(eq);
-            tags.push_back(&ct);
+            tags.push_back(Tag::ComparisonTag(eq));
         } else if (token == "!=") {
-            ComparisonTag ct = ComparisonTag(neq);
-            tags.push_back(&ct);
+            tags.push_back(Tag::ComparisonTag(neq));
         } else if (token == "<=") {
-            ComparisonTag ct = ComparisonTag(leq);
-            tags.push_back(&ct);
+            tags.push_back(Tag::ComparisonTag(leq));
         } else if (token == ">=") {
-            ComparisonTag ct = ComparisonTag(geq);
-            tags.push_back(&ct);
+            tags.push_back(Tag::ComparisonTag(geq));
         } else if (token == "<:") {
-            ComparisonTag ct = ComparisonTag(subtype);
-            tags.push_back(&ct);
+            tags.push_back(Tag::ComparisonTag(subtype));
         }
 
         // these might end up being Open/CloseTags or
         // ComparisonTags, pending semantic analysis
         else if (token == "<") {
-            LAngleTag lt = LAngleTag();
-            tags.push_back(&lt);
+            tags.push_back(Tag::LAngleTag());
         } else if (token == ">") {
-            RAngleTag rt = RAngleTag();
-            tags.push_back(&rt);
+            tags.push_back(Tag::RAngleTag());
         }
 
         else if (token == ".") {
-            ConversionTag ct = ConversionTag(toReal);
-            tags.push_back(&ct);
+            tags.push_back(Tag::ConversionTag(toReal));
         } else if (token == "$") {
-            ConversionTag ct = ConversionTag(toStr);
-            tags.push_back(&ct);
+            tags.push_back(Tag::ConversionTag(toStr));
         } else if (token == "[]") {
-            ConversionTag ct = ConversionTag(toArr);
-            tags.push_back(&ct);
+            tags.push_back(Tag::ConversionTag(toArr));
         } else if (token == "{}") {
-            ConversionTag ct = ConversionTag(toList);
-            tags.push_back(&ct);
+            tags.push_back(Tag::ConversionTag(toList));
         } else if (token == "<>") {
-            ConversionTag ct = ConversionTag(toSet);
-            tags.push_back(&ct);
+            tags.push_back(Tag::ConversionTag(toSet));
         }
 
         else if (token == "true") {
-            BoolTag bt = BoolTag(true);
-            tags.push_back(&bt);
+            tags.push_back(Tag::BoolTag(true));
         } else if (token == "false") {
-            BoolTag bt = BoolTag(false);
-            tags.push_back(&bt);
+            tags.push_back(Tag::BoolTag(false));
         } 
 
         else if (token[0] == '"') {
-            StringTag st = StringTag(token);
-            tags.push_back(&st);
+            tags.push_back(Tag::StringTag(token));
         } else if (in_charset(token[0],nums)) {
             size_t found = token.find('.');
             if (found == string::npos) {
-                IntTag it = IntTag(stoi(token));
-                tags.push_back(&it);
+                tags.push_back(Tag::IntTag(stoi(token)));
             } else {
-                RealTag rt = RealTag(stof(token));
-                tags.push_back(&rt);
+                tags.push_back(Tag::RealTag(stof(token)));
             }
         } else {
             if (i > 0 && tokens[i-1] == ".") {
                 tags.pop_back(); // period . gets interpreted as a conversion unless followed by a label
-                AttrTag at = AttrTag();
-                tags.push_back(&at);
-            }
-            LabelTag lt = LabelTag(token);
-            tags.push_back(&lt);
+                tags.push_back(Tag::AttrTag());
+            } 
+            tags.push_back(Tag::LabelTag(token));
         }
     }
     return tags;
