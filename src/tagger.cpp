@@ -150,6 +150,7 @@ public:
         }
         repr = "OpenTag " + bstr;
     }
+    Brace getBrace() {return b;}
 };
 
 class CloseTag : public Tag {
@@ -167,6 +168,7 @@ public:
         }
         repr = "CloseTag " + bstr;
     }
+    Brace getBrace() {return b;}
 };
 
 // < and > need their own tag type because
@@ -276,129 +278,176 @@ public:
     }
 };
 
-vector<Tag> get_tags(vector<string> tokens) {
-    vector<Tag> tags;
+vector<Tag*> get_tags(vector<string> tokens) {
+    vector<Tag*> tags;
     for (int i = 0; i < tokens.size(); i++) {
         string token = tokens[i];
         if (token == ";") {
-            tags.push_back(SemicolonTag()); 
+            SemicolonTag st = SemicolonTag();
+            tags.push_back(&st); 
         } else if (token == ":") {
-            tags.push_back(ColonTag());
+            ColonTag ct = ColonTag();
+            tags.push_back(&ct);
         } else if (token == ",") {
-            tags.push_back(CommaTag());
+            CommaTag ct = CommaTag();
+            tags.push_back(&ct);
         } else if (token == "?") {
-            tags.push_back(QMarkTag());
+            QMarkTag qt = QMarkTag();
+            tags.push_back(&qt);
         } else if (token == "!") {
-            tags.push_back(BangTag());
+            BangTag bt = BangTag();
+            tags.push_back(&bt);
         }
 
         else if (token == "(") {
-            tags.push_back(OpenTag(paren));
+            OpenTag ot = OpenTag(paren);
+            tags.push_back(&ot);
         } else if (token == ")") {
-            tags.push_back(CloseTag(paren));
+            CloseTag ct = CloseTag(paren);
+            tags.push_back(&ct);
         } else if (token == "{") {
-            tags.push_back(OpenTag(curly));
+            OpenTag ot = OpenTag(curly);
+            tags.push_back(&ot);
         } else if (token == "}") {
-            tags.push_back(CloseTag(curly));
+            CloseTag ct = CloseTag(curly);
+            tags.push_back(&ct);
         } else if (token == "[") {
-            tags.push_back(OpenTag(square));
+            OpenTag ot = OpenTag(square);
+            tags.push_back(&ot);
         } else if (token == "]") {
-            tags.push_back(CloseTag(square));
+            CloseTag ct = CloseTag(square);
+            tags.push_back(&ct);
         } 
 
         else if (token == "if") {
-            tags.push_back(IfTag());
+            IfTag it = IfTag();
+            tags.push_back(&it);
         } else if (token == "else") {
-            tags.push_back(ElseTag());
+            ElseTag et = ElseTag();
+            tags.push_back(&et);
         } 
 
         else if (token == "+") {
-            tags.push_back(BinOpTag(add));
+            BinOpTag bot = BinOpTag(add);
+            tags.push_back(&bot);
         } else if (token == "-") {
-            tags.push_back(BinOpTag(sub));
+            BinOpTag bot = BinOpTag(sub);
+            tags.push_back(&bot);
         } else if (token == "*") {
-            tags.push_back(BinOpTag(mult));
+            BinOpTag bot = BinOpTag(mult);
+            tags.push_back(&bot);
         } else if (token == "/") {
-            tags.push_back(BinOpTag(divs));
+            BinOpTag bot = BinOpTag(divs);
+            tags.push_back(&bot);
         } else if (token == "^") {
-            tags.push_back(BinOpTag(exp));
+            BinOpTag bot = BinOpTag(exp);
+            tags.push_back(&bot);
         } else if (token == "%%") {
-            tags.push_back(BinOpTag(mod));
+            BinOpTag bot = BinOpTag(mod);
+            tags.push_back(&bot);
         } else if (token == "&&") {
-            tags.push_back(BinOpTag(conj));
+            BinOpTag bot = BinOpTag(conj);
+            tags.push_back(&bot);
         } else if (token == "||") {
-            tags.push_back(BinOpTag(disj));
+            BinOpTag bot = BinOpTag(disj);
+            tags.push_back(&bot);
         }
 
         else if (token == "=") {
-            tags.push_back(SetterTag(normal));
+            SetterTag st = SetterTag(normal);
+            tags.push_back(&st);
         } else if (token == "+=") {
-            tags.push_back(SetterTag(setadd));
+            SetterTag st = SetterTag(setadd);
+            tags.push_back(&st);
         } else if (token == "-=") {
-            tags.push_back(SetterTag(setsub));
+            SetterTag st = SetterTag(setsub);
+            tags.push_back(&st);
         } else if (token == "*=") {
-            tags.push_back(SetterTag(setmult));
+            SetterTag st = SetterTag(setmult);
+            tags.push_back(&st);
         } else if (token == "/=") {
-            tags.push_back(SetterTag(setdivs));
+            SetterTag st = SetterTag(setdivs);
+            tags.push_back(&st);
         } else if (token == "^=") {
-            tags.push_back(SetterTag(setexp));
+            SetterTag st = SetterTag(setexp);
+            tags.push_back(&st);
         } else if (token == "%%=") {
-            tags.push_back(SetterTag(setmod));
+            SetterTag st = SetterTag(setmod);
+            tags.push_back(&st);
         }
 
         else if (token == "==") {
-            tags.push_back(ComparisonTag(eq));
+            ComparisonTag ct = ComparisonTag(eq);
+            tags.push_back(&ct);
         } else if (token == "!=") {
-            tags.push_back(ComparisonTag(neq));
+            ComparisonTag ct = ComparisonTag(neq);
+            tags.push_back(&ct);
         } else if (token == "<=") {
-            tags.push_back(ComparisonTag(leq));
+            ComparisonTag ct = ComparisonTag(leq);
+            tags.push_back(&ct);
         } else if (token == ">=") {
-            tags.push_back(ComparisonTag(geq));
+            ComparisonTag ct = ComparisonTag(geq);
+            tags.push_back(&ct);
         } else if (token == "<:") {
-            tags.push_back(ComparisonTag(subtype));
+            ComparisonTag ct = ComparisonTag(subtype);
+            tags.push_back(&ct);
         }
 
         // these might end up being Open/CloseTags or
         // ComparisonTags, pending semantic analysis
         else if (token == "<") {
-            tags.push_back(LAngleTag());
+            LAngleTag lt = LAngleTag();
+            tags.push_back(&lt);
         } else if (token == ">") {
-            tags.push_back(RAngleTag());
+            RAngleTag rt = RAngleTag();
+            tags.push_back(&rt);
         }
 
         else if (token == ".") {
-            tags.push_back(ConversionTag(toReal));
+            ConversionTag ct = ConversionTag(toReal);
+            tags.push_back(&ct);
         } else if (token == "$") {
-            tags.push_back(ConversionTag(toStr));
+            ConversionTag ct = ConversionTag(toStr);
+            tags.push_back(&ct);
         } else if (token == "[]") {
-            tags.push_back(ConversionTag(toArr));
+            ConversionTag ct = ConversionTag(toArr);
+            tags.push_back(&ct);
         } else if (token == "{}") {
-            tags.push_back(ConversionTag(toList));
+            ConversionTag ct = ConversionTag(toList);
+            tags.push_back(&ct);
         } else if (token == "<>") {
-            tags.push_back(ConversionTag(toSet));
+            ConversionTag ct = ConversionTag(toSet);
+            tags.push_back(&ct);
         }
 
         else if (token == "true") {
-            tags.push_back(BoolTag(true));
+            BoolTag bt = BoolTag(true);
+            tags.push_back(&bt);
         } else if (token == "false") {
-            tags.push_back(BoolTag(false));
+            BoolTag bt = BoolTag(false);
+            tags.push_back(&bt);
         } 
 
         else if (token[0] == '"') {
-            tags.push_back(StringTag(token));
+            StringTag st = StringTag(token);
+            tags.push_back(&st);
         } else if (in_charset(token[0],nums)) {
             size_t found = token.find('.');
             if (found == string::npos) {
-                tags.push_back(IntTag(stoi(token)));
+                IntTag it = IntTag(stoi(token));
+                tags.push_back(&it);
             } else {
-                tags.push_back(RealTag(stof(token)));
+                RealTag rt = RealTag(stof(token));
+                tags.push_back(&rt);
             }
         } else {
             if (i > 0 && tokens[i-1] == ".") {
                 tags.pop_back(); // period . gets interpreted as a conversion unless followed by a label
-                tags.push_back(AttrTag());
-            } 
-            tags.push_back(LabelTag(token));
+                AttrTag at = AttrTag();
+                tags.push_back(&at);
+            }
+            LabelTag lt = LabelTag(token);
+            tags.push_back(&lt);
         }
     }
     return tags;

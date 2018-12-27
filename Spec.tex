@@ -104,7 +104,7 @@ Each Teko file consists of a single \textsc{CodeBlock}. \\ \\
 
 \textsc{Setter} := \code{=} $\|$ \code{+=} $\|$ \code{-=} $\|$ \code{*=} $\|$ \code{/=} $\|$ \code{\^{}=} $\|$ \code{\%=} \\
 
-\textsc{Expression} := \textsc{Primitive} $\|$ \textsc{Composite} $\|$ \textsc{Label} (\textsc{Struct}) ( \code{.} \textsc{Label} (\textsc{Struct}) )* $\|$ \textsc{Expression} \textsc{BinaryOp} \textsc{Expression} $\|$ \textsc{Expression} \textsc{Converter} $\|$ \textsc{Expression} \textsc{Slice} $\|$ \code{:} \textsc{Expression})
+\textsc{Expression} := \textsc{Primitive} $\|$ \textsc{Composite} $\|$ \textsc{Label} (\textsc{Struct}) ( \code{.} \textsc{Label} (\textsc{Struct}) )* $\|$ \textsc{Expression} \textsc{BinaryOp} \textsc{Expression} $\|$ \textsc{Expression} \textsc{Comparison} \textsc{Expression} $\|$ \textsc{Expression} \textsc{Converter} $\|$ \textsc{Expression} \textsc{Slice} $\|$ \code{:} \textsc{Expression}) $\|$ \code{(} \textsc{Expression} \code{)}
 
 \begin{quote} $\bullet$ Expressions are the only syntactic units which evaluate to a value; in fact, in all contexts, expressions must evaluate to an appropriately-typed value. \end{quote}
 
@@ -137,6 +137,8 @@ Each Teko file consists of a single \textsc{CodeBlock}. \\ \\
 \begin{quote} $\bullet$ All parameters without equals \code{=} must occur before all parameters with equals. \end{quote}
 
 \textsc{BinaryOp} := \code{+} $\|$ \code{-} $\|$ \code{*} $\|$ \code{/} $\|$ \code{\^} $\|$ \code{\%} $\|$ \code{<:} \\
+
+\textsc{Comparison} := \code{==} $\|$ \code{!=} $\|$ \code{<} $\|$ \code{>} $\|$ \code{<=} $\|$ \code{>=} $\|$ \code{<:} \\
 
 \textsc{Converter} := \code{.} $\|$ \code{\$} $\|$ \code{[]} $\|$ \code{\{\}} $\|$ \code{<>} \\
 
