@@ -26,7 +26,7 @@ vector<Tag> match_braces(vector<Tag> &tags, int &location) {
 
     while (location < tags.size() && tags[location].type != CloseTag) {
         if (tags[location].type == OpenTag) {
-        	vector<Tag> brace_section = match_braces(tags,location);
+            vector<Tag> brace_section = match_braces(tags,location);
             out.insert(out.end(),brace_section.begin(),brace_section.end()) ;
         } else {
             out.push_back(tags[location]);
@@ -52,7 +52,7 @@ void grab_line(vector<Tag> &tags, vector<Line> &lines, int &location) {
     vector<Tag> line_tags;
     while (location < tags.size() && tags[location].type != SemicolonTag ) {
         if (tags[location].type == OpenTag) {
-        	vector<Tag> brace_section = match_braces(tags,location);
+            vector<Tag> brace_section = match_braces(tags,location);
             line_tags.insert(line_tags.end(),brace_section.begin(),brace_section.end()) ;
         } else {
             line_tags.push_back(tags[location]);
