@@ -1,11 +1,18 @@
 #include <vector>
+#include <variant>
 
-enum LineType { declaration, assignment, expression, 
-                if_statement, while_block, for_block };
+enum LineType { DeclarationLine, AssignmentLine, ExpressionLine, 
+                IfStatementLine, WhileBlockLine, ForBlockLine };
 
 struct Line {
-    vector<Tag> tags;
     LineType type;
+    //variant<Declaration,Assignment,Expression,IfStatement,
+    //WhileBlock,ForBlock> content;
+    vector<Tag> tags;
+};
+
+struct CodeBlock {
+    vector<Line> lines;
 };
 
 vector<Tag> match_braces(vector<Tag> &tags, int &location) {
@@ -61,7 +68,7 @@ void grab_line(vector<Tag> &tags, vector<Line> &lines, int &location) {
 
     Line l;
     l.tags = line_tags;
-    l.type = expression;
+    l.type = ExpressionLine;
     lines.push_back(l);
 }
 
