@@ -54,6 +54,6 @@ void TekoObject::set_parent(TekoObject _parent) {
     }
 
 TekoObject TekoString = TekoObject(&TekoType);
-/*TekoObject TekoObject::TekoInt = TekoObject(&TekoType);
+TekoObject TekoObject::TekoInt = TekoObject(&TekoType);
 TekoObject TekoObject::TekoReal = TekoObject(&TekoType);
-TekoObject TekoObject::TekoBool = TekoObject(&TekoType);*/
+TekoObject TekoObject::TekoBool = TekoObject(&TekoType);

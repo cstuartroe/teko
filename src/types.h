@@ -26,12 +26,9 @@ public:
     TekoObject(TekoObject* _type);
 
     TekoObject() {
-
     }
 };
 
 bool is_subtype(TekoObject sub, TekoObject super);
 
-TekoObject TekoType;
-
-TekoObject TekoString;
+TekoObject TekoType, TekoString, TekoInt, TekoReal, TekoBool;

@@ -14,7 +14,7 @@ struct Assignment {
 };
 
 struct Declaration {
-    //TekoObject type = NULL;
+    TekoObject type;
     vector<Assignment> assignments;
 };
 
@@ -33,9 +33,9 @@ struct WhileBlock {
 };
 
 struct ForBlock {
-    //TekoObject type = NULL;
-    //TekoObject label = NULL;
-    //TekoObject iterable = NULL;
+    TekoObject type;
+    TekoObject label;
+    TekoObject iterable;
     CodeBlock loop;
 };
 
@@ -79,6 +79,25 @@ vector<Tag> match_braces(vector<Tag> &tags, int &location) {
     return out;
 }
 
+LineType determine_line_type(vector<Tag> line_tags) {
+    if (line_tags[0].type == IfTag) {
+        return IfStatementLine;
+    } else if (line_tags[0].type == ForTag) {
+        return ForBlockLine;
+    } else if (line_tags[0].type == WhileTag) {
+        return WhileBlockLine;
+    } else if (line_tags[0].type == LetTag) {
+        return DeclarationLine;
+    } else if (line_tags.size() >= 2) {
+        if (line_tags[0].type == LabelTag && line_tags[1].type == LabelTag) {
+            return DeclarationLine;
+        } else if (line_tags[0].type == LabelTag && line_tags[1].type == SetterTag) {
+            return AssignmentLine;
+        }
+    }
+    return ExpressionLine;
+}
+
 void grab_line(vector<Tag> &tags, vector<Line> &lines, int &location) {
     vector<Tag> line_tags;
     while (location < tags.size() && tags[location].type != SemicolonTag ) {
@@ -99,7 +118,7 @@ void grab_line(vector<Tag> &tags, vector<Line> &lines, int &location) {
 
     Line l;
     l.tags = line_tags;
-    l.type = ExpressionLine;
+    l.type = determine_line_type(line_tags);
     lines.push_back(l);
 }
 

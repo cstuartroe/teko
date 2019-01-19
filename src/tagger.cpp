@@ -74,7 +74,8 @@ string to_string(Conversion c) {
 }
 
 enum TagType { LabelTag, StringTag, IntTag, RealTag,
-                BoolTag, IfTag, ElseTag, SemicolonTag,
+                BoolTag, IfTag, ElseTag, ForTag,
+                WhileTag, InTag, LetTag, SemicolonTag,
                 ColonTag, CommaTag, QMarkTag, BangTag,
                 AttrTag, OpenTag, CloseTag, LAngleTag,
                 RAngleTag, BinOpTag, SetterTag, 
@@ -95,6 +96,11 @@ struct Tag {
 
             case IfTag:        return "IfTag";                                 break;
             case ElseTag:      return "ElseTag";                               break;
+            case ForTag:       return "ForTag";                                break;
+            case WhileTag:     return "WhileTag";                              break;
+            case InTag:        return "InTag";                                 break;
+            case LetTag:       return "LetTag";                                break;
+
             case SemicolonTag: return "Semicolon Tag";                         break;
             case ColonTag:     return "ColonTag";                              break;
             case CommaTag:     return "CommaTag";                              break;
@@ -137,6 +143,14 @@ vector<Tag> get_tags(vector<string> tokens) {
             newtag.type = IfTag;
         } else if (token == "else") {
             newtag.type = ElseTag;
+        } else if (token == "for") {
+            newtag.type = ForTag;
+        } else if (token == "while") {
+            newtag.type = WhileTag;
+        } else if (token == "in") {
+            newtag.type = InTag;
+        } else if (token == "let") {
+            newtag.type = LetTag;
         } 
 
         else if (token == "(") {
@@ -209,19 +223,19 @@ vector<Tag> get_tags(vector<string> tokens) {
         }
 
         else if (token == "==") {
-            newtag.type = SetterTag;
+            newtag.type = ComparisonTag;
             newtag.val = eq;
         } else if (token == "!=") {
-            newtag.type = SetterTag;
+            newtag.type = ComparisonTag;
             newtag.val = neq;
         } else if (token == "<=") {
-            newtag.type = SetterTag;
+            newtag.type = ComparisonTag;
             newtag.val = leq;
         } else if (token == ">=") {
-            newtag.type = SetterTag;
+            newtag.type = ComparisonTag;
             newtag.val = geq;
         } else if (token == "<:") {
-            newtag.type = SetterTag;
+            newtag.type = ComparisonTag;
             newtag.val = subtype;
         }
 
