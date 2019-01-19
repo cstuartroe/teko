@@ -4,15 +4,46 @@
 enum LineType { DeclarationLine, AssignmentLine, ExpressionLine, 
                 IfStatementLine, WhileBlockLine, ForBlockLine };
 
-struct Line {
-    LineType type;
-    //variant<Declaration,Assignment,Expression,IfStatement,
-    //WhileBlock,ForBlock> content;
-    vector<Tag> tags;
-};
+class Line;
 
 struct CodeBlock {
     vector<Line> lines;
+};
+
+struct Assignment {
+};
+
+struct Declaration {
+    //TekoObject type = NULL;
+    vector<Assignment> assignments;
+};
+
+struct Expression {
+};
+
+struct IfStatement {
+    Expression condition;
+    CodeBlock then_block;
+    IfStatement* else_stmt;
+};
+
+struct WhileBlock {
+    Expression condition;
+    CodeBlock loop;
+};
+
+struct ForBlock {
+    //TekoObject type = NULL;
+    //TekoObject label = NULL;
+    //TekoObject iterable = NULL;
+    CodeBlock loop;
+};
+
+struct Line {
+    LineType type;
+    variant<Declaration,Assignment,Expression,IfStatement,
+        WhileBlock,ForBlock> content;
+    vector<Tag> tags;
 };
 
 vector<Tag> match_braces(vector<Tag> &tags, int &location) {

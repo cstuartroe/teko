@@ -3,8 +3,8 @@
 #include <fstream>
 #include "tokenize.cpp"
 #include "tagger.cpp"
+#include "types.h"
 #include "parser.cpp"
-#include "types.cpp"
 
 using namespace std;
 
@@ -33,12 +33,14 @@ int main(int argc, char *argv[]) {
 
     vector<string> tokens = tokenize(buffer);
     vector<Tag> tags = get_tags(tokens);
-    vector<Line> lines = get_lines(tags);
+    /*vector<Line> lines = get_lines(tags);
     for (int i = 0; i < lines.size(); i++) {
+        cout << i << endl;
         vector<Tag> line_tags = lines[i].tags;
+        cout << "oh boi" << endl;
         for (int j = 0; j < line_tags.size(); j++) {
             cout << line_tags[j].to_str() << endl;
         }
         cout << endl;
-    }
+    }*/
 }
