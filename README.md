@@ -131,7 +131,7 @@ numarray{} + numlist; // {1,2,3,4,0,1,2,3,4}
 
 ### Control Structures
 
-Control structures should mostly  look familiar to anyone who writes Java, JS, or C:
+Basic control structures should mostly  look familiar to anyone who writes Java, JS, or C, although parentheses are optional and I introduce some abbreviations of ifs:
 
 ```
 if ( cond1 ) {
@@ -140,19 +140,56 @@ if ( cond1 ) {
     ...
 } else { 
     ...
-}
+};
+
+// final else and parens are optional
+if cond {
+    ...
+} {
+    ...        
+};
+
+// even more abbreviated:
+cond ? { ... } { ... }; // if-else
+cond ? { ... }; // a simple if
+
 
 while (cond) {
     ...
-}
+};
 ```
 
-Although I only have Python-style `for` loops, rather than C-style:
+I only have Python-style `for` loops, rather than C-style:
 
 ```
 for (int i in numlist) {
     ...
+};
+```
+
+Note the semicolons at the end - control blocks actually evaluate to values, even if the programmer chooses not to use those values.
+
+```
+int x = if (n > 0) {
+    return n1;
+} else {
+    return 0;
 }
+
+int x = n1 > 0 ? { n1; } { 0; }; // return can be implied
+int x = n1 > 0 ? n1 0; // braces can be omitted for any codeblock with one line
+
+int x = while ( cond ) {
+    return do_something(); // only last value is stored
+};
+
+int x = while ( cond ) do_something();
+
+int{} xs = for (int i in 1:10) { 
+    yield i^2; 
+};
+
+int{} xs = for (int i in 1:10) { i^2; }; // yield, rather than return, is always implied for fors
 ```
 
 There are also asynchronous control blocks:
@@ -162,7 +199,7 @@ There are also asynchronous control blocks:
 
 parallel (int i in numlist) {
     ...
-}
+};
 ```
 
 And maybe an easy syntax for threading:
@@ -172,14 +209,18 @@ And maybe an easy syntax for threading:
 
 begin {
     ...
-}
+};
 
 // Like parallel, but proceeds without waiting to finish the loops
 // Essentially just abbreviates a pair of braces
 
 begin parallel (int i in numlist) {
     ...
-}
+};
+
+async int{} xs = begin parallel ( ... ) {
+    ... // like with fors, yield is the implied keyword
+};
 ```
 
 ### Functions
@@ -190,10 +231,25 @@ Defining functions in Teko with a codeblock uses the special `->` setter:
 int add(int n1, int n2) -> { return n1 + n2; };
 ```
 
+The `return` keyword is optional - it will force a function to terminate and may assist readability, but can be omitted:
+
+```
+int foo(int n1, int n2, bool b) -> { 
+    b ? n1 += 5;
+    n1 * n2;
+};
+```
+
+In fact, as in control blocks, a single-line block can go without braces:
+
+```
+int add(int n1, int n2) ->  n1 + n2;
+```
+
 There are a few spooky things about Teko functions. Their return type and parameter set comprise the type and are thus immutable, and the parameter set is actually a struct. The definition is mutable though, and can be assigned on a different line than declaration, like any other variable (of course, using `final` in their declaration prevents this).
 
 ```
-int add(int n1, int n2) -> {return n1 + n2};
+int add(int n1, int n2) -> { return n1 + n2 };
 add(2,2); // 4
 add._args; // (int n1, int n2)
 add._args = (str s, bool b); // bad!
