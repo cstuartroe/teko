@@ -183,13 +183,13 @@ int x = while ( cond ) {
     return do_something(); // only last value is stored
 };
 
-int x = while ( cond ) do_something();
+int x = while cond do_something();
 
 int{} xs = for (int i in 1:10) { 
     yield i^2; 
 };
 
-int{} xs = for (int i in 1:10) { i^2; }; // yield, rather than return, is always implied for fors
+int{} xs = for (int i in 1:10) i^2; // yield, rather than return, is always implied for fors
 ```
 
 There are also asynchronous control blocks:
@@ -274,16 +274,16 @@ do_something(2,"Hi!",xs = {1.1,2.2});
 void remove_finger(body) -> {finger -= 1};
 typeof(remove_finger); // void(int nose ? 1, int eyes ? 2, int fingers ? 10)
 
-void remove_finger_real(body b) -> {body.finger -= 1};
+void remove_finger_real(body b) -> body.finger -= 1;
 typeof(remove_finger_real); // void(body b)
 
 remove_finger_real(carol);
 carol.fingers; // 12 - oops!
 
-void no_wait_really_remove_finger_this_time(body &b) -> {body.finger -= 1};
+void no_wait_really_remove_finger_this_time(body &b) -> body.finger -= 1;
 typeof(no_wait_really_remove_finger_this_time); // void(body &b);
 
-no_wait_really_remove_finger_this_time(**carol);
+no_wait_really_remove_finger_this_time(carol);
 carol.fingers; // 11 - ouch!
 ```
 
@@ -302,7 +302,7 @@ isinstance(type, type); // true
 isinstance(obj, type); // true!
 ```
 
-Teko has a heirarchical type system very similar to Java, with classes in a heirarchy:
+Teko has a hierarchical type system very similar to Java, with classes in a heirarchy:
 
 ```
 class Vehicle {
