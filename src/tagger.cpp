@@ -1,302 +1,240 @@
-#include <vector>
-#include <variant>
+#include "tokenize.cpp"
 
 using namespace std;
 
+const int num_braces = 4;
+
+char braces[9] = "(){}[]<>";
+
 enum Brace { paren, curly, square, angle };
+
+Brace brace_fromc(char c) {
+    switch(c) {
+        case '(': return paren;
+        case ')': return paren;
+        case '{': return curly;
+        case '}': return curly;
+        case '[': return square;
+        case ']': return square;
+        case '<': return angle;
+        case '>': return angle;
+    }
+}
+
+bool open_fromc(char c) {
+  switch(c) {
+      case '(': return true;
+      case ')': return false;
+      case '{': return true;
+      case '}': return false;
+      case '[': return true;
+      case ']': return false;
+      case '<': return true;
+      case '>': return false;
+  }
+}
+
 string to_string(Brace b, bool open) {
     if (open) {
         switch (b) {
-            case paren:  return "("; break;
-            case curly:  return "{"; break;
-            case square: return "["; break;
-            case angle:  return "<"; break;
+            case paren:  return "(";
+            case curly:  return "{";
+            case square: return "[";
+            case angle:  return "<";
         }
     } else {
         switch (b) {
-            case paren:  return ")"; break;
-            case curly:  return "}"; break;
-            case square: return "]"; break;
-            case angle:  return ">"; break;
+            case paren:  return ")";
+            case curly:  return "}";
+            case square: return "]";
+            case angle:  return ">";
         }
     }
 }
 
-enum BinOp { add, sub, mult, divs, exp, mod, conj, disj };
-string to_string(BinOp op) {
-    switch (op) {
-        case add:  return "+"; break;
-        case sub:  return "-"; break;
-        case mult: return "*"; break;
-        case divs: return "/"; break;
-        case exp:  return "^"; break;
-        case mod:  return "%%"; break;
-        case conj: return "&&"; break;
-        case disj: return "||"; break;
+// ------------
+
+const int num_binops = 9;
+
+string binops[num_binops+1] = {"+", "-", "*", "/", "^", "%", "&", "|", "in"};
+
+enum BinOp { add, sub, mult, divs, exp, mod, conj, disj, in};
+
+// ------------
+
+const int num_setters = 8;
+
+string setters[num_setters+1] = {"=", "+=", "-=", "*=", "/=", "/=", "^=", "%=", "->"};
+
+enum Setter { setnormal, setadd, setsub, setmult, setdivs, setexp, setmod, routine};
+
+// ------------
+
+const int num_comparisons = 7;
+
+string comparisons[num_comparisons+1] = {"==", "!=", "<", ">", "<=", ">=", "<:"};
+
+enum Comparison { eq, neq, lt, gt, leq, geq, subtype};
+
+// ------------
+
+const int num_conversions = 5;
+
+string conversions[num_conversions+1] = {".", "$", "[]", "{}", "<>"};
+
+enum Conversion { toReal, toStr, toArr, toList, toSet};
+
+// ------------
+
+const int num_tagtypes = 29;
+
+enum TagType { LabelTag, StringTag, IntTag, RealTag, BoolTag, CharTag,
+
+               IfTag, ElseTag, ForTag, WhileTag,
+
+               SemicolonTag, ColonTag, CommaTag, QMarkTag, BangTag, AttrTag,
+
+               OpenTag, CloseTag,
+
+               BinOpTag, SetterTag, ComparisonTag, ConversionTag,
+
+               VarTag, VisibilityTag, VartypeTag, AnnotationTag, CommandTag };
+
+// ------------
+
+TagType punct_tagtype(string s) {
+    if      (s == ";") { return SemicolonTag; }
+    else if (s == ":") { return ColonTag; }
+    else if (s == ",") { return CommaTag; }
+    else if (s == "?") { return QMarkTag; }
+    else if (s == "!") { return BangTag; }
+
+    else if (s.length() == 1 && in_charset(s[0], braces)) {
+      if (open_fromc(s[0])) {
+        return OpenTag;
+      } else {
+        return CloseTag;
+      }
+    }
+
+    else if (in_stringset(s, binops, num_binops)) {
+      return BinOpTag;
+    }
+
+    else if (in_stringset(s, setters, num_setters)) {
+      return SetterTag;
+    }
+
+    else if (in_stringset(s, comparisons, num_comparisons)) {
+      return ComparisonTag;
+    }
+
+    else if (in_stringset(s, conversions, num_conversions)) {
+      return ConversionTag;
     }
 }
-
-enum Setter { setnormal, setadd, setsub, setmult, setdivs, setexp, setmod };
-string to_string(Setter s) {
-    switch (s) {
-        case setnormal: return "=";  break;
-        case setadd:    return "+="; break;
-        case setsub:    return "-="; break;
-        case setmult:   return "*="; break;
-        case setdivs:   return "/="; break;
-        case setexp:    return "^="; break;
-        case setmod:    return "%%="; break;
-    }
-}
-
-enum Comparison { eq, neq, lt, gt, leq, geq, subtype };
-string to_string(Comparison c) {
-    switch (c) {
-        case eq:  return "=="; break;
-        case neq: return "!="; break;
-        case lt:  return "<";  break;
-        case gt:  return ">";  break;
-        case leq: return "<="; break;
-        case geq: return ">="; break;
-        case subtype: return "<:"; break;
-    }
-}
-
-enum Conversion { toReal, toStr, toArr, toList, toSet };
-string to_string(Conversion c) {
-    switch (c) {
-        case toReal: return ".";  break;
-        case toStr:  return "$";  break;
-        case toArr:  return "[]"; break;
-        case toList: return "{}"; break;
-        case toSet:  return "<>"; break;
-    }
-}
-
-enum TagType { LabelTag, StringTag, IntTag, RealTag,
-                BoolTag, IfTag, ElseTag, ForTag,
-                WhileTag, InTag, LetTag, SemicolonTag,
-                ColonTag, CommaTag, QMarkTag, BangTag,
-                AttrTag, OpenTag, CloseTag, LAngleTag,
-                RAngleTag, BinOpTag, SetterTag, 
-                ComparisonTag, ConversionTag };
-
-using TagValue = variant<string, int, float, bool, Brace, BinOp, Setter, Comparison, Conversion>;
 
 struct Tag {
+    Tag *next;
     TagType type;
-    TagValue val;
+    char *val; // will be cast to a different type of pointer depending on TagType
+    string s;
+    int line_number, col;
+
+    Tag() {}
+
     string to_str() {
         switch(type) {
-            case LabelTag:     return "LabelTag " + get<string>(val);          break;
-            case StringTag:    return "StringTag " + get<string>(val);         break;
-            case IntTag:       return "IntTag " + to_string(get<int>(val));    break;
-            case RealTag:      return "RealTag " + to_string(get<float>(val)); break;
-            case BoolTag:      return "BoolTag " + to_string(get<bool>(val));; break;
+            case LabelTag:     return "LabelTag "  + (*((string*) val));
+            case StringTag:    return "StringTag \"" + teko_escape(*((string*) val)) + "\"";
+            case IntTag:       return "IntTag "    + to_string(*((int*)    val));
+            case RealTag:      return "RealTag "   + to_string(*((float*)  val));
+            case BoolTag:      return "BoolTag "   + (*((bool*)   val)) ? "true" : "false";
+            case CharTag:      { string out = "CharTag '"; out += *val; out += "'"; return out; }
 
-            case IfTag:        return "IfTag";                                 break;
-            case ElseTag:      return "ElseTag";                               break;
-            case ForTag:       return "ForTag";                                break;
-            case WhileTag:     return "WhileTag";                              break;
-            case InTag:        return "InTag";                                 break;
-            case LetTag:       return "LetTag";                                break;
+            case IfTag:        return "IfTag";
+            case ElseTag:      return "ElseTag";
+            case ForTag:       return "ForTag";
+            case WhileTag:     return "WhileTag";
 
-            case SemicolonTag: return "Semicolon Tag";                         break;
-            case ColonTag:     return "ColonTag";                              break;
-            case CommaTag:     return "CommaTag";                              break;
-            case QMarkTag:     return "QMarkTag";                              break;
-            case BangTag:      return "BangTag";                               break;
-            case AttrTag:      return "AttrTag";                               break;
+            case SemicolonTag: return "Semicolon Tag";
+            case ColonTag:     return "ColonTag";
+            case CommaTag:     return "CommaTag";
+            case QMarkTag:     return "QMarkTag";
+            case BangTag:      return "BangTag";
+            case AttrTag:      return "AttrTag";
 
-            case OpenTag:      return "OpenTag " + to_string(get<Brace>(val),true); break;
-            case CloseTag:     return "CloseTag " + to_string(get<Brace>(val),false); break;
-            case LAngleTag:    return "LAngleTag";                             break;
-            case RAngleTag:    return "RAngleTag";                             break;
-            case BinOpTag:     return "BinOpTag " + to_string(get<BinOp>(val)); break;
-            case SetterTag:    return "SetterTag " + to_string(get<Setter>(val)); break;
-            case ComparisonTag:return "ComparisonTag " + to_string(get<Comparison>(val)); break;
-            case ConversionTag:return "ConversionTag " + to_string(get<Conversion>(val)); break;
+            case OpenTag:      return "OpenTag "       + to_string(*((Brace*) val), true);
+            case CloseTag:     return "CloseTag "      + to_string(*((Brace*) val), false);
+
+            case BinOpTag:     return "BinOpTag "      + binops[*val];
+            case SetterTag:    return "SetterTag "     + setters[*val];
+            case ComparisonTag:return "ComparisonTag " + comparisons[*val];
+            case ConversionTag:return "ConversionTag " + conversions[*val];
+
+            case VarTag:       return "VarTag";
+            case VisibilityTag: return "VisibilityTag";
+            case VartypeTag:   return "VartypeTag";
+            case AnnotationTag:return "AnnotationTag";
+            case CommandTag:   return "CommandTag";
         }
     }
 };
 
-vector<Tag> get_tags(vector<string> tokens) {
-    vector<Tag> tags;
+Tag *from_token(Token token) {
+    Tag *tag = new Tag();
+    tag->line_number = token.line_number;
+    tag->col = token.col;
+    tag->s = token.s;
 
-    for (int i = 0; i < tokens.size(); i++) {
-        string token = tokens[i];
-        Tag newtag;
-
-        if (token == ";") {
-            newtag.type = SemicolonTag; 
-        } else if (token == ":") {
-            newtag.type = ColonTag;
-        } else if (token == ",") {
-            newtag.type = CommaTag;
-        } else if (token == "?") {
-            newtag.type = QMarkTag;
-        } else if (token == "!") {
-            newtag.type = BangTag;
+    switch (token.type) {
+        case LABEL_T: {
+            tag->type = LabelTag;
+            string* sp = new string(token.s);
+            tag->val = (char*) sp;
+            break;
         }
 
-        else if (token == "if") {
-            newtag.type = IfTag;
-        } else if (token == "else") {
-            newtag.type = ElseTag;
-        } else if (token == "for") {
-            newtag.type = ForTag;
-        } else if (token == "while") {
-            newtag.type = WhileTag;
-        } else if (token == "in") {
-            newtag.type = InTag;
-        } else if (token == "let") {
-            newtag.type = LetTag;
-        } 
-
-        else if (token == "(") {
-            newtag.type = OpenTag;
-            newtag.val = paren;
-        } else if (token == ")") {
-            newtag.type = CloseTag;
-            newtag.val = paren;
-        } else if (token == "{") {
-            newtag.type = OpenTag;
-            newtag.val = curly;
-        } else if (token == "}") {
-            newtag.type = CloseTag;
-            newtag.val = curly;
-        } else if (token == "[") {
-            newtag.type = OpenTag;
-            newtag.val = square;
-        } else if (token == "]") {
-            newtag.type = CloseTag;
-            newtag.val = square;
-        } 
-
-        else if (token == "+") {
-            newtag.type = BinOpTag;
-            newtag.val = add;
-        } else if (token == "-") {
-            newtag.type = BinOpTag;
-            newtag.val = sub;
-        } else if (token == "*") {
-            newtag.type = BinOpTag;
-            newtag.val = mult;
-        } else if (token == "/") {
-            newtag.type = BinOpTag;
-            newtag.val = divs;
-        } else if (token == "^") {
-            newtag.type = BinOpTag;
-            newtag.val = exp;
-        } else if (token == "%%") {
-            newtag.type = BinOpTag;
-            newtag.val = mod;
-        } else if (token == "&&") {
-            newtag.type = BinOpTag;
-            newtag.val = conj;
-        } else if (token == "||") {
-            newtag.type = BinOpTag;
-            newtag.val = disj;
+        case NUM_T: {
+            tag->type = IntTag;
+            int* ip = new int(stoi(token.s));
+            tag->val = (char*) ip;
+            break;
         }
 
-        else if (token == "=") {
-            newtag.type = SetterTag;
-            newtag.val = setnormal;
-        } else if (token == "+=") {
-            newtag.type = SetterTag;
-            newtag.val = setadd;
-        } else if (token == "-=") {
-            newtag.type = SetterTag;
-            newtag.val = setsub;
-        } else if (token == "*=") {
-            newtag.type = SetterTag;
-            newtag.val = setmult;
-        } else if (token == "/=") {
-            newtag.type = SetterTag;
-            newtag.val = setdivs;
-        } else if (token == "^=") {
-            newtag.type = SetterTag;
-            newtag.val = setexp;
-        } else if (token == "%%=") {
-            newtag.type = SetterTag;
-            newtag.val = setmod;
+        case STRING_T: {
+            tag->type = StringTag;
+            string* sp = new string(token.s);
+            tag->val = (char*) sp;
+            break;
         }
 
-        else if (token == "==") {
-            newtag.type = ComparisonTag;
-            newtag.val = eq;
-        } else if (token == "!=") {
-            newtag.type = ComparisonTag;
-            newtag.val = neq;
-        } else if (token == "<=") {
-            newtag.type = ComparisonTag;
-            newtag.val = leq;
-        } else if (token == ">=") {
-            newtag.type = ComparisonTag;
-            newtag.val = geq;
-        } else if (token == "<:") {
-            newtag.type = ComparisonTag;
-            newtag.val = subtype;
-        }
+        case PUNCT_T: {
+            tag->type = punct_tagtype(token.s);
+            char index;
+            switch(tag->type) {
+                case OpenTag:  index = brace_fromc(token.s[0]); break;
+                case CloseTag: index = brace_fromc(token.s[0]); break;
 
-        // these might end up being Open/CloseTags or
-        // ComparisonTags, pending semantic analysis
-        else if (token == "<") {
-            newtag.type = LAngleTag;
-        } else if (token == ">") {
-            newtag.type = RAngleTag;
-        }
+                case BinOpTag:      index = string_index(token.s, binops,      num_binops);      break;
+                case SetterTag:     index = string_index(token.s, setters,     num_setters);     break;
+                case ComparisonTag: index = string_index(token.s, comparisons, num_comparisons); break;
+                case ConversionTag: index = string_index(token.s, conversions, num_conversions); break;
 
-        else if (token == ".") {
-            newtag.type = ConversionTag;
-            newtag.val = toReal;
-        } else if (token == "$") {
-            newtag.type = ConversionTag;
-            newtag.val = toStr;
-        } else if (token == "[]") {
-            newtag.type = ConversionTag;
-            newtag.val = toArr;
-        } else if (token == "{}") {
-            newtag.type = ConversionTag;
-            newtag.val = toList;
-        } else if (token == "<>") {
-            newtag.type = ConversionTag;
-            newtag.val = toSet;
-        }
-
-        else if (token == "true") {
-            newtag.type = BoolTag;
-            newtag.val = true;
-        } else if (token == "false") {
-            newtag.type = BoolTag;
-            newtag.val = false;
-        } 
-
-        else if (token[0] == '"') {
-            newtag.type = StringTag;
-            newtag.val = token;
-        } else if (in_charset(token[0],nums)) {
-            size_t found = token.find('.');
-            if (found == string::npos) {
-                newtag.type = IntTag;
-                newtag.val = stoi(token);
-            } else {
-                newtag.type = RealTag;
-                newtag.val = stof(token);
+                default: index = 0; break; // for ColonTag, etc.
             }
-        } else {
-            if (i > 0 && tokens[i-1] == ".") {
-                tags.pop_back(); // period . gets interpreted as a conversion unless followed by a label
-                Tag prevtag;
-                prevtag.type = AttrTag;
-                tags.push_back(prevtag);
-            } 
-            newtag.type = LabelTag;
-            newtag.val = token;
+            char* heap_index = new char(index);
+            tag->val = heap_index;
+            break;
         }
 
-        tags.push_back(newtag);
+        case CHAR_T: {
+            tag->type = CharTag;
+            char *cp = new char(token.s[0]);
+            tag->val = cp;
+            break;
+        }
     }
 
-    return tags;
+    return tag;
 }

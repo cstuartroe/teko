@@ -1,14 +1,5 @@
 #include <stdio.h>
 
-// givien an ascii char representing a digit, returns char with integer value
-char ctoi(char c) {
-	return c - 48;
-}
-
-char itoc(char i) {
-	return i + 48;
-}
-
 bool streq(char *s1, char *s2) {
 	if (*s1 == 0 && *s2 == 0) {
 		return true;
@@ -49,7 +40,7 @@ struct digitstring {
 		next = 0;
 		digitstring *temp;
 		if (*s == '-') { neg = true; s++; } else { neg = false; }
-		while (*s == '0') { s++; } // remove leading zeros
+		while (*s == '0' && *(s+1) != 0) { s++; } // remove leading zeros
 		while (*(s+1) != 0) {
 			temp = new digitstring();
 			temp->digit = ctoi(*s);
@@ -183,5 +174,13 @@ int main(int argc, char *argv[]) {
 	assert_sum(n5556,p12000,p6444);
 	assert_sum(p483, p5556, p6039);
 	assert_sum(p483, n5556, n5073);
+
+
+	char in1[16], in2[16];
+	scanf("%15s",in1);
+	scanf("%15s",in2);
+	digitstring d1 = digitstring(in1), d2 = digitstring(in2);
+	digitstring d3 = *d1.sum_digitstring(d2);
+	printf("%s\n", d3.tostr());
 	return 0;
 }

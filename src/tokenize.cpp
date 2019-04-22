@@ -1,55 +1,28 @@
 #include <string>
 
-char alpha[54] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_";
-char num[11] = "0123456789";
-char hex[17] = "0123456789abcdef";
-char white[4] = " \t\n";
-char punct[32] = "!\"#$%&\'()*+,-./:;<=>?@[\\]^`{|}~";
+using namespace std;
 
-const int num_punct_combos = 14;
-std::string punct_combos[num_punct_combos] = {"==","<=",">=","!=","<:","+=","-=",
-                                              "*=","/=","^=","%%=","{}","[]","<>"};
+const int num_punct_combos = 15;
+string punct_combos[num_punct_combos] = {"==","<=",">=","!=","<:","+=","-=",
+                                         "*=","/=","^=","%%=","->","{}","[]","<>"};
 
-// accepts a hexidecimal digit and returns corresponding value
-char xtoi(char c) {
-    for (int i = 0; i < 16; i++) {
-        if (hex[i] == c) { return i; }
-    }
-    throw std::runtime_error("uh oh, how'd we get here? 1");
-}
-
-enum STATE {LABEL_T, NUM_T, STRING_T, PUNCT_T, CHAR_T, 
+enum STATE {LABEL_T, NUM_T, STRING_T, PUNCT_T, CHAR_T,
              LINE_COMMENT, BLOCK_COMMENT, BLANK};
 
 struct Token {
     Token () {
         next = 0;
     }
-    std::string s;
+    string s;
     int line_number, col;
     Token *next;
     STATE type;
 };
 
-bool in_charset(char c, char *charset) {
-    while (*charset != 0) {
-        if (c == *charset) { return true; }
-        charset++;
-    }
-    return false;
-}
-
-bool in_stringset(std::string s, std::string *stringset, char size) {
-    for (int i = 0; i < size; i++) {
-        if (s == stringset[i]) { return true ;}
-    }
-    return false;
-}
-
 struct Tokenizer {
     Token *start;
     Token *curr;
-    std::string buff;
+    string buff;
     int line_number = 0, col;
     STATE state;
     bool decimal;
@@ -76,12 +49,12 @@ struct Tokenizer {
         char out;
 
         if (len == 0 || len > 4) { // no escape sequence should be more than 4 characters
-            throw std::runtime_error("uh oh, how'd we get here? 2");
+            throw runtime_error("uh oh, how'd we get here? 2");
         }
 
         if (buff[0] != '\\') { // a non-escaped character
             if (len != 1) {
-                throw std::runtime_error("uh oh, how'd we get here? 3");
+                throw runtime_error("uh oh, how'd we get here? 3");
             }
             out = buff[0];
             buff = "";
@@ -90,7 +63,7 @@ struct Tokenizer {
 
         if (len == 1) { // a single backslash - not an escape sequence yet!
             return 0;
-        } 
+        }
 
         switch (buff[1]) {
             case '\\': out = '\\'; break;
@@ -99,7 +72,7 @@ struct Tokenizer {
             case 'n':  out = '\n'; break;
             case 't':  out = '\t'; break;
             case 'x':  out = parse_hex(); break;
-            default:   throw std::runtime_error("Invalid escape sequence");
+            default:   throw runtime_error("Invalid escape sequence");
         }
 
         if (out != 0) { buff = ""; }
@@ -111,14 +84,14 @@ struct Tokenizer {
             return 0;
         }
 
-        if (buff[0] != '\\' || buff[1] != 'x' || !in_charset(buff[2],hex) || !in_charset(buff[3],hex)) {
-            throw std::runtime_error("Invalid escape sequence");
+        if (buff[0] != '\\' || buff[1] != 'x' || !in_charset(buff[2], hex_chars) || !in_charset(buff[3], hex_chars)) {
+            throw runtime_error("Invalid escape sequence");
         }
 
         return xtoi(buff[2])*16 + xtoi(buff[3]);
     }
 
-    void digest_line(std::string line) {
+    void digest_line(string line) {
         line_number++;
         for (int i = 0; i < line.length(); i++) {
             col = i+1;
@@ -141,7 +114,7 @@ struct Tokenizer {
     }
 
     void digest_blank(char c) {
-        if (in_charset(c, white)) { return; }
+        if (in_charset(c, white_chars)) { return; }
 
         curr->line_number = line_number;
         curr->col = col;
@@ -152,21 +125,21 @@ struct Tokenizer {
         } else if (c == '\'') {
             state = CHAR_T;
             return;
-        } else if (in_charset(c, alpha)) {
+        } else if (in_charset(c, alpha_chars)) {
             state = LABEL_T;
-        } else if (in_charset(c, num)) {
+        } else if (in_charset(c, num_chars)) {
             state = NUM_T;
-        } else if (in_charset(c, punct)) {
+        } else if (in_charset(c, punct_chars)) {
             state = PUNCT_T;
-        } else  { 
-            throw std::runtime_error("Disallowed character");
+        } else  {
+            throw runtime_error("Disallowed character");
         }
 
         digest(c);
     }
 
     void digest_label(char c) {
-        if (in_charset(c, alpha) || in_charset(c, num))  {
+        if (in_charset(c, alpha_chars) || in_charset(c, num_chars))  {
             curr->s += c;
         } else {
             newtoken();
@@ -175,26 +148,26 @@ struct Tokenizer {
     }
 
     void digest_num(char c) {
-        if (in_charset(c, num)) {
+        if (in_charset(c, num_chars)) {
             curr->s += c;
         } else if (c == '.' && !decimal) {
             decimal = true;
             curr->s += c;
         } else {
             newtoken();
-            digest_blank(c);            
+            digest_blank(c);
         }
     }
 
     void digest_punct(char c) {
-        if (in_charset(c,num) && buff == ".") {
+        if (in_charset(c, num_chars) && buff == ".") {
             state = NUM_T;
             decimal = true;
             digest(c);
             return;
         }
 
-        if (!in_charset(c, punct)) {
+        if (!in_charset(c, punct_chars)) {
             curr->s = buff.substr(0, buff.length());
             buff = "";
             newtoken();
@@ -228,8 +201,8 @@ struct Tokenizer {
         buff += c;
         if (buff == "\"") {
             buff = "";
-            newtoken(); 
-            return;          
+            newtoken();
+            return;
         }
         char parsed = parse_char();
         if (parsed != 0) {
@@ -241,13 +214,13 @@ struct Tokenizer {
         buff += c;
         if (buff == "\'") {
             if (curr->s.length() == 0){
-                throw std::runtime_error("Empty character is prohibited");
+                throw runtime_error("Empty character is prohibited");
             }
             buff = "";
             newtoken();
         } else {
             if (curr->s.length() != 0) {
-                throw std::runtime_error("Strings cannot use single quotes");
+                throw runtime_error("Strings cannot use single quotes");
             }
             char parsed = parse_char();
             if (parsed != 0) {

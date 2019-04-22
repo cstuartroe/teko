@@ -1,11 +1,11 @@
 #include <stdio.h>
 #include <fstream>
 #include "general.cpp"
-#include "tokenize.cpp"
+#include "tagger.cpp"
 
 using namespace std;
 
-int main(int argc, char *argv[]) {   
+int main(int argc, char *argv[]) {
     string filename;
     if (argc == 1) {
         printf("Please give a filename.");
@@ -31,7 +31,9 @@ int main(int argc, char *argv[]) {
     Token *curr = toker.start;
 
     while (curr->next != 0) {
-        printf("token: %s %d\n", curr->s.c_str(), curr->type);
+        //printf("%s %d\n", curr->s.c_str(), curr->type);
+        Tag *tag = from_token(*curr);
+        printf("%s\n", tag->to_str().c_str());
         curr = curr->next;
     }
 }
