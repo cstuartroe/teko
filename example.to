@@ -126,25 +126,46 @@ if (cond1) {
     ...
 } else {
     ...
-}
+};
+
+if cond1 {
+    ...
+} {
+    ...
+};
+
+cond1 ? { ... } { ... }
 
 bool stop = false;
 while (!stop) { // no surprises here
     ...
+};
+
+async int n = begin {
+    ...
+    return x;
 }
 
 int[] nums = [1,4,18,831,12];
 for (int num in nums) {
 	...
-}
+};
 
 for (int i in range(10)) { // see stdlib.to
 	...
+};
+
+int{} ns = for ( ... ) {
+    yield x;
 }
 
-each (int num in nums{}) { // async loop - we'll see whether this gets implemented
+parallel (int num in nums{}) { // async loop - we'll see whether this gets implemented
 	...
-}
+};
+
+async int{} ns = begin parallel ( ... ) {
+    yield x;  
+};
 
 // Function declarations
 
