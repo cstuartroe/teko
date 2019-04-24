@@ -2,11 +2,6 @@
 
 using namespace std;
 
-void compiler_error(char *message) {
-    printf("Teko Compiler Error: %s", message);
-    exit (EXIT_FAILURE);
-}
-
 char alpha_chars[54] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_";
 char num_chars[11]   = "0123456789";
 char hex_chars[17]   = "0123456789abcdef";

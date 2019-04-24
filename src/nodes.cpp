@@ -13,7 +13,7 @@ enum ExpressionType {SimpleExpr, CallExpr, AttrExpr, SliceExpr,
                      IfExpr, ForExpr, WhileExpr};
 
 struct Node {
-  Tag first_tag;
+  Tag *first_tag;
 };
 
 struct Statement : Node {
@@ -57,17 +57,17 @@ struct SimpleNode : ExpressionNode{
   SimpleExpressionType data_type;
   char *val = 0; // will be cast
 
-  SimpleNode(Tag t) {
+  SimpleNode(Tag *t) {
     first_tag = t;
-    val = t.val;
-    switch (t.type) {
+    val = t->val;
+    switch (t->type) {
       case LabelTag:  data_type = LabelExpr;  break;
       case StringTag: data_type = StringExpr; break;
       case CharTag:   data_type = CharExpr;   break;
       case RealTag:   data_type = RealExpr;   break;
       case IntTag:    data_type = IntExpr;    break;
       case BoolTag:   data_type = BoolExpr;   break;
-      default:        throw runtime_error("Invalid simple data type: " + to_string((char) t.type));
+      default:        throw runtime_error("Invalid simple data type: " + to_string((char) t->type));
     }
   }
 };

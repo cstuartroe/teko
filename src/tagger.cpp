@@ -54,27 +54,27 @@ string to_string(Brace b, bool open) {
 
 // ------------
 
-const int num_binops = 10;
+const int num_prefixes = 2;
 
-string binops[num_binops+1] = {"+", "-", "*", "/", "^", "%", "&", "|", "in", "to"};
-
-// ------------
-
-const int num_setters = 9;
-
-string setters[num_setters+1] = {"=", "+=", "-=", "*=", "/=", "/=", "^=", "%=", "=&", "->"};
+string prefixes[num_prefixes] = {"!", "*"};
 
 // ------------
 
-const int num_comparisons = 7;
+const int num_infixes = 17;
 
-string comparisons[num_comparisons+1] = {"==", "!=", "<", ">", "<=", ">=", "<:"};
+string infixes[num_infixes] = {"+", "-", "*", "/", "^", "%", "&", "|", "in", "to",
+                                "==", "!=", "<", ">", "<=", ">=", "<:"};
+// ------------
+
+const int num_setters = 10;
+
+string setters[num_setters] = {"=", "+=", "-=", "*=", "/=", "/=", "^=", "%=", "=&", "->"};
 
 // ------------
 
-const int num_conversions = 7;
+const int num_suffixes = 7;
 
-string conversions[num_conversions+1] = {".", "$", "#", "[]", "{}", "++", "--"};
+string suffixes[num_suffixes] = {".", "$", "#", "[]", "{}", "++", "--"};
 
 // ------------
 
@@ -84,11 +84,11 @@ enum TagType { LabelTag, StringTag, IntTag, RealTag, BoolTag, CharTag,
 
                IfTag, ElseTag, ForTag, WhileTag,
 
-               SemicolonTag, ColonTag, CommaTag, QMarkTag, BangTag, AttrTag,
+               SemicolonTag, ColonTag, CommaTag, QMarkTag, AttrTag,
 
                OpenTag, CloseTag,
 
-               BinOpTag, SetterTag, ComparisonTag, ConversionTag,
+               PrefixTag, InfixTag, SetterTag, SuffixTag,
 
                VarTag, VisibilityTag, VartypeTag, AnnotationTag, CommandTag };
 
@@ -99,7 +99,6 @@ TagType punct_tagtype(string s) {
     else if (s == ":") { return ColonTag; }
     else if (s == ",") { return CommaTag; }
     else if (s == "?") { return QMarkTag; }
-    else if (s == "!") { return BangTag; }
 
     else if (s.length() == 1 && in_charset(s[0], braces)) {
       if (open_fromc(s[0])) {
@@ -109,20 +108,20 @@ TagType punct_tagtype(string s) {
       }
     }
 
-    else if (in_stringset(s, binops, num_binops)) {
-      return BinOpTag;
+    else if (in_stringset(s, prefixes, num_prefixes)) {
+      return PrefixTag;
+    }
+
+    else if (in_stringset(s, infixes, num_infixes)) {
+      return InfixTag;
     }
 
     else if (in_stringset(s, setters, num_setters)) {
       return SetterTag;
     }
 
-    else if (in_stringset(s, comparisons, num_comparisons)) {
-      return ComparisonTag;
-    }
-
-    else if (in_stringset(s, conversions, num_conversions)) {
-      return ConversionTag;
+    else if (in_stringset(s, suffixes, num_suffixes)) {
+      return SuffixTag;
     }
 }
 
@@ -153,16 +152,15 @@ struct Tag {
             case ColonTag:     return "ColonTag";
             case CommaTag:     return "CommaTag";
             case QMarkTag:     return "QMarkTag";
-            case BangTag:      return "BangTag";
             case AttrTag:      return "AttrTag";
 
             case OpenTag:      return "OpenTag "       + to_string(*((Brace*) val), true);
             case CloseTag:     return "CloseTag "      + to_string(*((Brace*) val), false);
 
-            case BinOpTag:     return "BinOpTag "      + binops[*val];
+            case PrefixTag:    return "PrefixTag "     + prefixes[*val];
+            case InfixTag:     return "InfixTag "      + infixes[*val];
             case SetterTag:    return "SetterTag "     + setters[*val];
-            case ComparisonTag:return "ComparisonTag " + comparisons[*val];
-            case ConversionTag:return "ConversionTag " + conversions[*val];
+            case SuffixTag:    return "SuffixTag "     + suffixes[*val];
 
             case VarTag:       return "VarTag";
             case VisibilityTag:return "VisibilityTag";
@@ -186,9 +184,9 @@ Tag *from_token(Token token) {
             else if (token.s == "for")   { tag->type = ForTag; }
             else if (token.s == "while") { tag->type = WhileTag; }
 
-            else if (in_stringset(token.s, binops, num_binops)) {
-              tag->type = BinOpTag;
-              tag->val = new char(string_index(token.s, binops, num_binops));
+            else if (in_stringset(token.s, infixes, num_infixes)) {
+              tag->type = InfixTag;
+              tag->val = new char(string_index(token.s, infixes, num_infixes));
             } else {
               tag->type = LabelTag;
               string* sp = new string(token.s);
@@ -224,10 +222,10 @@ Tag *from_token(Token token) {
                 case OpenTag:  index = brace_fromc(token.s[0]); break;
                 case CloseTag: index = brace_fromc(token.s[0]); break;
 
-                case BinOpTag:      index = string_index(token.s, binops,      num_binops);      break;
+                case PrefixTag:     index = string_index(token.s, prefixes,    num_prefixes);    break;
+                case InfixTag:      index = string_index(token.s, infixes,     num_infixes);     break;
                 case SetterTag:     index = string_index(token.s, setters,     num_setters);     break;
-                case ComparisonTag: index = string_index(token.s, comparisons, num_comparisons); break;
-                case ConversionTag: index = string_index(token.s, conversions, num_conversions); break;
+                case SuffixTag:     index = string_index(token.s, suffixes,    num_suffixes);    break;
 
                 default: index = 0; break; // for ColonTag, etc.
             }
