@@ -1,8 +1,7 @@
 #include <stdio.h>
 #include <fstream>
-
-enum LineType { DeclarationLine, AssignmentLine, ExpressionLine,
-                IfStatementLine, WhileBlockLine, ForBlockLine };
+#include "tagger.cpp"
+#include "nodes.cpp"
 
 void TekoParserException(string message, Tag t) {
     printf("Teko Parsing Error: %s\n", message.c_str());
@@ -39,6 +38,14 @@ struct TekoParser {
         }
         curr_tag = new_tag;
         curr_token = curr_token->next;
+    }
+  }
+
+  void printout() {
+    curr_tag = first_tag;
+    while (curr_tag != 0) {
+      printf("%s\n", curr_tag->to_str().c_str());
+      curr_tag = curr_tag->next;
     }
   }
 
@@ -98,7 +105,7 @@ struct TekoParser {
       case IntTag:   expr = new SimpleNode(curr_tag); advance(); break;
       case RealTag:  expr = new SimpleNode(curr_tag); advance(); break;
       case BoolTag:  expr = new SimpleNode(curr_tag); advance(); break;
-      default: TekoParserException("Illegal start to expression: " + to_string(curr_tag->type), *curr_tag);
+      default: TekoParserException("Illegal start to expression: " + curr_tag->s, *curr_tag);
     }
 
     expr->first_tag = expr_first_tag;
@@ -107,13 +114,5 @@ struct TekoParser {
 
   DeclarationNode *grab_declaration() {
     return new DeclarationNode();
-  }
-
-  void printout() {
-    curr_tag = first_tag;
-    while (curr_tag != 0) {
-      printf("%s\n", curr_tag->to_str().c_str());
-      curr_tag = curr_tag->next;
-    }
   }
 };

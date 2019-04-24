@@ -1,6 +1,6 @@
 #include "nodes.h"
 
-enum StatementType {Declaration, Assignment, Expression};
+enum StatementType {DeclarationStmtType, AssignmentStmtType, ExpressionStmtType};
 
 const int num_expression_types = 13;
 
@@ -18,6 +18,7 @@ struct Node {
 
 struct Statement : Node {
   Statement *next = 0;
+  StatementType stmt_type;
 };
 
 // ------------
@@ -27,6 +28,7 @@ struct ExpressionNode : Node{
 };
 
 struct ExpressionStmt : Statement {
+  StatementType stmt_type = ExpressionStmtType;
   ExpressionNode *body = 0;
 };
 
@@ -38,11 +40,13 @@ struct DeclarationNode : Node {
 };
 
 struct DeclarationStmt : Statement {
+  StatementType stmt_type = DeclarationStmtType;
   ExpressionNode *tekotype = 0;
   DeclarationNode *declist = 0;
 };
 
 struct AssignmentStmt : Statement {
+  StatementType stmt_type = AssignmentStmtType;
   ExpressionNode *left = 0;
   char setter = 0;
   ExpressionNode *right = 0;

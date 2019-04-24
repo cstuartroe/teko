@@ -2,6 +2,14 @@
 
 using namespace std;
 
+void TekoTokenizerException(string message, Token t) {
+    printf("Teko Tokenizing Error: %s\n", message.c_str());
+    printf("at line %d, column %d\n", t.line_number, t.col);
+    exit (EXIT_FAILURE);
+}
+
+// ------------
+
 const int num_braces = 4;
 
 char braces[9] = "(){}[]<>";
@@ -50,6 +58,7 @@ string to_string(Brace b, bool open) {
             case angle:  return ">";
         }
     }
+    throw runtime_error("illegal brace: " + to_string((char) b));
 }
 
 // ------------
@@ -94,7 +103,9 @@ enum TagType { LabelTag, StringTag, IntTag, RealTag, BoolTag, CharTag,
 
 // ------------
 
-TagType punct_tagtype(string s) {
+TagType punct_tagtype(Token t) {
+    string s = t.s;
+
     if      (s == ";") { return SemicolonTag; }
     else if (s == ":") { return ColonTag; }
     else if (s == ",") { return CommaTag; }
@@ -122,6 +133,10 @@ TagType punct_tagtype(string s) {
 
     else if (in_stringset(s, suffixes, num_suffixes)) {
       return SuffixTag;
+    }
+
+    else {
+      TekoTokenizerException("Unknown token: " + s, t);
     }
 }
 
@@ -154,13 +169,13 @@ struct Tag {
             case QMarkTag:     return "QMarkTag";
             case AttrTag:      return "AttrTag";
 
-            case OpenTag:      return "OpenTag "       + to_string(*((Brace*) val), true);
-            case CloseTag:     return "CloseTag "      + to_string(*((Brace*) val), false);
+            case OpenTag:      return "OpenTag "   + to_string(*((Brace*) val), true);
+            case CloseTag:     return "CloseTag "  + to_string(*((Brace*) val), false);
 
-            case PrefixTag:    return "PrefixTag "     + prefixes[*val];
-            case InfixTag:     return "InfixTag "      + infixes[*val];
-            case SetterTag:    return "SetterTag "     + setters[*val];
-            case SuffixTag:    return "SuffixTag "     + suffixes[*val];
+            case PrefixTag:    return "PrefixTag " + prefixes[*val];
+            case InfixTag:     return "InfixTag "  + infixes[*val];
+            case SetterTag:    return "SetterTag " + setters[*val];
+            case SuffixTag:    return "SuffixTag " + suffixes[*val];
 
             case VarTag:       return "VarTag";
             case VisibilityTag:return "VisibilityTag";
@@ -216,21 +231,22 @@ Tag *from_token(Token token) {
         }
 
         case PUNCT_T: {
-            tag->type = punct_tagtype(token.s);
-            char index;
+            tag->type = punct_tagtype(token);
             switch(tag->type) {
-                case OpenTag:  index = brace_fromc(token.s[0]); break;
-                case CloseTag: index = brace_fromc(token.s[0]); break;
+                case OpenTag:
+                case CloseTag: {
+                  Brace *bp = new Brace;
+                  *bp = brace_fromc(token.s[0]);
+                  tag->val = (char *) bp;
+                } break;
 
-                case PrefixTag:     index = string_index(token.s, prefixes,    num_prefixes);    break;
-                case InfixTag:      index = string_index(token.s, infixes,     num_infixes);     break;
-                case SetterTag:     index = string_index(token.s, setters,     num_setters);     break;
-                case SuffixTag:     index = string_index(token.s, suffixes,    num_suffixes);    break;
+                case PrefixTag: tag->val = new char(string_index(token.s, prefixes, num_prefixes)); break;
+                case InfixTag:  tag->val = new char(string_index(token.s, infixes,  num_infixes));  break;
+                case SetterTag: tag->val = new char(string_index(token.s, setters,  num_setters));  break;
+                case SuffixTag: tag->val = new char(string_index(token.s, suffixes, num_suffixes)); break;
 
-                default: index = 0; break; // for ColonTag, etc.
+                default: tag->val = 0; break; // for ColonTag, etc.
             }
-            char* heap_index = new char(index);
-            tag->val = heap_index;
             break;
         }
 
@@ -241,6 +257,5 @@ Tag *from_token(Token token) {
             break;
         }
     }
-
     return tag;
 }

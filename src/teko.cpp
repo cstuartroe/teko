@@ -1,7 +1,5 @@
 #include <stdio.h>
 #include "general.cpp"
-#include "tagger.cpp"
-#include "nodes.cpp"
 #include "parser.cpp"
 
 using namespace std;

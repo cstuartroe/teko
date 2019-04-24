@@ -38,7 +38,7 @@ struct Tokenizer {
 
     void newtoken() {
         curr->type = state;
-        curr->next = new Token;
+        curr->next = new Token();
         curr = curr->next;
         state = BLANK;
     }
