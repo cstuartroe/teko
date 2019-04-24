@@ -9,6 +9,29 @@ void TekoParserException(string message, Tag t) {
     exit (EXIT_FAILURE);
 }
 
+enum Precedence {NoPrec, Compare, BoolOp, AddSub, MultDiv, Exp};
+
+Precedence getPrec(string infix) {
+  if      (infix == "+")  { return AddSub; }
+  else if (infix == "-")  { return AddSub; }
+  else if (infix == "*")  { return MultDiv; }
+  else if (infix == "/")  { return MultDiv; }
+  else if (infix == "^")  { return Exp; }
+  else if (infix == "%")  { return MultDiv; }
+  else if (infix == "&")  { return BoolOp; }
+  else if (infix == "|")  { return BoolOp; }
+  else if (infix == "in") { return BoolOp; }
+  else if (infix == "to") { return BoolOp; }
+  else if (infix == "==") { return Compare; }
+  else if (infix == "!=") { return Compare; }
+  else if (infix == "<")  { return Compare; }
+  else if (infix == ">")  { return Compare; }
+  else if (infix == "<=") { return Compare; }
+  else if (infix == ">=") { return Compare; }
+  else if (infix == "<:") { return Compare; }
+  else { throw runtime_error("Invalid infix: " + infix); }
+}
+
 struct TekoParser {
   Tag* first_tag = 0;
   Tag* curr_tag = 0;
@@ -59,6 +82,7 @@ struct TekoParser {
         curr_stmt->next = new_stmt;
       }
       curr_stmt = new_stmt;
+      printf("expr: %s", curr_stmt->to_str(0).c_str());
     }
   }
 
@@ -71,7 +95,7 @@ struct TekoParser {
   }
 
   Statement *grab_statement() {
-    ExpressionNode *expr1 = grab_expression();
+    ExpressionNode *expr1 = grab_expression(NoPrec);
     Statement *stmt;
     if (curr_tag->type == LabelTag) {
       DeclarationStmt *decl_stmt = new DeclarationStmt();
@@ -94,7 +118,11 @@ struct TekoParser {
     }
   }
 
-  ExpressionNode *grab_expression() {
+  DeclarationNode *grab_declaration() {
+    return new DeclarationNode();
+  }
+
+  ExpressionNode *grab_expression(Precedence prec) {
     ExpressionNode *expr;
     Tag *expr_first_tag = curr_tag;
 
@@ -107,12 +135,68 @@ struct TekoParser {
       case BoolTag:  expr = new SimpleNode(curr_tag); advance(); break;
       default: TekoParserException("Illegal start to expression: " + curr_tag->s, *curr_tag);
     }
-
     expr->first_tag = expr_first_tag;
+
+    expr = continue_expression(prec, expr);
     return expr;
   }
 
-  DeclarationNode *grab_declaration() {
-    return new DeclarationNode();
+  ExpressionNode *continue_expression(Precedence prec, ExpressionNode *left_expr) {
+    switch (curr_tag->type) {
+      case InfixTag: {
+        Precedence new_prec = getPrec(infixes[*curr_tag->val]);
+        if (new_prec <= prec) {
+          return left_expr;
+        } else {
+          InfixNode *infix_expr = new InfixNode();
+          infix_expr->first_tag = curr_tag;
+          infix_expr->left = left_expr;
+          infix_expr->infix = *curr_tag->val;
+          advance();
+          infix_expr->right = grab_expression(new_prec);
+          return continue_expression(prec, infix_expr);
+        }
+      } break;
+
+      case OpenTag: {
+        Brace b = *((Brace *) curr_tag->val);
+        switch (b) {
+          case paren: {
+            CallNode *call_expr = new CallNode();
+            call_expr->first_tag = left_expr->first_tag;
+            call_expr->left = left_expr;
+            advance();
+            call_expr->args = grab_args();
+            return continue_expression(prec, call_expr);
+          } break;
+
+          default: throw runtime_error("Not yet implemented!");
+        }
+      }
+
+      default: return left_expr;
+    }
+  }
+
+  ArgNode *grab_args() {
+    if (curr_tag->type == CloseTag && *((Brace*) curr_tag->val) == paren) {
+      return 0;
+    } else {
+      ArgNode *expr = new ArgNode();
+      expr->first_tag = curr_tag;
+      expr->value = grab_expression(NoPrec);
+
+      if (curr_tag->type == CommaTag) {
+        advance();
+        expr->next = grab_args();
+      } else if (curr_tag->type == CloseTag && *((Brace*) curr_tag->val) == paren) {
+        advance();
+        expr->next = 0;
+      } else {
+        TekoParserException("Expected a comma", *curr_tag);
+      }
+
+      return expr;
+    }
   }
 };

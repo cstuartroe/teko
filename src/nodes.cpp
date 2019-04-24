@@ -1,19 +1,23 @@
 #include "nodes.h"
 
+const int indent_width = 4;
+
 enum StatementType {DeclarationStmtType, AssignmentStmtType, ExpressionStmtType};
 
-const int num_expression_types = 13;
+const int num_expression_types = 14;
 
 enum ExpressionType {SimpleExpr, CallExpr, AttrExpr, SliceExpr,
 
                      SeqExpr, MapExpr, StructExpr, ArgExpr,
 
-                     BinopExpr, ComparisonExpr, ConversionExpr, NotExpr,
+                     PrefixExpr, InfixExpr, SuffixExpr,
 
                      IfExpr, ForExpr, WhileExpr};
 
 struct Node {
   Tag *first_tag;
+
+  virtual string to_str(int indent) { return ""; }
 };
 
 struct Statement : Node {
@@ -30,6 +34,12 @@ struct ExpressionNode : Node{
 struct ExpressionStmt : Statement {
   StatementType stmt_type = ExpressionStmtType;
   ExpressionNode *body = 0;
+
+  string to_str(int indent) {
+    string s(indent*indent_width, ' ');
+    s += body->to_str(indent) + ";\n";
+    return s;
+  }
 };
 
 struct DeclarationNode : Node {
@@ -74,18 +84,19 @@ struct SimpleNode : ExpressionNode{
       default:        throw runtime_error("Invalid simple data type: " + to_string((char) t->type));
     }
   }
-};
 
-struct CallNode : ExpressionNode {
-  ExpressionType expr_type = CallExpr;
-  ExpressionNode *left = 0;
-  ArgNode *args = 0;
-};
-
-struct AttrNode : ExpressionNode {
-  ExpressionType expr_type = AttrExpr;
-  ExpressionNode *left = 0;
-  string label;
+  string to_str(int indent) {
+    string s;
+    switch (data_type) {
+      case LabelExpr:  s = *((string*) val); break;
+      case StringExpr: s = "\"" + teko_escape(*((string*) val)) + "\""; break;
+      case CharExpr:   s = "\'" + teko_escape(to_string(val[0])) + "\'"; break;
+      case IntExpr:    s = to_string(*((int*) val)); break;
+      case RealExpr:   s = to_string(*((float*) val)); break;
+      case BoolExpr:   s = *((bool*) val) ? "true" : "false"; break;
+    }
+    return s;
+  }
 };
 
 struct SliceNode : ExpressionNode {
@@ -123,32 +134,63 @@ struct ArgNode : ExpressionNode {
   ExpressionType expr_type = ArgExpr;
   string label;
   ExpressionNode *value = 0;
+  ArgNode *next = 0;
+
+  string to_str(int indent) {
+    string s = "(";
+    ArgNode *curr = this;
+    while (curr != 0) {
+      s += curr->value->to_str(indent);
+      curr = curr->next;
+      if (curr != 0) { s += ", "; }
+    }
+    s += ")";
+    return s;
+  }
+};
+
+struct CallNode : ExpressionNode {
+  ExpressionType expr_type = CallExpr;
+  ExpressionNode *left = 0;
+  ArgNode *args = 0;
+
+  string to_str(int indent) {
+    return left->to_str(indent) + args->to_str(indent);
+  }
+};
+
+struct AttrNode : ExpressionNode {
+  ExpressionType expr_type = AttrExpr;
+  ExpressionNode *left = 0;
+  string label;
 };
 
 // ------------
 
-struct BinopNode : ExpressionNode {
-  ExpressionType expr_type = BinopExpr;
-  char binop;
-  ExpressionNode *left = 0;
+struct PrefixNode : ExpressionNode {
+  ExpressionType expr_type = PrefixExpr;
+  char prefix;
   ExpressionNode *right = 0;
 };
 
-struct ComparisonNode : ExpressionNode {
-  ExpressionType expr_type = ComparisonExpr;
-  char comp;
+struct InfixNode : ExpressionNode {
+  ExpressionType expr_type = InfixExpr;
   ExpressionNode *left = 0;
+  char infix;
   ExpressionNode *right = 0;
+
+  string to_str(int indent) {
+    string s = left->to_str(indent);
+    s += " " + infixes[infix] + " ";
+    s += right->to_str(indent);
+    return s;
+  }
 };
 
-struct ConversionNode : ExpressionNode {
-  ExpressionType expr_type = ConversionExpr;
-  char conv;
+struct SuffixNode : ExpressionNode {
+  ExpressionType expr_type = SuffixExpr;
   ExpressionNode *left = 0;
-};
-
-struct NotNode : ExpressionNode {
-  ExpressionNode *right = 0;
+  char suffix;
 };
 
 // ------------

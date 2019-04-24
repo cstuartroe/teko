@@ -7,10 +7,10 @@ using namespace std;
 int main(int argc, char *argv[]) {
     string filename;
     if (argc == 1) {
-        printf("Please give a filename.");
+        printf("Please give a filename.\n");
         exit (EXIT_FAILURE);
     } else if (argc > 2) {
-        printf("Usage: teko <file.to>");
+        printf("Usage: teko <file.to>\n");
         exit (EXIT_FAILURE);
     }
 
@@ -18,5 +18,6 @@ int main(int argc, char *argv[]) {
 
     TekoParser p = TekoParser(filename);
     p.printout();
+    printf("\n");
     p.parse();
 }
