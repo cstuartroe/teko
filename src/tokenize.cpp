@@ -2,9 +2,10 @@
 
 using namespace std;
 
-const int num_punct_combos = 15;
+const int num_punct_combos = 16;
 string punct_combos[num_punct_combos] = {"==","<=",">=","!=","<:","+=","-=",
-                                         "*=","/=","^=","%%=","->","{}","[]","<>"};
+                                         "*=","/=","^=","%%=","->","{}","[]",
+                                         "++", "--"};
 
 enum STATE {LABEL_T, NUM_T, STRING_T, PUNCT_T, CHAR_T,
              LINE_COMMENT, BLOCK_COMMENT, BLANK};
@@ -15,13 +16,13 @@ struct Token {
     }
     string s;
     int line_number, col;
-    Token *next;
+    Token *next = 0;
     STATE type;
 };
 
 struct Tokenizer {
-    Token *start;
-    Token *curr;
+    Token *start = 0;
+    Token *curr = 0;
     string buff;
     int line_number = 0, col;
     STATE state;

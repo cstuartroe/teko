@@ -34,7 +34,7 @@ The syntax is most similar to Javascript:
 var str s;
 
 @IO
-for (int i in 1:15) {
+for (int i in 1 to 15) {
     s = "";
     (i % 3 == 0) ? s += "Fizz ";
     (i % 5 == 0) ? s += "Buzz ";
@@ -98,32 +98,28 @@ let n = 3; // good
 Teko also boasts a several powerful composite data types:
 
 ```
-// Arrays
+// Amortized Arrays
 int[4] numarray = [1,2,3,4];
 numarray[2]; // 3
-
-// Linked Lists
-int{} numlist = {1,2,3,4};
-numlist:; // 1
-:numlist; // {2,3,4}
-numlist = 0:numlist;
-numlist; // {0,1,2,3,4}
+numarray.size; // 4 and O(1)
+3 in numarray; // true and O(n)
+numarray.sort();
 
 // Sets
-int<> numset = <1,2,3,4>;
-numset; // <2,4,3,1> (or some other order - sets aren't ordered)
-3 in numset; // true
+int{} numset = {1,2,3,4};
+numset; // {2,4,3,1} (or some other order - sets aren't ordered)
+3 in numset; // true and O(1)
 
 // Enums
-enum(int) numbers = <ONE = 1, TWO = 2, ANOTHERONE = 1>;
+enum(int) numbers = {ONE = 1, TWO = 2, ANOTHERONE = 1};
 typeof(ONE); // numbers
 isa(ONE, int); // true
 numbers <: int; // true
 typeof(ONE + ANOTHERONE); // int - even though 1 + 1 = 2 has a corresponding element in numbers, verifying this is equivalent to the halting problem
 
-enum() Location = <Brussels, Beijing, Cairo, Buenos_Aires>;
-typeof(Location.Beijing); // Location
-isa(Location.Beijing, label); // true
+enum() Location = {Brussels, Beijing, Cairo, Buenos_Aires};
+typeof(Beijing); // Location
+isa(Beijing, label); // true
 
 ONE == ANOTHERONE; // true
 ONE is ANOTHERONE; // false
@@ -149,7 +145,6 @@ n. + 1.0; // 4.0
 n + " times"; // bad!
 n$ + " times"; // "3 times"
 numarray + numlist; // bad!
-numarray{} + numlist; // {1,2,3,4,0,1,2,3,4}
 ```
 
 Exceptions to this include setting values of `struct` types in contexts when expected type is known, in which case writing out the type again is not necessary:
@@ -219,11 +214,11 @@ int x = if (n > 0) {
 int x = n1 > 0 ? { n1; } : { 0; }; // return can be implied
 int x = n1 > 0 ? n1 : 0; // braces can be omitted for any codeblock with one line
 
-int{} x = while ( cond ) {
+int[] x = while ( cond ) {
     do_something(); // only last value is stored
 };
 
-int{} x = while cond do_something();
+int[] x = while cond do_something();
 
 int[] xs = for (int i in 1:10) {
     i^2;
@@ -258,7 +253,7 @@ begin parallel (int i in numlist) {
     ...
 };
 
-async int{} xs = begin parallel ( ... ) {
+async int[] xs = begin parallel ( ... ) {
     ... // like with fors, yield is the implied keyword
 };
 ```

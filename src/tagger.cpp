@@ -54,19 +54,15 @@ string to_string(Brace b, bool open) {
 
 // ------------
 
-const int num_binops = 9;
+const int num_binops = 10;
 
-string binops[num_binops+1] = {"+", "-", "*", "/", "^", "%", "&", "|", "in"};
-
-enum BinOp { add, sub, mult, divs, exp, mod, conj, disj, in};
+string binops[num_binops+1] = {"+", "-", "*", "/", "^", "%", "&", "|", "in", "to"};
 
 // ------------
 
-const int num_setters = 8;
+const int num_setters = 9;
 
-string setters[num_setters+1] = {"=", "+=", "-=", "*=", "/=", "/=", "^=", "%=", "->"};
-
-enum Setter { setnormal, setadd, setsub, setmult, setdivs, setexp, setmod, routine};
+string setters[num_setters+1] = {"=", "+=", "-=", "*=", "/=", "/=", "^=", "%=", "=&", "->"};
 
 // ------------
 
@@ -74,19 +70,15 @@ const int num_comparisons = 7;
 
 string comparisons[num_comparisons+1] = {"==", "!=", "<", ">", "<=", ">=", "<:"};
 
-enum Comparison { eq, neq, lt, gt, leq, geq, subtype};
+// ------------
+
+const int num_conversions = 7;
+
+string conversions[num_conversions+1] = {".", "$", "#", "[]", "{}", "++", "--"};
 
 // ------------
 
-const int num_conversions = 5;
-
-string conversions[num_conversions+1] = {".", "$", "[]", "{}", "<>"};
-
-enum Conversion { toReal, toStr, toArr, toList, toSet};
-
-// ------------
-
-const int num_tagtypes = 29;
+const int num_tagtypes = 27;
 
 enum TagType { LabelTag, StringTag, IntTag, RealTag, BoolTag, CharTag,
 
@@ -135,9 +127,9 @@ TagType punct_tagtype(string s) {
 }
 
 struct Tag {
-    Tag *next;
+    Tag *next = 0;
     TagType type;
-    char *val; // will be cast to a different type of pointer depending on TagType
+    char *val = 0; // will be cast to a different type of pointer depending on TagType
     string s;
     int line_number, col;
 
@@ -173,7 +165,7 @@ struct Tag {
             case ConversionTag:return "ConversionTag " + conversions[*val];
 
             case VarTag:       return "VarTag";
-            case VisibilityTag: return "VisibilityTag";
+            case VisibilityTag:return "VisibilityTag";
             case VartypeTag:   return "VartypeTag";
             case AnnotationTag:return "AnnotationTag";
             case CommandTag:   return "CommandTag";
@@ -189,16 +181,32 @@ Tag *from_token(Token token) {
 
     switch (token.type) {
         case LABEL_T: {
-            tag->type = LabelTag;
-            string* sp = new string(token.s);
-            tag->val = (char*) sp;
+            if      (token.s == "if")    { tag->type = IfTag; }
+            else if (token.s == "else")  { tag->type = ElseTag; }
+            else if (token.s == "for")   { tag->type = ForTag; }
+            else if (token.s == "while") { tag->type = WhileTag; }
+
+            else if (in_stringset(token.s, binops, num_binops)) {
+              tag->type = BinOpTag;
+              tag->val = new char(string_index(token.s, binops, num_binops));
+            } else {
+              tag->type = LabelTag;
+              string* sp = new string(token.s);
+              tag->val = (char*) sp;
+            }
             break;
         }
 
         case NUM_T: {
-            tag->type = IntTag;
-            int* ip = new int(stoi(token.s));
-            tag->val = (char*) ip;
+            if (token.s.find(".") == string::npos) {
+                tag->type = IntTag;
+                int* ip = new int(stoi(token.s));
+                tag->val = (char*) ip;
+            } else {
+                tag->type = RealTag;
+                float* fp = new float(stof(token.s));
+                tag->val = (char*) fp;
+            }
             break;
         }
 
