@@ -1,4 +1,7 @@
+#include <vector>
 #include "nodes.h"
+
+using namespace std;
 
 const int indent_width = 4;
 
@@ -36,7 +39,8 @@ struct ExpressionStmt : Statement {
   ExpressionNode *body = 0;
 
   string to_str(int indent) {
-    string s(indent*indent_width, ' ');
+    string s = "expr:\n";
+    s += string(indent*indent_width, ' ');
     s += body->to_str(indent) + ";\n";
     return s;
   }
@@ -99,51 +103,90 @@ struct SimpleNode : ExpressionNode{
   }
 };
 
-struct SliceNode : ExpressionNode {
-  ExpressionType expr_type = SliceExpr;
+struct AttrNode : ExpressionNode {
+  ExpressionType expr_type = AttrExpr;
   ExpressionNode *left = 0;
-  Brace brace;
-  ExpressionNode *slice = 0;
+  string label;
+
+  string to_str(int indent) {
+    return left->to_str(indent) + "." + label;
+  }
 };
 
 // ------------
-
-struct SeqNode : ExpressionNode {
-  ExpressionType expr_type = SeqExpr;
-  Brace brace;
-  ExpressionNode *first = 0;
-  SeqNode *next = 0;
-};
 
 struct MapNode : ExpressionNode {
   ExpressionType expr_type = MapExpr;
   ExpressionNode *key = 0;
   ExpressionNode *value = 0;
-  MapNode *next = 0;
+
+  string to_str(int indent) {
+    return key->to_str(indent) + ": " + value->to_str(indent);
+  }
+};
+
+struct SeqNode : ExpressionNode {
+  ExpressionType expr_type = SeqExpr;
+  Brace brace;
+  vector<ExpressionNode*> elems;
+
+  string to_str(int indent) {
+    string s = to_string(brace, true);
+    for (ExpressionNode *expr : elems) {
+      s += expr->to_str(indent) + ", ";
+    }
+    s.pop_back();
+    s.pop_back();
+    s += to_string(brace, false);
+    return s;
+  }
+};
+
+struct SliceNode : ExpressionNode {
+  ExpressionType expr_type = SliceExpr;
+  ExpressionNode *left = 0;
+  SeqNode *slice = 0;
+
+  string to_str(int indent) {
+    return left->to_str(indent) + slice->to_str(indent);
+  }
+};
+
+struct StructElemNode : Node {
+  ExpressionNode *tekotype = 0;
+  string label = "";
+  ExpressionNode *deflt = 0;
 };
 
 struct StructNode : ExpressionNode {
   ExpressionType expr_type = StructExpr;
-  ExpressionNode *tekotype = 0;
-  string label;
-  ExpressionNode *deflt = 0;
-  StructNode *next = 0;
+  vector<StructElemNode*> elems;
 };
 
-struct ArgNode : ExpressionNode {
-  ExpressionType expr_type = ArgExpr;
-  string label;
+struct ArgNode : Node {
+  string label = "";
   ExpressionNode *value = 0;
-  ArgNode *next = 0;
+
+  string to_str(int indent) {
+    if (label == "") {
+      return value->to_str(indent);
+    } else {
+      return label + " = " + value->to_str(indent);
+    }
+  }
+};
+
+struct ArgsNode : ExpressionNode {
+  ExpressionType expr_type = ArgExpr;
+  vector<ArgNode*> args;
 
   string to_str(int indent) {
     string s = "(";
-    ArgNode *curr = this;
-    while (curr != 0) {
-      s += curr->value->to_str(indent);
-      curr = curr->next;
-      if (curr != 0) { s += ", "; }
+    for (ArgNode *arg: args) {
+      s += arg->to_str(indent) + ", ";
     }
+    s.pop_back();
+    s.pop_back();
     s += ")";
     return s;
   }
@@ -152,17 +195,11 @@ struct ArgNode : ExpressionNode {
 struct CallNode : ExpressionNode {
   ExpressionType expr_type = CallExpr;
   ExpressionNode *left = 0;
-  ArgNode *args = 0;
+  ArgsNode *args = 0;
 
   string to_str(int indent) {
     return left->to_str(indent) + args->to_str(indent);
   }
-};
-
-struct AttrNode : ExpressionNode {
-  ExpressionType expr_type = AttrExpr;
-  ExpressionNode *left = 0;
-  string label;
 };
 
 // ------------
@@ -180,9 +217,9 @@ struct InfixNode : ExpressionNode {
   ExpressionNode *right = 0;
 
   string to_str(int indent) {
-    string s = left->to_str(indent);
+    string s = "(" + left->to_str(indent);
     s += " " + infixes[infix] + " ";
-    s += right->to_str(indent);
+    s += right->to_str(indent) + ")";
     return s;
   }
 };
@@ -191,6 +228,12 @@ struct SuffixNode : ExpressionNode {
   ExpressionType expr_type = SuffixExpr;
   ExpressionNode *left = 0;
   char suffix;
+
+  string to_str(int indent) {
+    string s = left->to_str(indent);
+    s += suffixes[suffix];
+    return s;
+  }
 };
 
 // ------------

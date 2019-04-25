@@ -17,7 +17,5 @@ int main(int argc, char *argv[]) {
     filename = argv[1];
 
     TekoParser p = TekoParser(filename);
-    p.printout();
-    printf("\n");
     p.parse();
 }

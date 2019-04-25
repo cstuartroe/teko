@@ -65,7 +65,7 @@ string to_string(Brace b, bool open) {
 
 const int num_prefixes = 2;
 
-string prefixes[num_prefixes] = {"!", "*"};
+string prefixes[num_prefixes] = {"!", "~"};
 
 // ------------
 
@@ -108,6 +108,7 @@ TagType punct_tagtype(Token t) {
 
     if      (s == ";") { return SemicolonTag; }
     else if (s == ":") { return ColonTag; }
+    else if (s == ".") { return AttrTag; }
     else if (s == ",") { return CommaTag; }
     else if (s == "?") { return QMarkTag; }
 
