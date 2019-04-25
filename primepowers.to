@@ -6,8 +6,8 @@ struct prime_power = (int prime, int exp, int N);
 
 int[] pps = for prime in primes {
     var exp = -1;
-    *while( prime^(exp++) <= MAX ) {
-        prime_power out = (prime, exp, prime^exp);
+    ~while( prime^(exp++) <= MAX ) {
+        prime_power(prime, exp, prime^exp);
     };
 };
 

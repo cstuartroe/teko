@@ -99,10 +99,22 @@ struct TekoParser {
     return prev;
   }
 
-  Statement *grab_statement() {
+  Tag *get_curr_tag() {
+    if (curr_tag == 0) {
+      Tag fake_tag = Tag();
+      fake_tag.s = " ";
+      fake_tag.line_number = lines.size();
+      fake_tag.col = lines[lines.size()-1].size();
+      TekoParserException("Unexpected EOF", fake_tag);
+    } else {
+      return curr_tag;
+    }
+  }
+
+  Statement *grab_statement(bool expect_semicolon = true) {
     ExpressionNode *expr1 = grab_expression(NoPrec);
     Statement *stmt;
-    if (curr_tag->type == LabelTag) {
+    if (get_curr_tag()->type == LabelTag) {
       DeclarationStmt *decl_stmt = new DeclarationStmt();
       decl_stmt->first_tag = expr1->first_tag;
       decl_stmt->tekotype = expr1;
@@ -115,12 +127,15 @@ struct TekoParser {
       stmt = expr_stmt;
     }
 
-    if (curr_tag->type == SemicolonTag) {
-      advance();
-      return stmt;
-    } else {
-      TekoParserException("Expected semicolon", *curr_tag);
+    if (expect_semicolon) {
+      if (get_curr_tag()->type == SemicolonTag) {
+        advance();
+      } else {
+        TekoParserException("Expected semicolon", *get_curr_tag());
+      }
     }
+
+    return stmt;
   }
 
   DeclarationNode *grab_declaration() {
@@ -129,7 +144,7 @@ struct TekoParser {
 
   ExpressionNode *grab_expression(Precedence prec) {
     ExpressionNode *expr;
-    Tag *expr_first_tag = curr_tag;
+    Tag *expr_first_tag = get_curr_tag();
 
     switch (curr_tag->type) {
       case LabelTag:  expr = new SimpleNode(curr_tag); advance(); break;
@@ -138,6 +153,10 @@ struct TekoParser {
       case IntTag:    expr = new SimpleNode(curr_tag); advance(); break;
       case RealTag:   expr = new SimpleNode(curr_tag); advance(); break;
       case BoolTag:   expr = new SimpleNode(curr_tag); advance(); break;
+      case IfTag:     expr = grab_if(); break;
+      case ForTag:    expr = grab_for(); break;
+      case WhileTag:  expr = grab_while(); break;
+
       case OpenTag:   {
         if (*((Brace*)curr_tag->val) == paren) {
           expr = grab_struct();
@@ -148,6 +167,7 @@ struct TekoParser {
           expr = grab_sequence();
         }
       } break;
+
       case PrefixTag: {
         PrefixNode *prefix_expr = new PrefixNode();
         prefix_expr->first_tag = curr_tag;
@@ -158,14 +178,17 @@ struct TekoParser {
       default: TekoParserException("Illegal start to expression: " + curr_tag->s, *curr_tag);
     }
     expr->first_tag = expr_first_tag;
-
     expr = continue_expression(prec, expr);
     return expr;
   }
 
   ExpressionNode *continue_expression(Precedence prec, ExpressionNode *left_expr) {
+    if (curr_tag == 0) {
+      return left_expr;
+    }
+
     if (curr_tag->type == AttrTag) {
-      if (curr_tag->next->type == LabelTag) {
+      if (curr_tag->next != 0 && curr_tag->next->type == LabelTag) {
         AttrNode *attr_expr = new AttrNode();
         attr_expr->first_tag = curr_tag;
         attr_expr->left = left_expr;
@@ -196,6 +219,25 @@ struct TekoParser {
         }
       } break;
 
+      case SetterTag: {
+        if (prec > NoPrec) {
+          return left_expr;
+        } else {
+          AssignmentNode *asst_expr = new AssignmentNode();
+          asst_expr->first_tag = left_expr->first_tag;
+          asst_expr->left = left_expr;
+          asst_expr->setter = *curr_tag->val;
+          advance();
+          string set = setters[asst_expr->setter];
+          if (set == "->") {
+            asst_expr->right = grab_codeblock();
+          } else {
+            asst_expr->right = grab_expression(NoPrec);
+          }
+          return asst_expr;
+        }
+      } break;
+
       case OpenTag: {
         Brace b = *((Brace *) curr_tag->val);
         switch (b) {
@@ -218,7 +260,7 @@ struct TekoParser {
       } break;
 
       case SuffixTag: {
-        SuffixNode *suff_expr = new SuffixNode;
+        SuffixNode *suff_expr = new SuffixNode();
         suff_expr->first_tag = curr_tag;
         suff_expr->left = left_expr;
         suff_expr->suffix = *curr_tag->val;
@@ -226,20 +268,20 @@ struct TekoParser {
         return continue_expression(prec, suff_expr);
       }
 
-      default: return left_expr;
+      default: return left_expr; break;
     }
   }
 
-  SeqNode *grab_sequence() {
+  SeqNode *grab_sequence(bool forensic = false) {
     SeqNode *seq_expr = new SeqNode();
-    if (curr_tag->type != OpenTag) { throw runtime_error("erroneously called grab_sequence"); }
+    if (get_curr_tag()->type != OpenTag) { throw runtime_error("erroneously called grab_sequence"); }
     seq_expr->first_tag = curr_tag;
     seq_expr->brace = *((Brace*) curr_tag->val);
     advance();
 
-    while (curr_tag->type != CloseTag) {
+    while (get_curr_tag()->type != CloseTag) {
       ExpressionNode *elem = grab_expression(NoPrec);
-      if (curr_tag->type == ColonTag) {
+      if (get_curr_tag()->type == ColonTag) {
         MapNode *map_expr = new MapNode();
         map_expr->first_tag = elem->first_tag;
         map_expr->key = elem;
@@ -249,10 +291,11 @@ struct TekoParser {
       }
       seq_expr->elems.push_back(elem);
 
-      if (curr_tag->type == CommaTag) {
+      if (get_curr_tag()->type == CommaTag) {
         advance();
-      } else if (curr_tag->type != CloseTag) {
-        TekoParserException("Expected a comma", *curr_tag);
+      } else if (get_curr_tag()->type != CloseTag) {
+        if (forensic) { return 0; } // for use when grabbing a codeblock
+        TekoParserException("Expected a comma", *get_curr_tag());
       }
     }
 
@@ -267,11 +310,11 @@ struct TekoParser {
 
   ArgsNode *grab_args() {
     ArgsNode *args_expr = new ArgsNode();
-    if (curr_tag->type != OpenTag || *((Brace*) curr_tag->val) != paren) { throw runtime_error("erroneously called grab_args"); }
+    if (get_curr_tag()->type != OpenTag || *((Brace*) curr_tag->val) != paren) { throw runtime_error("erroneously called grab_args"); }
     args_expr->first_tag = curr_tag;
     advance();
 
-    while (curr_tag->type != CloseTag) {
+    while (get_curr_tag()->type != CloseTag) {
       ArgNode *arg = new ArgNode();
       ExpressionNode* expr = grab_expression(NoPrec);
       if (expr->expr_type == SimpleExpr && ((SimpleNode*) expr)->data_type == LabelExpr && curr_tag->type == SetterTag && setters[*curr_tag->val] == "=") {
@@ -282,10 +325,10 @@ struct TekoParser {
       arg->value = expr;
       args_expr->args.push_back(arg);
 
-      if (curr_tag->type == CommaTag) {
+      if (get_curr_tag()->type == CommaTag) {
         advance();
-      } else if (curr_tag->type != CloseTag) {
-        TekoParserException("Expected a comma", *curr_tag);
+      } else if (get_curr_tag()->type != CloseTag) {
+        TekoParserException("Expected a comma", *get_curr_tag());
       }
     }
 
@@ -299,7 +342,7 @@ struct TekoParser {
   }
 
   StructNode *grab_struct() {
-    Tag* orig_tag = curr_tag;
+    Tag* orig_tag = get_curr_tag();
 
     StructNode *struct_expr = new StructNode();
     if (curr_tag->type != OpenTag || *((Brace*) curr_tag->val) != paren) { throw runtime_error("erroneously called grab_args"); }
@@ -308,7 +351,7 @@ struct TekoParser {
 
     ExpressionNode* expr = grab_expression(NoPrec);
 
-    if (curr_tag->type != LabelTag) {
+    if (get_curr_tag()->type != LabelTag) {
       curr_tag = orig_tag;
       return 0;
     } else {
@@ -316,7 +359,7 @@ struct TekoParser {
       advance();
     }
 
-    while (curr_tag->type != CloseTag) {
+    while (get_curr_tag()->type != CloseTag) {
       StructElemNode *elem = new StructElemNode();
       elem->tekotype = grab_expression(NoPrec);
       if (curr_tag->type != LabelTag) {
@@ -326,17 +369,17 @@ struct TekoParser {
         advance();
       }
 
-      if (curr_tag->type == QMarkTag) {
+      if (get_curr_tag()->type == QMarkTag) {
         advance();
         elem->deflt = grab_expression(NoPrec);
       }
 
       struct_expr->elems.push_back(elem);
 
-      if (curr_tag->type == CommaTag) {
+      if (get_curr_tag()->type == CommaTag) {
         advance();
-      } else if (curr_tag->type != CloseTag) {
-        TekoParserException("Expected a comma", *curr_tag);
+      } else if (get_curr_tag()->type != CloseTag) {
+        TekoParserException("Expected a comma", *get_curr_tag());
       }
     }
 
@@ -347,5 +390,140 @@ struct TekoParser {
     }
 
     return struct_expr;
+  }
+
+  Codeblock *grab_codeblock() {
+    Codeblock *cb = new Codeblock();
+    cb->first_tag = get_curr_tag();
+    if (curr_tag->type == OpenTag && *((Brace*)curr_tag->val) == curly) {
+      Tag *orig_tag = curr_tag;
+      ExpressionNode *possible_set = grab_sequence(true);
+      if (possible_set == 0) {
+        curr_tag = orig_tag;
+        advance();
+
+        while (get_curr_tag()->type != CloseTag) {
+          Statement *stmt = grab_statement();
+          cb->stmts.push_back(stmt);
+        }
+
+        if (*((Brace*) curr_tag->val) != curly) {
+          TekoParserException("Mismatched brace", *curr_tag);
+        } else {
+          advance();
+        }
+      }
+
+      else {
+        curr_tag = orig_tag;
+        Statement *stmt = grab_statement(false);
+        cb->stmts.push_back(stmt);
+      }
+    }
+
+    else {
+      Statement *stmt = grab_statement(false);
+      cb->stmts.push_back(stmt);
+    }
+    return cb;
+  }
+
+  IfNode *grab_if() {
+    if (get_curr_tag()->type != IfTag) {
+      throw runtime_error("Erroneously called grab_if");
+    }
+
+    IfNode* if_expr = new IfNode();
+    if_expr->first_tag = curr_tag;
+    advance();
+
+    if_expr->condition = grab_expression(NoPrec);
+    if_expr->then_block = grab_codeblock();
+    if_expr->else_block = grab_else();
+    return if_expr;
+  }
+
+  Codeblock *grab_else() {
+    if (curr_tag == 0) {
+      return 0;
+    }
+
+    if (curr_tag->type == ElseTag || curr_tag->type == ColonTag) {
+      advance();
+      return grab_codeblock();
+    } else {
+      return 0;
+    }
+  }
+
+  ForNode *grab_for() {
+    if (get_curr_tag()->type != ForTag) {
+      throw runtime_error("Erroneously called grab_for");
+    }
+
+    ForNode* for_expr = new ForNode();
+    for_expr->first_tag = curr_tag;
+    advance();
+
+    bool populated = false;
+    Tag *orig_tag = get_curr_tag();
+
+    if (curr_tag->type == OpenTag && *((Brace*)curr_tag->val) == paren) {
+      advance();
+      populated = populate_for(for_expr);
+      if (get_curr_tag()->type == CloseTag && *((Brace*)curr_tag->val) == paren) {
+        advance();
+      } else {
+        TekoParserException("Mismatched parentheses", *curr_tag);
+      }
+    }
+
+    if (!populated) {
+      curr_tag = orig_tag;
+      populated = populate_for(for_expr);
+    }
+
+    if (!populated) {
+      TekoParserException("Invalid for loop", *get_curr_tag());
+    }
+
+    for_expr->codeblock = grab_codeblock();
+    return for_expr;
+  }
+
+  bool populate_for(ForNode* for_expr) {
+    ExpressionNode *expr1 = grab_expression(TopPrec);
+    if (get_curr_tag()->type == LabelTag) {
+      for_expr->tekotype = expr1;
+      for_expr->label = *((string*)curr_tag->val);
+      advance();
+    } else if (expr1->expr_type == SimpleExpr && ((SimpleNode*)expr1)->data_type == LabelExpr) {
+      for_expr->label = expr1->to_str(0);
+    } else {
+      return false;
+    }
+
+    if (get_curr_tag()->type != InfixTag || infixes[*curr_tag->val] != "in") {
+      return false;
+    } else {
+      advance();
+    }
+
+    for_expr->iterator = grab_expression(NoPrec);
+    return true;
+  }
+
+  WhileNode *grab_while() {
+    if (get_curr_tag()->type != WhileTag) {
+      throw runtime_error("Erroneously called grab_while");
+    }
+
+    WhileNode *while_expr = new WhileNode();
+    while_expr->first_tag = curr_tag;
+    advance();
+
+    while_expr->condition = grab_expression(NoPrec);
+    while_expr->codeblock = grab_codeblock();
+    return while_expr;
   }
 };
