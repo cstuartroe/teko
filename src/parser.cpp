@@ -112,19 +112,25 @@ struct TekoParser {
     }
 
     Statement *grab_statement(bool expect_semicolon = true) {
-        ExpressionNode *expr1 = grab_expression(NoPrec);
         Statement *stmt;
-        if (get_curr_tag()->type == LabelTag) {
-            DeclarationStmt *decl_stmt = new DeclarationStmt();
-            decl_stmt->first_tag = expr1->first_tag;
-            decl_stmt->tekotype = expr1;
-            decl_stmt->declist = grab_declaration();
-            stmt = decl_stmt;
+
+        if (get_curr_tag()->type == AnnotationTag || curr_tag->type == VartypeTag
+            || curr_tag->type == LetTag) {
+            stmt = grab_declstmt();
         } else {
-            ExpressionStmt *expr_stmt = new ExpressionStmt();
-            expr_stmt->first_tag = expr1->first_tag;
-            expr_stmt->body = expr1;
-            stmt = expr_stmt;
+            ExpressionNode *expr1 = grab_expression(NoPrec);
+            if (get_curr_tag()->type == LabelTag) {
+                DeclarationStmt *decl_stmt = new DeclarationStmt();
+                decl_stmt->first_tag = expr1->first_tag;
+                decl_stmt->tekotype = expr1;
+                decl_stmt->declist = grab_declarations();
+                stmt = decl_stmt;
+            } else {
+                ExpressionStmt *expr_stmt = new ExpressionStmt();
+                expr_stmt->first_tag = expr1->first_tag;
+                expr_stmt->body = expr1;
+                stmt = expr_stmt;
+            }
         }
 
         if (expect_semicolon) {
@@ -138,8 +144,102 @@ struct TekoParser {
         return stmt;
     }
 
-    DeclarationNode *grab_declaration() {
-        return new DeclarationNode();
+    DeclarationStmt *grab_declstmt() {
+        DeclarationStmt *decl_stmt = new DeclarationStmt();
+        decl_stmt->first_tag = get_curr_tag();
+
+        while (get_curr_tag()->type == AnnotationTag) {
+            char which_annot = *curr_tag->val;
+            if (decl_stmt->annots[which_annot] != 0) {
+                TekoParserException("Duplicate annotation " + annotations[*curr_tag->val], *curr_tag);
+            }
+            advance();
+
+            AnnotationNode *annot = new AnnotationNode();
+            if (annotations_params[which_annot]) {
+                bool cont = true;
+                while (cont) {
+                    annot->params.push_back(grab_expression(TopPrec));
+                    if (get_curr_tag()->type == CommaTag) {
+                        advance();
+                    } else {
+                        cont = false;
+                    }
+                }
+            }
+            decl_stmt->annots[which_annot] = annot;
+        }
+
+        bool still_needs_type = true;
+        for (int i = 0; i < num_vartypes; i++) {
+            if (get_curr_tag()->type == VartypeTag && *curr_tag->val == i) {
+                still_needs_type = false;
+                decl_stmt->vts[i] = true;
+                advance();
+            }
+        }
+        if (get_curr_tag()->type == VartypeTag) {
+            TekoParserException("Variable typing out of order", *curr_tag);
+        }
+
+        if (get_curr_tag()->type == LetTag) {
+            if (!still_needs_type) {
+                TekoParserException("Don't use let with variable types", *curr_tag);
+            } else {
+                still_needs_type = false;
+                advance();
+            }
+        }
+
+        if (still_needs_type) {
+            decl_stmt->tekotype = grab_expression(TopPrec);
+        }
+
+        if (get_curr_tag()->type == SetterTag) {
+            TekoParserException("Did not declare type", *curr_tag);
+        }
+
+        decl_stmt->declist = grab_declarations();
+
+        return decl_stmt;
+    }
+
+    vector<DeclarationNode*> grab_declarations() {
+        vector<DeclarationNode*> declist;
+
+        while (get_curr_tag()->type == LabelTag) {
+            DeclarationNode *decl_expr = new DeclarationNode();
+            decl_expr->first_tag = curr_tag;
+            decl_expr->label = *((string*)curr_tag->val);
+            advance();
+
+            if (get_curr_tag()->type == OpenTag && *((Brace*)curr_tag->val) == paren) {
+                decl_expr->argstruct = grab_struct();
+            }
+
+            if (get_curr_tag()->type == SetterTag) {
+                string set = setters[*curr_tag->val];
+                if (set == "=" || set == "=&") {
+                    decl_expr->setter = *curr_tag->val;
+                    advance();
+                    decl_expr->value = grab_expression(NoPrec);
+                } else if (set == "->") {
+                    decl_expr->setter = *curr_tag->val;
+                    advance();
+                    decl_expr->value = grab_codeblock();
+                } else {
+                    TekoParserException("Declarations may not use updating setters", *curr_tag);
+                }
+            }
+
+            if (get_curr_tag()->type == CommaTag) {
+                advance();
+            } else if (curr_tag->type != SemicolonTag) {
+                TekoParserException("Invalid declaration", *curr_tag);
+            }
+            declist.push_back(decl_expr);
+        }
+        return declist;
     }
 
     ExpressionNode *grab_expression(Precedence prec) {
@@ -345,9 +445,18 @@ struct TekoParser {
         Tag* orig_tag = get_curr_tag();
 
         StructNode *struct_expr = new StructNode();
-        if (curr_tag->type != OpenTag || *((Brace*) curr_tag->val) != paren) { throw runtime_error("erroneously called grab_args"); }
+        if (curr_tag->type != OpenTag || *((Brace*) curr_tag->val) != paren) { throw runtime_error("erroneously called grab_struct"); }
         struct_expr->first_tag = curr_tag;
         advance();
+
+        if (get_curr_tag()->type == CloseTag) {
+            if (*((Brace*) curr_tag->val) != paren) {
+                TekoParserException("Mismatched brace", *curr_tag);
+            } else {
+                advance();
+                return struct_expr;
+            }
+        }
 
         ExpressionNode* expr = grab_expression(NoPrec);
 

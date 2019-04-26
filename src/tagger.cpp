@@ -3,8 +3,10 @@
 using namespace std;
 
 void TekoTokenizerException(string message, Token t) {
+    printf("%s\n", string(12,'-').c_str());
     printf("Teko Tokenizing Error: %s\n", message.c_str());
     printf("at line %d, column %d\n", t.line_number, t.col);
+    printf("%s\n", t.s.c_str());
     exit (EXIT_FAILURE);
 }
 
@@ -75,15 +77,30 @@ string infixes[num_infixes] = {"+", "-", "*", "/", "^", "%", "&", "|", "in", "to
                                "==", "!=", "<", ">", "<=", ">=", "<:"};
 // ------------
 
-const int num_setters = 10;
+const int num_setters = 9;
 
-string setters[num_setters] = {"=", "+=", "-=", "*=", "/=", "/=", "^=", "%=", "=&", "->"};
+string setters[num_setters] = {"=", "+=", "-=", "*=", "/=", "^=", "%=", "=&", "->"};
 
 // ------------
 
 const int num_suffixes = 7;
 
 string suffixes[num_suffixes] = {".", "$", "#", "[]", "{}", "++", "--"};
+
+// ------------
+
+const int num_vartypes = 2;
+
+string vartypes[num_vartypes] = {"async", "var"};
+
+// ------------
+
+const int num_annotations = 6;
+
+string annotations[num_annotations] = {"@IO", "@hangs", "@updates", "@sees",
+                                       "@modifies", "@throws"};
+
+bool annotations_params[num_annotations] = {false, false, false, true, true, true};
 
 // ------------
 
@@ -99,7 +116,9 @@ enum TagType { LabelTag, StringTag, IntTag, RealTag, BoolTag, CharTag,
 
                PrefixTag, InfixTag, SetterTag, SuffixTag,
 
-               VarTag, VisibilityTag, VartypeTag, AnnotationTag, CommandTag };
+               LetTag, VisibilityTag, VartypeTag, AnnotationTag,
+
+               CommandTag, NamespaceTag };
 
 // ------------
 
@@ -153,37 +172,38 @@ struct Tag {
 
     string to_str() {
         switch(type) {
-        case LabelTag:     return "LabelTag "  + (*((string*) val));
-        case StringTag:    return "StringTag \"" + teko_escape(*((string*) val)) + "\"";
-        case IntTag:       return "IntTag "    + to_string(*((int*)    val));
-        case RealTag:      return "RealTag "   + to_string(*((float*)  val));
-        case BoolTag:      return "BoolTag "   + (*((bool*)   val)) ? "true" : "false";
-        case CharTag:      { string out = "CharTag '"; out += *val; out += "'"; return out; }
+        case LabelTag:      return "LabelTag "  + *((string*) val);
+        case StringTag:     return "StringTag \"" + teko_escape(*((string*) val)) + "\"";
+        case IntTag:        return "IntTag "    + to_string(*((int*)    val));
+        case RealTag:       return "RealTag "   + to_string(*((float*)  val));
+        case BoolTag:       return "BoolTag "   + (*((bool*)   val)) ? "true" : "false";
+        case CharTag:       { string out = "CharTag '"; out += *val; out += "'"; return out; }
 
-        case IfTag:        return "IfTag";
-        case ElseTag:      return "ElseTag";
-        case ForTag:       return "ForTag";
-        case WhileTag:     return "WhileTag";
+        case IfTag:         return "IfTag";
+        case ElseTag:       return "ElseTag";
+        case ForTag:        return "ForTag";
+        case WhileTag:      return "WhileTag";
 
-        case SemicolonTag: return "Semicolon Tag";
-        case ColonTag:     return "ColonTag";
-        case CommaTag:     return "CommaTag";
-        case QMarkTag:     return "QMarkTag";
-        case AttrTag:      return "AttrTag";
+        case SemicolonTag:  return "Semicolon Tag";
+        case ColonTag:      return "ColonTag";
+        case CommaTag:      return "CommaTag";
+        case QMarkTag:      return "QMarkTag";
+        case AttrTag:       return "AttrTag";
 
-        case OpenTag:      return "OpenTag "   + to_string(*((Brace*) val), true);
-        case CloseTag:     return "CloseTag "  + to_string(*((Brace*) val), false);
+        case OpenTag:       return "OpenTag "   + to_string(*((Brace*) val), true);
+        case CloseTag:      return "CloseTag "  + to_string(*((Brace*) val), false);
 
-        case PrefixTag:    return "PrefixTag " + prefixes[*val];
-        case InfixTag:     return "InfixTag "  + infixes[*val];
-        case SetterTag:    return "SetterTag " + setters[*val];
-        case SuffixTag:    return "SuffixTag " + suffixes[*val];
+        case PrefixTag:     return "PrefixTag " + prefixes[*val];
+        case InfixTag:      return "InfixTag "  + infixes[*val];
+        case SetterTag:     return "SetterTag " + setters[*val];
+        case SuffixTag:     return "SuffixTag " + suffixes[*val];
 
-        case VarTag:       return "VarTag";
+        case LetTag:        return "LetTag";
         case VisibilityTag: return "VisibilityTag";
-        case VartypeTag:   return "VartypeTag";
-        case AnnotationTag: return "AnnotationTag";
-        case CommandTag:   return "CommandTag";
+        case VartypeTag:    return "VartypeTag " + vartypes[*val];
+        case AnnotationTag: return "AnnotationTag " + annotations[*val];
+        case CommandTag:    return "CommandTag";
+        case NamespaceTag:  return "NamespaceTag";
         }
     }
 };
@@ -196,15 +216,33 @@ Tag *from_token(Token token) {
 
     switch (token.type) {
     case LABEL_T: {
-        if      (token.s == "if")    { tag->type = IfTag; }
-        else if (token.s == "else")  { tag->type = ElseTag; }
-        else if (token.s == "for")   { tag->type = ForTag; }
-        else if (token.s == "while") { tag->type = WhileTag; }
+        if      (token.s == "if")        { tag->type = IfTag; }
+        else if (token.s == "else")      { tag->type = ElseTag; }
+        else if (token.s == "for")       { tag->type = ForTag; }
+        else if (token.s == "while")     { tag->type = WhileTag; }
+        else if (token.s == "let")       { tag->type = LetTag; }
+        else if (token.s == "namespace") { tag->type = NamespaceTag; }
+
+        else if (token.s[0] == '@') {
+            if (in_stringset(token.s, annotations, num_annotations)) {
+                tag->type = AnnotationTag;
+                tag->val = new char(string_index(token.s, annotations, num_annotations));
+            } else {
+                TekoTokenizerException("Illegal token", token);
+            }
+        }
 
         else if (in_stringset(token.s, infixes, num_infixes)) {
             tag->type = InfixTag;
             tag->val = new char(string_index(token.s, infixes, num_infixes));
-        } else {
+        }
+
+        else if (in_stringset(token.s, vartypes, num_vartypes)) {
+            tag->type = VartypeTag;
+            tag->val = new char(string_index(token.s, vartypes, num_vartypes));
+        }
+
+        else {
             tag->type = LabelTag;
             string* sp = new string(token.s);
             tag->val = (char*) sp;

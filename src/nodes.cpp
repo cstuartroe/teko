@@ -47,19 +47,6 @@ struct ExpressionStmt : Statement {
     }
 };
 
-struct DeclarationNode : Node {
-    DeclarationNode *next = 0;
-    SimpleNode *label = 0;
-    StructNode *argstruct = 0;
-    ExpressionNode *value = 0;
-};
-
-struct DeclarationStmt : Statement {
-    StatementType stmt_type = DeclarationStmtType;
-    ExpressionNode *tekotype = 0;
-    DeclarationNode *declist = 0;
-};
-
 // ------------
 
 enum SimpleExpressionType {LabelExpr, StringExpr, CharExpr, RealExpr, IntExpr, BoolExpr};
@@ -326,6 +313,80 @@ struct WhileNode : ExpressionNode {
     string to_str(int indent) {
         string s = "while (" + condition->to_str(indent) + ") ";
         s += codeblock->to_str(indent);
+        return s;
+    }
+};
+
+// ------------
+
+struct DeclarationNode : Node {
+    string label;
+    StructNode *argstruct = 0;
+    char setter;
+    ExpressionNode *value = 0;
+
+    string to_str(int indent) {
+        string s = label;
+        if (argstruct != 0) {
+            s += argstruct->to_str(indent);
+        }
+
+        if (value != 0) {
+            s += " " + setters[setter] + " " + value->to_str(indent);
+        }
+        return s;
+    }
+};
+
+struct AnnotationNode : Node {
+    vector<ExpressionNode*> params;
+
+    string to_str(int indent) {
+        string s = "";
+        for (ExpressionNode *param : params) {
+            s += " " + param->to_str(indent) + ",";
+        }
+        if (params.size() > 0) {
+            s.pop_back();
+        }
+        return s;
+    }
+};
+
+struct DeclarationStmt : Statement {
+    StatementType stmt_type = DeclarationStmtType;
+    AnnotationNode *annots[num_annotations] = {0};
+    bool vts[num_vartypes] = {false};
+    ExpressionNode *tekotype = 0;
+    vector<DeclarationNode*> declist;
+
+    string to_str(int indent) {
+        string s = "";
+        for (int i = 0; i < num_annotations; i++) {
+            if (annots[i] != 0) {
+                s += annotations[i] + annots[i]->to_str(indent) + "\n";
+            }
+        }
+
+        bool has_vt = false;
+        for (int i = 0; i < num_vartypes; i++) {
+            if (vts[i]) {
+                has_vt = true;
+                s += vartypes[i] + " ";
+            }
+        }
+
+        if (tekotype != 0) {
+            s += tekotype->to_str(indent) + " ";
+        } else if (!has_vt) {
+            s += "let ";
+        }
+        for (DeclarationNode *decl_expr: declist) {
+            s += decl_expr->to_str(indent) + ", ";
+        }
+        s.pop_back();
+        s.pop_back();
+        s += ";\n";
         return s;
     }
 };

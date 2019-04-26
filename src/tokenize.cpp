@@ -2,10 +2,10 @@
 
 using namespace std;
 
-const int num_punct_combos = 16;
+const int num_punct_combos = 17;
 string punct_combos[num_punct_combos] = {"==","<=",">=","!=","<:","+=","-=",
-                                         "*=","/=","^=","%%=","->","{}","[]",
-                                         "++", "--"};
+                                         "*=","/=","^=","%%=","=&","->","{}",
+                                         "[]","++","--"};
 
 enum STATE {LABEL_T, NUM_T, STRING_T, PUNCT_T, CHAR_T,
             LINE_COMMENT, BLOCK_COMMENT, BLANK};
@@ -125,6 +125,10 @@ struct Tokenizer {
             return;
         } else if (c == '\'') {
             state = CHAR_T;
+            return;
+        } else if (c == '@') {
+            state = LABEL_T;
+            curr->s = c;
             return;
         } else if (in_charset(c, alpha_chars)) {
             state = LABEL_T;
