@@ -1,0 +1,7 @@
+align_with_tabs = false
+
+cmt_convert_tab_to_spaces = true
+
+indent_with_tabs = 0
+
+indent_columns = 4

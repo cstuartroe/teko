@@ -8,8 +8,8 @@ bool is_subtype(TekoObject sub, TekoObject sup) {
     bool sub_is_type;
     if (&sub == &TekoType) {
         sub_is_type = true;
-    //} else if (is_subtype(*(sub.type), TekoType)) {
-    //    sub_is_type = true;
+        //} else if (is_subtype(*(sub.type), TekoType)) {
+        //    sub_is_type = true;
     } else {
         sub_is_type = false;
     }
@@ -17,8 +17,8 @@ bool is_subtype(TekoObject sub, TekoObject sup) {
     bool sup_is_type;
     if (&sup == &TekoType) {
         sup_is_type = true;
-    //} else if (is_subtype(*(sup.type), TekoType)) {
-    //    sup_is_type = true;
+        //} else if (is_subtype(*(sup.type), TekoType)) {
+        //    sup_is_type = true;
     } else {
         sup_is_type = false;
     }
@@ -46,12 +46,12 @@ TekoObject::TekoObject(TekoObject* _type) {
 }
 
 void TekoObject::set_parent(TekoObject _parent) {
-        if (is_subtype(_parent,TekoType)) {
-            attrs["parent"] = &_parent;
-        } else {
-            throw runtime_error("Issue setting parent");
-        }
+    if (is_subtype(_parent,TekoType)) {
+        attrs["parent"] = &_parent;
+    } else {
+        throw runtime_error("Issue setting parent");
     }
+}
 
 TekoObject TekoString = TekoObject(&TekoType);
 TekoObject TekoObject::TekoInt = TekoObject(&TekoType);
