@@ -8,6 +8,7 @@ string punct_combos[num_punct_combos] = {"==","<=",">=","!=","<:","+=","-=",
                                          "[]","++","--"};
 
 enum STATE {LABEL_T, NUM_T, STRING_T, PUNCT_T, CHAR_T,
+            BITS_OR_BYTES_T, BITS_T, BYTES_T,
             LINE_COMMENT, BLOCK_COMMENT, BLANK};
 
 struct Token {
@@ -27,6 +28,7 @@ struct Tokenizer {
     int line_number = 0, col;
     STATE state;
     bool decimal;
+    char comment_depth = 0;
 
     Tokenizer () {
         start = new Token();
@@ -109,8 +111,11 @@ struct Tokenizer {
         case STRING_T: digest_string(c); break;
         case PUNCT_T:  digest_punct(c);  break;
         case CHAR_T:   digest_char(c);   break;
-        case LINE_COMMENT:  digest_line_comment(c);  break;
-        case BLOCK_COMMENT: digest_block_comment(c); break;
+        case BITS_T:   digest_bits(c);   break;
+        case BYTES_T:  digest_bytes(c);  break;
+        case BITS_OR_BYTES_T: digest_x_or_b(c);        break;
+        case LINE_COMMENT:    digest_line_comment(c);  break;
+        case BLOCK_COMMENT:   digest_block_comment(c); break;
         }
     }
 
@@ -128,6 +133,10 @@ struct Tokenizer {
             return;
         } else if (c == '@') {
             state = LABEL_T;
+            curr->s = c;
+            return;
+        } else if (c == '0') {
+            state = BITS_OR_BYTES_T;
             curr->s = c;
             return;
         } else if (in_charset(c, alpha_chars)) {
@@ -185,6 +194,7 @@ struct Tokenizer {
         if (buff == "/*") {
             buff = "";
             state = BLOCK_COMMENT;
+            comment_depth = 1;
             return;
         }
 
@@ -234,6 +244,37 @@ struct Tokenizer {
         }
     }
 
+    void digest_x_or_b(char c) {
+        if (c == 'b') {
+            curr->s += c;
+            state = BITS_T;
+        } else if (c == 'x') {
+            curr->s += c;
+            state = BYTES_T;
+        } else {
+            newtoken();
+            digest_blank(c);
+        }
+    }
+
+    void digest_bits(char c) {
+        if (c == '0' || c == '1') {
+            curr->s += c;
+        } else {
+            newtoken();
+            digest_blank(c);
+        }
+    }
+
+    void digest_bytes(char c) {
+        if (in_charset(c, hex_chars)) {
+            curr->s += c;
+        } else {
+            newtoken();
+            digest_blank(c);
+        }
+    }
+
     void digest_line_comment(char c) {
         if (col == 1) {
             state = BLANK;
@@ -244,9 +285,15 @@ struct Tokenizer {
     void digest_block_comment(char c) {
         buff += c;
         if (buff == "*/") {
-            state = BLANK;
             buff = "";
-        } else if (buff != "*") {
+            comment_depth -= 1;
+            if (comment_depth == 0) {
+                state = BLANK;
+            }
+        } else if (buff == "/*") {
+            buff = "";
+            comment_depth += 1;
+        } else if (buff != "*" && buff != "/") {
             buff = "";
         }
     }

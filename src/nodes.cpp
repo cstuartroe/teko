@@ -5,7 +5,7 @@ using namespace std;
 
 const int indent_width = 4;
 
-enum StatementType {DeclarationStmtType, AssignmentStmtType, ExpressionStmtType};
+enum StatementType {DeclarationStmtType, NamespaceStmtType, ExpressionStmtType};
 
 const int num_expression_types = 14;
 
@@ -49,7 +49,8 @@ struct ExpressionStmt : Statement {
 
 // ------------
 
-enum SimpleExpressionType {LabelExpr, StringExpr, CharExpr, RealExpr, IntExpr, BoolExpr};
+enum SimpleExpressionType {LabelExpr, StringExpr, CharExpr, RealExpr, IntExpr,
+                           BoolExpr, BitsExpr, BytesExpr};
 
 struct SimpleNode : ExpressionNode {
     ExpressionType expr_type = SimpleExpr;
@@ -66,6 +67,8 @@ struct SimpleNode : ExpressionNode {
         case RealTag:   data_type = RealExpr;   break;
         case IntTag:    data_type = IntExpr;    break;
         case BoolTag:   data_type = BoolExpr;   break;
+        case BitsTag:   data_type = BitsExpr;   break;
+        case BytesTag:  data_type = BytesExpr;  break;
         default:        throw runtime_error("Invalid simple data type: " + to_string((char) t->type));
         }
     }
@@ -79,6 +82,8 @@ struct SimpleNode : ExpressionNode {
         case IntExpr:    s = to_string(*((int*) val)); break;
         case RealExpr:   s = to_string(*((float*) val)); break;
         case BoolExpr:   s = *((bool*) val) ? "true" : "false"; break;
+        case BitsExpr:   s = *((string*) val); break;
+        case BytesExpr:  s = *((string*) val); break;
         }
         return s;
     }
@@ -361,7 +366,7 @@ struct DeclarationStmt : Statement {
     vector<DeclarationNode*> declist;
 
     string to_str(int indent) {
-        string s = "";
+        string s = string(indent*indent_width, ' ');;
         for (int i = 0; i < num_annotations; i++) {
             if (annots[i] != 0) {
                 s += annotations[i] + annots[i]->to_str(indent) + "\n";
@@ -386,6 +391,20 @@ struct DeclarationStmt : Statement {
         }
         s.pop_back();
         s.pop_back();
+        s += ";\n";
+        return s;
+    }
+};
+
+struct NamespaceStmt : Statement {
+    StatementType stmt_type = NamespaceStmtType;
+    string label;
+    Codeblock *codeblock;
+
+    string to_str(int indent) {
+        string s = string(indent*indent_width, ' ');
+        s += "namespace " + label + " ";
+        s += codeblock->to_str(indent);
         s += ";\n";
         return s;
     }

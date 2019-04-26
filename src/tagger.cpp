@@ -108,6 +108,8 @@ const int num_tagtypes = 27;
 
 enum TagType { LabelTag, StringTag, IntTag, RealTag, BoolTag, CharTag,
 
+               BitsTag, BytesTag,
+
                IfTag, ElseTag, ForTag, WhileTag,
 
                SemicolonTag, ColonTag, CommaTag, QMarkTag, AttrTag,
@@ -178,6 +180,8 @@ struct Tag {
         case RealTag:       return "RealTag "   + to_string(*((float*)  val));
         case BoolTag:       return "BoolTag "   + (*((bool*)   val)) ? "true" : "false";
         case CharTag:       { string out = "CharTag '"; out += *val; out += "'"; return out; }
+        case BitsTag:       return "BitsTag "   + *((string*) val);
+        case BytesTag:      return "BytesTag "  + *((string*) val);
 
         case IfTag:         return "IfTag";
         case ElseTag:       return "ElseTag";
@@ -295,6 +299,18 @@ Tag *from_token(Token token) {
         char *cp = new char(token.s[0]);
         tag->val = cp;
         break;
+    }
+
+    case BITS_T: {
+        tag->type = BitsTag;
+        string* bp = new string(token.s);
+        tag->val = (char*) bp;
+    }
+
+    case BYTES_T: {
+        tag->type = BytesTag;
+        string* Bp = new string(token.s);
+        tag->val = (char*) Bp;
     }
     }
     return tag;

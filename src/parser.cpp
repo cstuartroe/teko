@@ -114,11 +114,14 @@ struct TekoParser {
     Statement *grab_statement(bool expect_semicolon = true) {
         Statement *stmt;
 
-        if (get_curr_tag()->type == AnnotationTag || curr_tag->type == VartypeTag
-            || curr_tag->type == LetTag) {
+        if (get_curr_tag()->type == NamespaceTag) {
+            stmt = grab_namespace();
+        } else if (get_curr_tag()->type == AnnotationTag || curr_tag->type == VartypeTag
+                   || curr_tag->type == LetTag) {
             stmt = grab_declstmt();
         } else {
-            ExpressionNode *expr1 = grab_expression(NoPrec);
+            Tag *orig_tag = curr_tag;
+            ExpressionNode *expr1 = grab_expression(TopPrec);
             if (get_curr_tag()->type == LabelTag) {
                 DeclarationStmt *decl_stmt = new DeclarationStmt();
                 decl_stmt->first_tag = expr1->first_tag;
@@ -126,9 +129,10 @@ struct TekoParser {
                 decl_stmt->declist = grab_declarations();
                 stmt = decl_stmt;
             } else {
+                curr_tag = orig_tag;
                 ExpressionStmt *expr_stmt = new ExpressionStmt();
                 expr_stmt->first_tag = expr1->first_tag;
-                expr_stmt->body = expr1;
+                expr_stmt->body = grab_expression(NoPrec);
                 stmt = expr_stmt;
             }
         }
@@ -142,6 +146,23 @@ struct TekoParser {
         }
 
         return stmt;
+    }
+
+    NamespaceStmt *grab_namespace() {
+        NamespaceStmt *ns_stmt = new NamespaceStmt();
+        if (get_curr_tag()->type != NamespaceTag) { throw runtime_error("erroneously called grab_namespace"); }
+        ns_stmt->first_tag = curr_tag;
+        advance();
+
+        if (get_curr_tag()->type != LabelTag) {
+            TekoParserException("Expected label",*curr_tag);
+        } else {
+            ns_stmt->label = curr_tag->s;
+            advance();
+        }
+
+        ns_stmt->codeblock = grab_codeblock();
+        return ns_stmt;
     }
 
     DeclarationStmt *grab_declstmt() {
@@ -253,6 +274,8 @@ struct TekoParser {
         case IntTag:    expr = new SimpleNode(curr_tag); advance(); break;
         case RealTag:   expr = new SimpleNode(curr_tag); advance(); break;
         case BoolTag:   expr = new SimpleNode(curr_tag); advance(); break;
+        case BitsTag:   expr = new SimpleNode(curr_tag); advance(); break;
+        case BytesTag:  expr = new SimpleNode(curr_tag); advance(); break;
         case IfTag:     expr = grab_if(); break;
         case ForTag:    expr = grab_for(); break;
         case WhileTag:  expr = grab_while(); break;
