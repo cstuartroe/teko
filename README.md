@@ -1,10 +1,10 @@
 # Teko
 
-Teko is a programming language of an unusual sort - a statically typed scripting language. The plan is for Teko to be both interpreted and compiled, à la Python; its interpretation-oriented syntax gives it the ease of use of a scripting language like JS, Python, or Ruby, while its static typing will hopefully allow compiled code to run at speeds comparable to other compiled languages like Java. This close coupling of compiled and interpreted, scripting-style code will make Teko projects both quick to get started and scalable.
+Teko is a programming language of an unusual sort - a statically typed scripting language. The plan is for Teko to be both interpreted and compiled, à la Python; its interpretation-oriented organization and built-in types and data structures give it the ease of use of a scripting language like JS, Python, or Ruby, while its static typing and "functional-by-default" semantics will provide better safety and scalability.
 
 **Major design features include:**
 
- * A robust type and visibility system reminiscient of Java, which provide safety and scalability and allow compiled code to run fast
+ * A robust type and visibility system reminiscient of Java, which provide safety and allow compiled code to run fast
  * The freedom of organization of a scripting language - put variable declarations, control blocks, or whatever you want right in the body of a file, no need to wrap it in a class or `main()`!
  * Zero type coercion - made up for with a variety of lightweight conversion syntax (`5$` means `5.to_str()`)
  * Consistency of semantics:
@@ -12,11 +12,11 @@ Teko is a programming language of an unusual sort - a statically typed scripting
      * `typeof(int)` yields `type`, `int.to_str()` yields `"int"`
      * `typeof((int x) -> x^2)` yields `int(int x)`
    * Everything is a method: e.g., `+` is *always* an alias for `.add()`; `3 + 4` *is* `(3).add(4)`
-   * Everything is an expression - control blocks evaluate to a value
+   * Everything is an expression - assignments and control blocks evaluate to a value
  * Powerful data structures, including primitive arrays, linked lists, labels, maps, sets, structs, and enums
  * Fastidiousness about reference vs. value - functions support a `&` argument operator to pass an argument by reference
  * Easy support for asynchrony, including `begin { }` syntax for threading, `parallel` loops, `async` variables and functions, and even updating and halting function types
- * Support for effect typing of functions, such as marking functions as `async` (asynchronous, and allowed to alter asynchronous variables), `hanging` (pausing execution and needing to be restarted), `updating` (returning multiple values asynchronously), and with `throws` annotation (to denote which errors a method may throw)
+ * Support for effect typing of functions, such as marking functions as `async` (asynchronous, and allowed to alter asynchronous variables), `hangs` (pausing execution and needing to be restarted), `updates` (returning multiple values asynchronously), and with `throws` annotation (to denote which errors a method may throw)
  * Elements of functional or functional-by-default style programming:
    * First-order functions and function closures
    * Fastidiousness about mutability - mutable variables must be declared with the `var` keyword
@@ -79,10 +79,20 @@ Teko's primitive types include arbitrary-precision integers, floating-point numb
 ```
 int n = 3;
 real x;
-bool b = true;
+bool q = true;
 char c = '?';
 str s1 = "Hello, World!", s2;
+bits b = 0b10010110101;
+bytes B = 0x1ac093e746f6;
 label THIS, THAT;
+```
+
+A last, interesting primitive type is `unit`. These represent units of measure, or multiples of units. `unit`s support multiplication and division by reals and other units, as well as exponentiation.
+
+```
+unit meter, USD, year;
+unit olympic_pool_volume = 2500*(meter^3);
+unit us_median_salary = 56000*USD/year;
 ```
 
 Variables can also be declared using the keyword `let` - expressions in Teko are generally not ambiguous for type, so type can be immediately inferred if the variable is set on the same line. However, variables in Teko must always know their type, so variables declared with `let` *must* be simultaneously set.
@@ -99,11 +109,20 @@ Teko also boasts a several powerful composite data types:
 
 ```
 // Amortized Arrays
-int[4] numarray = [1,2,3,4];
-numarray[2]; // 3
-numarray.size; // 4 and O(1)
+int[] numarray1 = [1,2,3];
+typeof(numarray1); // int[]
+numarray1[2]; // 3
+numarray1.size; // 3 and O(1)
 3 in numarray; // true and O(n)
 numarray.sort();
+
+numarray1[0 to 2]; // [1, 2] - ranges are exclusive at the end
+numarray1 = numarray1[0 to 2]; // resizing is supported
+
+int[4] numarray2 = [1,2,3,4]; // arrays can be declared a specific size
+numarray2 = numarray2[0 to 2]; // cannot be resized
+typeof(numarray2); // int[4]
+int[4] <: int[]; // true
 
 // Sets
 int{} numset = {1,2,3,4};
@@ -256,6 +275,58 @@ begin parallel (int i in numlist) {
 async int[] xs = begin parallel ( ... ) {
     ... // like with fors, yield is the implied keyword
 };
+```
+
+### "Exploded" Data Types
+
+Teko supports a unique class of data types called exploded types.
+Exploded types are essentially iterable data structures that pass themselves to an outer context element by element.
+Perhaps it's easiest to understand by example:
+
+```
+str[] names = ["Alice","Bob","Carol","Eve"];
+names[0,1,2]; // ["Alice","Bob","Carol"]
+names[0 to 3]; // ["Alice","Bob","Carol"]
+typeof(0 to 3); // ~int - arrays slices are exploded!
+
+int[] nums = [0,1,2];
+typeof(nums); // int[]
+typeof(~nums); // ~int - "~" is the explosion operator
+names[~nums]; // ["Alice","Bob","Carol"]
+names[~nums, 3]; // ["Alice","Bob","Carol","Eve"]
+
+nums + 5; // type error - int[] and int cannot add
+~nums + 5; // [5,6,7] - but ~int and int can!
+~int <: int; // true! - an exploded int can be passed anywhere a normal int can
+~nums + ~nums; // [0,1,2,1,2,3,2,3,4];
+
+bool even(int n) -> n % 2 == 0;
+
+even(~nums); // true, false, true - no need for a function map()!
+typeof(even(~nums)); // ~bool
+[even(~nums)]; // [true, false, true] - exploded types can be collected back into an array
+
+struct pair = (int x, int y);
+
+// without explosion, nested loops produce nested lists
+let pairs1 = for (int i in nums) {
+  for (int j in nums) {
+    pair(i ,j);
+  };
+};
+pairs1; // [ [(0,0),(0,1),(0,2)],
+             [(1,0),(1,1),(1,2)],
+             [(2,0),(2,1),(2,2)] ]
+
+// but explosion flattens them right out!
+let pairs2 = for (int i in nums) {
+  ~for (int j in nums) {
+    pair(i ,j);
+  };
+};
+pairs2; // [(0,0),(0,1),(0,2),
+            (1,0),(1,1),(1,2),
+            (2,0),(2,1),(2,2)]
 ```
 
 ### Functions
@@ -602,6 +673,20 @@ void bar() -> {
 void another_function() -> {
   bar();
 }
+```
+
+### Namespaces
+
+Teko supports namespaces within files:
+
+```
+namespace physics {
+  unit c = 300000*kilometer/second;
+  unit G = 6.8*(10^-11)*(meter^3)/(kilogram*(second^2));
+  unit h = 6.6*(10^-34)*joule*second;
+}
+
+physics.c; // 300000*kilometer/second
 ```
 
 ### Classes and Objects
