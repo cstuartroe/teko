@@ -87,7 +87,6 @@ struct TekoParser {
                 curr_stmt->next = new_stmt;
             }
             curr_stmt = new_stmt;
-            printf("%s", curr_stmt->to_str(0).c_str());
         }
     }
 
