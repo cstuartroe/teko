@@ -37,12 +37,15 @@ struct ExpressionNode : Node {
 };
 
 struct ExpressionStmt : Statement {
-    StatementType stmt_type = ExpressionStmtType;
     ExpressionNode *body = 0;
+
+    ExpressionStmt() {
+        stmt_type = ExpressionStmtType;
+    }
 
     string to_str(int indent) {
         string s = string(indent*indent_width, ' ');
-        s += body->to_str(indent) + ";\n";
+        s += body->to_str(indent) + "; \n";
         return s;
     }
 };
@@ -53,46 +56,49 @@ enum SimpleExpressionType {LabelExpr, StringExpr, CharExpr, RealExpr, IntExpr,
                            BoolExpr, BitsExpr, BytesExpr};
 
 struct SimpleNode : ExpressionNode {
-    ExpressionType expr_type = SimpleExpr;
     SimpleExpressionType data_type;
     char *val = 0; // will be cast
 
     SimpleNode(Tag *t) {
+        expr_type = SimpleExpr;
         first_tag = t;
         val = t->val;
         switch (t->type) {
-        case LabelTag:  data_type = LabelExpr;  break;
-        case StringTag: data_type = StringExpr; break;
-        case CharTag:   data_type = CharExpr;   break;
-        case RealTag:   data_type = RealExpr;   break;
-        case IntTag:    data_type = IntExpr;    break;
-        case BoolTag:   data_type = BoolExpr;   break;
-        case BitsTag:   data_type = BitsExpr;   break;
-        case BytesTag:  data_type = BytesExpr;  break;
-        default:        throw runtime_error("Invalid simple data type: " + to_string((char) t->type));
+            case LabelTag:  data_type = LabelExpr;  break;
+            case StringTag: data_type = StringExpr; break;
+            case CharTag:   data_type = CharExpr;   break;
+            case RealTag:   data_type = RealExpr;   break;
+            case IntTag:    data_type = IntExpr;    break;
+            case BoolTag:   data_type = BoolExpr;   break;
+            case BitsTag:   data_type = BitsExpr;   break;
+            case BytesTag:  data_type = BytesExpr;  break;
+            default:        throw runtime_error("Invalid simple data type: " + to_string((char) t->type));
         }
     }
 
     string to_str(int indent) {
         string s;
         switch (data_type) {
-        case LabelExpr:  s = *((string*) val); break;
-        case StringExpr: s = "\"" + teko_escape(*((string*) val)) + "\""; break;
-        case CharExpr:   s = "\'" + teko_escape(to_string(val[0])) + "\'"; break;
-        case IntExpr:    s = to_string(*((int*) val)); break;
-        case RealExpr:   s = to_string(*((float*) val)); break;
-        case BoolExpr:   s = *((bool*) val) ? "true" : "false"; break;
-        case BitsExpr:   s = *((string*) val); break;
-        case BytesExpr:  s = *((string*) val); break;
+            case LabelExpr:  s = *((string*) val); break;
+            case StringExpr: s = "\"" + teko_escape(*((string*) val)) + "\""; break;
+            case CharExpr:   s = "\'" + teko_escape(to_string(val[0])) + "\'"; break;
+            case IntExpr:    s = to_string(*((int*) val)); break;
+            case RealExpr:   s = to_string(*((float*) val)); break;
+            case BoolExpr:   s = *((bool*) val) ? "true" : "false"; break;
+            case BitsExpr:   s = *((string*) val); break;
+            case BytesExpr:  s = *((string*) val); break;
         }
         return s;
     }
 };
 
 struct AttrNode : ExpressionNode {
-    ExpressionType expr_type = AttrExpr;
     ExpressionNode *left = 0;
     string label;
+
+    AttrNode() {
+        expr_type = AttrExpr;
+    }
 
     string to_str(int indent) {
         return "(" + left->to_str(indent) + "." + label + ")";
@@ -102,9 +108,12 @@ struct AttrNode : ExpressionNode {
 // ------------
 
 struct MapNode : ExpressionNode {
-    ExpressionType expr_type = MapExpr;
     ExpressionNode *key = 0;
     ExpressionNode *value = 0;
+
+    MapNode() {
+        expr_type = MapExpr;
+    }
 
     string to_str(int indent) {
         return key->to_str(indent) + ": " + value->to_str(indent);
@@ -112,9 +121,12 @@ struct MapNode : ExpressionNode {
 };
 
 struct SeqNode : ExpressionNode {
-    ExpressionType expr_type = SeqExpr;
     Brace brace;
     vector<ExpressionNode*> elems;
+
+    SeqNode() {
+        expr_type = SeqExpr;
+    }
 
     string to_str(int indent) {
         string s = to_string(brace, true);
@@ -129,9 +141,12 @@ struct SeqNode : ExpressionNode {
 };
 
 struct SliceNode : ExpressionNode {
-    ExpressionType expr_type = SliceExpr;
     ExpressionNode *left = 0;
     SeqNode *slice = 0;
+
+    SliceNode() {
+        expr_type = SliceExpr;
+    }
 
     string to_str(int indent) {
         return left->to_str(indent) + slice->to_str(indent);
@@ -154,8 +169,11 @@ struct StructElemNode : Node {
 };
 
 struct StructNode : ExpressionNode {
-    ExpressionType expr_type = StructExpr;
     vector<StructElemNode*> elems;
+
+    StructNode() {
+        expr_type = StructExpr;
+    }
 
     string to_str(int indent) {
         string s = "(";
@@ -185,8 +203,11 @@ struct ArgNode : Node {
 };
 
 struct ArgsNode : ExpressionNode {
-    ExpressionType expr_type = ArgExpr;
     vector<ArgNode*> args;
+
+    ArgsNode() {
+        expr_type = ArgExpr;
+    }
 
     string to_str(int indent) {
         string s = "(";
@@ -203,9 +224,12 @@ struct ArgsNode : ExpressionNode {
 };
 
 struct CallNode : ExpressionNode {
-    ExpressionType expr_type = CallExpr;
     ExpressionNode *left = 0;
     ArgsNode *args = 0;
+
+    CallNode() {
+        expr_type = CallExpr;
+    }
 
     string to_str(int indent) {
         return left->to_str(indent) + args->to_str(indent);
@@ -215,16 +239,22 @@ struct CallNode : ExpressionNode {
 // ------------
 
 struct PrefixNode : ExpressionNode {
-    ExpressionType expr_type = PrefixExpr;
     char prefix;
     ExpressionNode *right = 0;
+
+    PrefixNode() {
+        expr_type = PrefixExpr;
+    }
 };
 
 struct InfixNode : ExpressionNode {
-    ExpressionType expr_type = InfixExpr;
     ExpressionNode *left = 0;
     char infix;
     ExpressionNode *right = 0;
+
+    InfixNode() {
+        expr_type = InfixExpr;
+    }
 
     string to_str(int indent) {
         string s = "(" + left->to_str(indent);
@@ -235,10 +265,13 @@ struct InfixNode : ExpressionNode {
 };
 
 struct AssignmentNode : ExpressionNode {
-    ExpressionType expr_type = AssignmentExpr;
     ExpressionNode *left = 0;
     char setter = 0;
     ExpressionNode *right = 0;
+
+    AssignmentNode() {
+        expr_type = AssignmentExpr;
+    }
 
     string to_str(int indent) {
         string s = "(" + left->to_str(indent);
@@ -249,9 +282,12 @@ struct AssignmentNode : ExpressionNode {
 };
 
 struct SuffixNode : ExpressionNode {
-    ExpressionType expr_type = SuffixExpr;
     ExpressionNode *left = 0;
     char suffix;
+
+    SuffixNode() {
+        expr_type = SuffixExpr;
+    }
 
     string to_str(int indent) {
         string s = left->to_str(indent);
@@ -263,8 +299,11 @@ struct SuffixNode : ExpressionNode {
 // ------------
 
 struct Codeblock : ExpressionNode {
-    ExpressionType expr_type = CodeblockExpr;
     vector<Statement*> stmts;
+
+    Codeblock() {
+        expr_type = CodeblockExpr;
+    }
 
     string to_str(int indent) {
         string s = "{\n";
@@ -277,10 +316,13 @@ struct Codeblock : ExpressionNode {
 };
 
 struct IfNode : ExpressionNode {
-    ExpressionType expr_type = IfExpr;
     ExpressionNode *condition = 0;
     Codeblock *then_block = 0;
     Codeblock *else_block = 0;
+
+    IfNode() {
+        expr_type = IfExpr;
+    }
 
     string to_str(int indent) {
         string s = "if ";
@@ -294,11 +336,14 @@ struct IfNode : ExpressionNode {
 };
 
 struct ForNode : ExpressionNode {
-    ExpressionType expr_type = ForExpr;
     ExpressionNode *tekotype = 0;
     string label;
     ExpressionNode *iterator = 0;
     Codeblock *codeblock = 0;
+
+    ForNode() {
+        expr_type = ForExpr;
+    }
 
     string to_str(int indent) {
         string s = "for (";
@@ -311,9 +356,12 @@ struct ForNode : ExpressionNode {
 };
 
 struct WhileNode : ExpressionNode {
-    ExpressionType expr_type = WhileExpr;
     ExpressionNode *condition = 0;
     Codeblock *codeblock = 0;
+
+    WhileNode() {
+        expr_type = WhileExpr;
+    }
 
     string to_str(int indent) {
         string s = "while (" + condition->to_str(indent) + ") ";
@@ -359,11 +407,14 @@ struct AnnotationNode : Node {
 };
 
 struct DeclarationStmt : Statement {
-    StatementType stmt_type = DeclarationStmtType;
     AnnotationNode *annots[num_annotations] = {0};
     bool vts[num_vartypes] = {false};
     ExpressionNode *tekotype = 0;
     vector<DeclarationNode*> declist;
+
+    DeclarationStmt() {
+        stmt_type = DeclarationStmtType;
+    }
 
     string to_str(int indent) {
         string s = string(indent*indent_width, ' ');;
@@ -397,9 +448,12 @@ struct DeclarationStmt : Statement {
 };
 
 struct NamespaceStmt : Statement {
-    StatementType stmt_type = NamespaceStmtType;
     string label;
     Codeblock *codeblock;
+
+    NamespaceStmt() {
+        stmt_type = NamespaceStmtType;
+    }
 
     string to_str(int indent) {
         string s = string(indent*indent_width, ' ');

@@ -33,6 +33,8 @@ struct TekoParser {
     Statement *first_stmt = 0;
     Statement *curr_stmt = 0;
 
+    TekoParser() : TekoParser ("") {}
+
     TekoParser(string filename) {
         Tokenizer toker = Tokenizer();
 
@@ -267,37 +269,37 @@ struct TekoParser {
         Tag *expr_first_tag = get_curr_tag();
 
         switch (curr_tag->type) {
-        case LabelTag:  expr = new SimpleNode(curr_tag); advance(); break;
-        case StringTag: expr = new SimpleNode(curr_tag); advance(); break;
-        case CharTag:   expr = new SimpleNode(curr_tag); advance(); break;
-        case IntTag:    expr = new SimpleNode(curr_tag); advance(); break;
-        case RealTag:   expr = new SimpleNode(curr_tag); advance(); break;
-        case BoolTag:   expr = new SimpleNode(curr_tag); advance(); break;
-        case BitsTag:   expr = new SimpleNode(curr_tag); advance(); break;
-        case BytesTag:  expr = new SimpleNode(curr_tag); advance(); break;
-        case IfTag:     expr = grab_if(); break;
-        case ForTag:    expr = grab_for(); break;
-        case WhileTag:  expr = grab_while(); break;
+            case LabelTag:  expr = new SimpleNode(curr_tag); advance(); break;
+            case StringTag: expr = new SimpleNode(curr_tag); advance(); break;
+            case CharTag:   expr = new SimpleNode(curr_tag); advance(); break;
+            case IntTag:    expr = new SimpleNode(curr_tag); advance(); break;
+            case RealTag:   expr = new SimpleNode(curr_tag); advance(); break;
+            case BoolTag:   expr = new SimpleNode(curr_tag); advance(); break;
+            case BitsTag:   expr = new SimpleNode(curr_tag); advance(); break;
+            case BytesTag:  expr = new SimpleNode(curr_tag); advance(); break;
+            case IfTag:     expr = grab_if(); break;
+            case ForTag:    expr = grab_for(); break;
+            case WhileTag:  expr = grab_while(); break;
 
-        case OpenTag:   {
-            if (*((Brace*)curr_tag->val) == paren) {
-                expr = grab_struct();
-                if (expr == 0) {
-                    expr = grab_args();
+            case OpenTag:   {
+                if (*((Brace*)curr_tag->val) == paren) {
+                    expr = grab_struct();
+                    if (expr == 0) {
+                        expr = grab_args();
+                    }
+                } else {
+                    expr = grab_sequence();
                 }
-            } else {
-                expr = grab_sequence();
-            }
-        } break;
+            } break;
 
-        case PrefixTag: {
-            PrefixNode *prefix_expr = new PrefixNode();
-            prefix_expr->first_tag = curr_tag;
-            prefix_expr->prefix = *curr_tag->val;
-            prefix_expr->right = grab_expression(TopPrec);
-            expr = prefix_expr;
-        } break;
-        default: TekoParserException("Illegal start to expression: " + curr_tag->s, *curr_tag);
+            case PrefixTag: {
+                PrefixNode *prefix_expr = new PrefixNode();
+                prefix_expr->first_tag = curr_tag;
+                prefix_expr->prefix = *curr_tag->val;
+                prefix_expr->right = grab_expression(TopPrec);
+                expr = prefix_expr;
+            } break;
+            default: TekoParserException("Illegal start to expression: " + curr_tag->s, *curr_tag);
         }
         expr->first_tag = expr_first_tag;
         expr = continue_expression(prec, expr);
@@ -326,71 +328,71 @@ struct TekoParser {
         }
 
         switch (curr_tag->type) {
-        case InfixTag: {
-            Precedence new_prec = getPrec(infixes[*curr_tag->val]);
-            if (new_prec <= prec) {
-                return left_expr;
-            } else {
-                InfixNode *infix_expr = new InfixNode();
-                infix_expr->first_tag = curr_tag;
-                infix_expr->left = left_expr;
-                infix_expr->infix = *curr_tag->val;
-                advance();
-                infix_expr->right = grab_expression(new_prec);
-                return continue_expression(prec, infix_expr);
-            }
-        } break;
-
-        case SetterTag: {
-            if (prec > NoPrec) {
-                return left_expr;
-            } else {
-                AssignmentNode *asst_expr = new AssignmentNode();
-                asst_expr->first_tag = left_expr->first_tag;
-                asst_expr->left = left_expr;
-                asst_expr->setter = *curr_tag->val;
-                advance();
-                string set = setters[asst_expr->setter];
-                if (set == "->") {
-                    asst_expr->right = grab_codeblock();
+            case InfixTag: {
+                Precedence new_prec = getPrec(infixes[*curr_tag->val]);
+                if (new_prec <= prec) {
+                    return left_expr;
                 } else {
-                    asst_expr->right = grab_expression(NoPrec);
+                    InfixNode *infix_expr = new InfixNode();
+                    infix_expr->first_tag = curr_tag;
+                    infix_expr->left = left_expr;
+                    infix_expr->infix = *curr_tag->val;
+                    advance();
+                    infix_expr->right = grab_expression(new_prec);
+                    return continue_expression(prec, infix_expr);
                 }
-                return asst_expr;
-            }
-        } break;
-
-        case OpenTag: {
-            Brace b = *((Brace *) curr_tag->val);
-            switch (b) {
-            case paren: {
-                CallNode *call_expr = new CallNode();
-                call_expr->first_tag = left_expr->first_tag;
-                call_expr->left = left_expr;
-                call_expr->args = grab_args();
-                return continue_expression(prec, call_expr);
             } break;
 
-            default: {
-                SliceNode *slice_expr = new SliceNode();
-                slice_expr->first_tag = curr_tag;
-                slice_expr->left = left_expr;
-                slice_expr->slice = grab_sequence();
-                return continue_expression(prec, slice_expr);
+            case SetterTag: {
+                if (prec > NoPrec) {
+                    return left_expr;
+                } else {
+                    AssignmentNode *asst_expr = new AssignmentNode();
+                    asst_expr->first_tag = left_expr->first_tag;
+                    asst_expr->left = left_expr;
+                    asst_expr->setter = *curr_tag->val;
+                    advance();
+                    string set = setters[asst_expr->setter];
+                    if (set == "->") {
+                        asst_expr->right = grab_codeblock();
+                    } else {
+                        asst_expr->right = grab_expression(NoPrec);
+                    }
+                    return asst_expr;
+                }
             } break;
+
+            case OpenTag: {
+                Brace b = *((Brace *) curr_tag->val);
+                switch (b) {
+                    case paren: {
+                        CallNode *call_expr = new CallNode();
+                        call_expr->first_tag = left_expr->first_tag;
+                        call_expr->left = left_expr;
+                        call_expr->args = grab_args();
+                        return continue_expression(prec, call_expr);
+                    } break;
+
+                    default: {
+                        SliceNode *slice_expr = new SliceNode();
+                        slice_expr->first_tag = curr_tag;
+                        slice_expr->left = left_expr;
+                        slice_expr->slice = grab_sequence();
+                        return continue_expression(prec, slice_expr);
+                    } break;
+                }
+            } break;
+
+            case SuffixTag: {
+                SuffixNode *suff_expr = new SuffixNode();
+                suff_expr->first_tag = curr_tag;
+                suff_expr->left = left_expr;
+                suff_expr->suffix = *curr_tag->val;
+                advance();
+                return continue_expression(prec, suff_expr);
             }
-        } break;
 
-        case SuffixTag: {
-            SuffixNode *suff_expr = new SuffixNode();
-            suff_expr->first_tag = curr_tag;
-            suff_expr->left = left_expr;
-            suff_expr->suffix = *curr_tag->val;
-            advance();
-            return continue_expression(prec, suff_expr);
-        }
-
-        default: return left_expr; break;
+            default: return left_expr; break;
         }
     }
 

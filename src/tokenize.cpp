@@ -69,13 +69,13 @@ struct Tokenizer {
         }
 
         switch (buff[1]) {
-        case '\\': out = '\\'; break;
-        case '\"': out = '\"'; break;
-        case '\'': out = '\''; break;
-        case 'n':  out = '\n'; break;
-        case 't':  out = '\t'; break;
-        case 'x':  out = parse_hex(); break;
-        default:   throw runtime_error("Invalid escape sequence");
+            case '\\': out = '\\'; break;
+            case '\"': out = '\"'; break;
+            case '\'': out = '\''; break;
+            case 'n':  out = '\n'; break;
+            case 't':  out = '\t'; break;
+            case 'x':  out = parse_hex(); break;
+            default:   throw runtime_error("Invalid escape sequence");
         }
 
         if (out != 0) { buff = ""; }
@@ -105,17 +105,17 @@ struct Tokenizer {
 
     void digest(char c) {
         switch (state) {
-        case BLANK:    digest_blank(c);  break;
-        case LABEL_T:  digest_label(c);  break;
-        case NUM_T:    digest_num(c);    break;
-        case STRING_T: digest_string(c); break;
-        case PUNCT_T:  digest_punct(c);  break;
-        case CHAR_T:   digest_char(c);   break;
-        case BITS_T:   digest_bits(c);   break;
-        case BYTES_T:  digest_bytes(c);  break;
-        case BITS_OR_BYTES_T: digest_x_or_b(c);        break;
-        case LINE_COMMENT:    digest_line_comment(c);  break;
-        case BLOCK_COMMENT:   digest_block_comment(c); break;
+            case BLANK:    digest_blank(c);  break;
+            case LABEL_T:  digest_label(c);  break;
+            case NUM_T:    digest_num(c);    break;
+            case STRING_T: digest_string(c); break;
+            case PUNCT_T:  digest_punct(c);  break;
+            case CHAR_T:   digest_char(c);   break;
+            case BITS_T:   digest_bits(c);   break;
+            case BYTES_T:  digest_bytes(c);  break;
+            case BITS_OR_BYTES_T: digest_x_or_b(c);        break;
+            case LINE_COMMENT:    digest_line_comment(c);  break;
+            case BLOCK_COMMENT:   digest_block_comment(c); break;
         }
     }
 

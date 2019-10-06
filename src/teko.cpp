@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "general.cpp"
 #include "parser.cpp"
-#include "types.cpp"
+#include "exec.cpp"
 
 using namespace std;
 
@@ -18,8 +18,10 @@ int main(int argc, char *argv[]) {
     filename = argv[1];
 
     TekoParser p = TekoParser(filename);
-    p.parse();
+    printf("o\n");
+    TekoParser *pp = &p;
+    Interpreter i8er = Interpreter(pp);
 
-    TekoTypeChecker ttc = TekoTypeChecker();
-    ttc.check(p.first_stmt);
+    p.parse();
+    i8er.execute(p.first_stmt);
 }

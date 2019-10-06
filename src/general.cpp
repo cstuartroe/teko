@@ -52,9 +52,9 @@ string teko_escape(string s) {
     string out = "";
     for (int i = 0; i < s.length(); i++) {
         switch (s[i]) {
-        case '\n': out += "\\n"; break;
-        case '\t': out += "\\t"; break;
-        default: out += s[i]; break;
+            case '\n': out += "\\n"; break;
+            case '\t': out += "\\t"; break;
+            default: out += s[i]; break;
         }
     }
     return out;
