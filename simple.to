@@ -1,0 +1,38 @@
+bool n = 5;
+
+
+/* int[] n = 5;
+
+int i, f(int j, str k ? 9), n =& 4;
+
+@throws BigBadException, SpicyError("you messed up").attribute
+@sees i
+@updates
+async var x() -> {
+  kapow;
+};
+
+n = 5;
+
+namespace foo {
+  int x = 3;
+};
+
+int<> ns = <1,2,3,4,5>; // hello
+
+"\thell\x41"; '\x45'
+
+for (int n in ns) {
+	print(n$ + "\n");
+}
+
+struct s = (int n);
+int add3(s) = (3)._add;
+print(add3(5)$ + "\n");
+
+s x = s(3);
+print(x$ + "\n");
+
+struct person = (str name, int toes ? 10, int eyes ? 2);
+person mary = person("Mary", eyes = 4);
+print(mary$ + "\n"); */
