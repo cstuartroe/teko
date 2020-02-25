@@ -1,32 +1,16 @@
 #include "types.cpp"
+#include "objects.cpp"
+#include "math.cpp"
 
 struct Interpreter {
     TekoParser *parser;
-    TekoTypeChecker ttc;
-    TekoObject module;
+    TekoNamespace *ns;
 
     Interpreter(TekoParser *_parser) {
-        printf("o\n");
         parser = _parser;
-        ttc = TekoTypeChecker();
-        module = TekoObject(TekoModule);
-        module.name = "<main>";
-
-        module.declare("obj",    TekoTypeType, false);
-        module.declare("type",   TekoTypeType, false);
-        module.declare("bool",   TekoTypeType, false);
-        module.declare("int",    TekoTypeType, false);
-        module.declare("real",   TekoTypeType, false);
-        module.declare("char",   TekoTypeType, false);
-        module.declare("module", TekoTypeType, false);
-
-        module.set("obj",    TekoObjectType);
-        module.set("type",   TekoTypeType);
-        module.set("bool",   TekoBool);
-        module.set("int",    TekoInt);
-        module.set("real",   TekoReal);
-        module.set("char",   TekoChar);
-        module.set("module", TekoModule);
+        TekoNamespace *stdns = new TekoStandardNS();
+        ns = new TekoNamespace(stdns);
+        ns->name = "<main>";
     }
 
     void TekoTypeException(string message, Node *n) {
@@ -52,14 +36,13 @@ struct Interpreter {
     TekoObject *evaluate_simple(SimpleNode *expr) {
         switch (expr->data_type) {
             case LabelExpr:
-                return module.get(*((string*) expr->val));
+                return ns->get(*((string*) expr->val));
             case StringExpr: break;
             case CharExpr: break;
             case RealExpr: break;
             case IntExpr:
                 {
-                    TekoObject *n = new TekoObject(TekoInt);
-                    n->val = expr->val;
+                    TekoObject *n = new TekoInt((int*) expr->val);
                     return n;
                 }
             case BoolExpr: break;
@@ -73,6 +56,7 @@ struct Interpreter {
     }
 
     TekoObject *evaluate_infix(InfixNode *expr) {
+        printf("Infix expressions don't work yet! Segfault in 3, 2, 1...\n");
         return 0;
     }
 
@@ -82,7 +66,6 @@ struct Interpreter {
 
     void execute(Statement *stmt) {
         printf("%s\n", stmt->to_str(0).c_str());
-        ttc.check(stmt);
 
         switch (stmt->stmt_type) {
             case DeclarationStmtType: execute_decl((DeclarationStmt*) stmt); break;
@@ -102,18 +85,16 @@ struct Interpreter {
         }
         TekoType *type = (TekoType*) type_obj;
 
-        bool is_mutable = stmt->vts[1];
+        bool is_mutable = stmt->vts[Var];
 
         for (int i = 0; i < stmt->declist.size(); i++) {
             DeclarationNode *decl = stmt->declist[i];
 
-            module.declare(decl->label, type, is_mutable);
+            ns->declareField(decl->label, type, is_mutable);
 
             if (decl->value != 0) {
                 TekoObject *value = evaluate(decl->value);
-                if (!is_instance(value, type)) {
-                    TekoTypeException("expected " + type->to_str(), decl->value);
-                }
+                ns->set(decl->label, value);
             }            
         }
     }

@@ -1,4 +1,8 @@
-bool n = 5;
+int n = 3 < 2;
+
+type sometype = 4 > 3 ? int : bool;
+
+sometype x = 3;
 
 
 /* int[] n = 5;

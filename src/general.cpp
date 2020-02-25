@@ -59,3 +59,13 @@ string teko_escape(string s) {
     }
     return out;
 }
+
+struct TekoCompilerException : exception {
+    string message_;
+    TekoCompilerException(string message) {
+        message_ = message;
+    }
+    virtual const char* what() const throw() {
+        return message_.c_str();
+    }
+};

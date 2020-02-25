@@ -392,6 +392,21 @@ struct TekoParser {
                 return continue_expression(prec, suff_expr);
             }
 
+            case QMarkTag: {
+                if (prec > NoPrec) {
+                    return left_expr;
+                } else {
+                    IfNode *if_expr = new IfNode();
+                    if_expr->first_tag = left_expr->first_tag;
+                    advance();
+
+                    if_expr->condition = left_expr;
+                    if_expr->then_block = grab_codeblock();
+                    if_expr->else_block = grab_else();
+                    return if_expr;
+                }
+            }
+
             default: return left_expr; break;
         }
     }

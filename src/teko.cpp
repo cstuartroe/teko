@@ -18,7 +18,6 @@ int main(int argc, char *argv[]) {
     filename = argv[1];
 
     TekoParser p = TekoParser(filename);
-    printf("o\n");
     TekoParser *pp = &p;
     Interpreter i8er = Interpreter(pp);
 

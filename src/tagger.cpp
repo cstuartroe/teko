@@ -14,9 +14,9 @@ void TekoTokenizerException(string message, Token t) {
 
 const int num_braces = 4;
 
-char braces[9] = "(){}[]<>";
+char braces[9] = "(){}[]";
 
-enum Brace { paren, curly, square, angle };
+enum Brace { paren, curly, square };
 
 Brace brace_fromc(char c) {
     switch(c) {
@@ -26,8 +26,6 @@ Brace brace_fromc(char c) {
         case '}': return curly;
         case '[': return square;
         case ']': return square;
-        case '<': return angle;
-        case '>': return angle;
     }
 }
 
@@ -39,8 +37,6 @@ bool open_fromc(char c) {
         case '}': return false;
         case '[': return true;
         case ']': return false;
-        case '<': return true;
-        case '>': return false;
     }
 }
 
@@ -50,14 +46,12 @@ string to_string(Brace b, bool open) {
             case paren:  return "(";
             case curly:  return "{";
             case square: return "[";
-            case angle:  return "<";
         }
     } else {
         switch (b) {
             case paren:  return ")";
             case curly:  return "}";
             case square: return "]";
-            case angle:  return ">";
         }
     }
     throw runtime_error("illegal brace: " + to_string((char) b));
@@ -91,11 +85,15 @@ string suffixes[num_suffixes] = {".", "$", "#", "[]", "{}", "++", "--"};
 
 const int num_vartypes = 2;
 
+enum VarType { Async, Var };
+
 string vartypes[num_vartypes] = {"async", "var"};
 
 // ------------
 
 const int num_annotations = 6;
+
+enum Annotation { IO, hangs, updates, sees, modifies, throws };
 
 string annotations[num_annotations] = {"@IO", "@hangs", "@updates", "@sees",
                                        "@modifies", "@throws"};

@@ -1,18 +1,16 @@
 #include <unordered_map>
+#include "nodes.cpp"
 
-struct Variable;
+struct TekoTypeField;
+struct TekoStructField;
 struct TekoObject;
 struct TekoType;
+struct TekoStruct;
 struct TekoFunctionType;
 struct TekoFunction;
 
-TekoType *TekoTypeType, *TekoObjectType, *TekoVoid, *TekoBool, *TekoInt, *TekoReal, *TekoChar, *TekoString, *TekoModule;
-
-TekoFunctionType *TekoPrintType;
-
-struct TekoPrintFunction;
-
-TekoPrintFunction *TekoPrint;
+TekoType *TekoTypeType, *TekoObjectType, *TekoVoidType, *TekoBoolType, *TekoIntType,
+         *TekoRealType, *TekoCharType, *TekoStringType, *TekoNamespaceType, *TekoStructType, *TekoFunctionTypeType;
 
 bool is_subtype(TekoType *sub, TekoType *sup);
 bool is_instance(TekoObject *o, TekoType *t);
