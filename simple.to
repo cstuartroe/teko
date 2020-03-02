@@ -1,6 +1,8 @@
-int n = 3 < 2;
+type int2 = int;
 
-type sometype = 4 > 3 ? int : bool;
+real n = 3.;
+
+type sometype = 4 > 3 ? int : 3 > 2 ? str : bool;
 
 sometype x = 3;
 
@@ -40,3 +42,106 @@ print(x$ + "\n");
 struct person = (str name, int toes ? 10, int eyes ? 2);
 person mary = person("Mary", eyes = 4);
 print(mary$ + "\n"); */
+
+/* notes:
+
+// conjoined types
+
+int f((str | int) x) -> typecheck x {
+  str x.length;
+  int x + 1;
+};
+
+// JSON
+
+JSON = str | int | real | JSON[] | [str:JSON]
+
+// implicit constructors
+
+class Foo(int n, str s) {
+
+};
+
+x = Foo(3, "hello");
+
+x.s // "hello"
+
+// variable deletion
+
+class Foo(int n, str s) {
+  del s;
+};
+
+x = Foo(3, "hello");
+
+x.s // error
+
+// so... class === struct?
+
+class Foo(int n, str s);
+
+struct Foo = (int n, str s); // different? not really
+
+struct Foo = (int n, str s) { // a proposed new syntax
+  ...
+};
+
+// a note on mutability and under-the-hood storage
+
+struct Foo = () {
+  int n = 3; // this should be stored with Foo
+  var str s = "hello"; // this should be stored with instances
+};
+
+Foo.n; // should work? debatable
+
+// structural typing
+
+struct Foo = (int n);
+
+struct Bar = () {
+  int n = 5;
+  str s = 3;
+};
+
+Foo <: Bar; // true
+
+// interfaces:
+
+struct Foo = () {
+  int n = 3;
+}
+
+struct Bar = () {
+  str s = "hello";
+}
+
+struct Baz <: Foo, Bar = ();
+
+// overriding
+
+struct Baz <: Foo, Bar = (int n) {
+  str s = "goodbye";
+};
+
+// same-typed name collisions
+
+struct Foo = () {
+  int n = 3;
+};
+
+struct Bar = () {
+  int n = 4;
+};
+
+struct Baz <: Foo, Bar = (); // does not compile - name collision must be resolved
+
+struct Baz <: Foo, Bar = () {
+  int n = Foo.n; // not sure this is how it should work
+};
+
+// differently-typed name collisions
+
+struct Foo = (int x);
+struct Bar = (str x);
+struct Baz <: Foo, Bar; // ruh roh - now what?
