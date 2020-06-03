@@ -330,7 +330,7 @@ struct IfNode : ExpressionNode {
         s += condition->to_str(indent) + " ";
         s += then_block->to_str(indent);
         if (else_block != 0) {
-            s += else_block->to_str(indent);
+            s += " else " + else_block->to_str(indent);
         }
         return s;
     }

@@ -231,7 +231,7 @@ struct TekoStandardNS : TekoNamespace {
         TekoStringType = new TekoType(TekoObjectType);
 
         TekoNamespaceType = new TekoType(TekoObjectType);
-        setType(TekoNamespaceType);
+        type = TekoNamespaceType;
 
         TekoStruct *to_str_struct = new TekoStruct(vector<string>(), vector<TekoStructField>());
         TekoFunctionType *to_str_type = new TekoFunctionType(TekoStringType, to_str_struct);
@@ -242,7 +242,7 @@ struct TekoStandardNS : TekoNamespace {
 //        TekoTypeType->setField("fields", , false);
 
         declareField("obj",  TekoTypeType, false);
-//        declareField("type", TekoTypeType, false);
+        fields["type"] = TekoTypeField(TekoTypeType, false);
         declareField("void", TekoTypeType, false);
         declareField("bool", TekoTypeType, false);
         declareField("int",  TekoTypeType, false);
@@ -252,7 +252,7 @@ struct TekoStandardNS : TekoNamespace {
         declareField("namespace",  TekoTypeType, false);
 
         set("obj",  TekoObjectType);
-//        set("type", TekoTypeType);
+        set("type", TekoTypeType);
         set("void", TekoVoidType);
         set("bool", TekoBoolType);
         set("int",  TekoIntType);
@@ -261,8 +261,6 @@ struct TekoStandardNS : TekoNamespace {
         set("str",  TekoStringType);
         set("namespace", TekoNamespaceType);
     }
-
-
 
     void check(Statement *stmt) {
         printf("%s", stmt->to_str(0).c_str());

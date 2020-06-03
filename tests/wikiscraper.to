@@ -1,0 +1,20 @@
+str{} scraped = {};
+
+class StringQueueNode(str value)  {
+  public:
+  StringQueueNode next = null, prev = null;
+}
+
+class StringQueue() {
+  StringQueueNode head = null;
+  StringQueueNode tail = null;
+
+  public:
+
+  @modifies head, tail
+  void enq(str s) {
+    StringQueueNode new = StringQueueNode(s); // !
+    new.next = head;
+    head.prev = new;
+  }
+}
