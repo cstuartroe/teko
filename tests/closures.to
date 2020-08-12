@@ -1,0 +1,179 @@
+// remember structs?
+struct complex = (float real, float i);
+
+// this is how structs worked in my original draft of Teko:
+complex z = complex(3.0, 5.5);
+z; // (real: 3.0, i: 5.5);
+typeof(z); // complex
+
+// I was always a little unsure what to do with it, it seemed like complex needed to have two types:
+typeof(complex); // struct? or maybe (float, float) => complex?
+
+// another issue with these is that they don't really jive with our intuition that the members of z should be unordered.
+// it seems like these should be the same:
+struct complex2 = (float i, float real);
+complex2 z2 = complex2(5.5, 3.0);
+z == z2; // false, but it kinda seems like it should be true, right?
+
+//---
+
+// Introducing a new Teko concept: generic types, for lack of a better term
+let complex_type = type({"real": float, "i": float})
+
+// Now, structs are functions only. Their job is to interpret arguments.
+// "struct" might no longer be the right name. currently accepting suggestions.
+struct complex = (float real, float i);
+typeof(complex); // (float, float) => type({"real": float, "i": float})
+
+let z = complex(3.0, 5.5);
+z; // {real: 3.0, i: 5.5} this is a lot like a JS object, except that it has a statically analyzable type
+typeof(z); // type({"real": float, "i": float})
+typeof(z) == complex_type; // true
+
+struct complex2 = (float real, float i);
+let z2 = complex2(5.5, 3.0);
+z == z2; // true - the objects created by structs are unordered mappings of names to values.
+
+// I guess there's no reason that generic objects can't be created directly, though I haven't settled on the syntax:
+let z3 = {real: 3.0, i: 5.5};
+typeof(z3); // type({"real": float, "i": float})
+
+// From now on, essentially all Teko types will be these generic types,
+// and all Teko type checking will be structural.
+// There is no concept of class inheritance. But more on that later...
+
+//---
+
+// The next thing to introduce is the way closures now work in Teko.
+// Closures describe any set of variables accessible from a codeblock, namespace, function body, class body, or imported file.
+
+// Let's start with a codeblock. Like C++, a codeblock can be created without any fanfare with a pair of curly braces.
+// Unlike C++, codeblocks are just another expression type that can evaluate to a value.
+// For instance, that's how I'd analyze what's happening when an if statement returns a value:
+let x = if (false) "Yep" else "Nope"; // remember, if statements evaluate to a value
+let y = if (false) { // in this if statement, the expression evaluated on true happens to be a codeblock.
+  int x = 3;
+  x*10;
+} else 0;
+
+// So here's a plain codeblock:
+int n = {
+  int x = 3;
+  x*10;
+};
+
+// The way to access closures is the new closure() function:
+typeof(closure); // () => generic type (remember that `type` is now a function in Teko. I don't know what, if any, label will refer to the generic type type.)
+let n = {
+  int x = 3;
+  closure();
+}
+n; // {x: 3};
+typeof(n); // type({"x": int});
+// Note that it's not often practical to explicitly declare the type of a closure, since it will change frequently if edits are made to the block.
+// Closures are a good use case for `let`, which detects type on the line it's declared.
+// I originally forbade `let` declarations that weren't immediately set; I may revisit the issue.
+
+//---
+
+// Closures can be returned from a function, too:
+let foo(int n, bool b) -> {
+  str s = "Yo";
+  closure();
+};
+typeof(foo); // (int, bool) => {"n": int, "b": bool, "s": str}
+foo(10, false); // {n: 10, b: false, s: "Yo"}
+
+//---
+
+// Imports are effectively closures:
+let requests = import("requests.to");
+let requests2 = {
+  <paste the entire body of requests.to here>
+  closure();
+}
+requests == requests2; // true
+
+// Lastly, classes are basically just syntactic sugar for functions that return their own closure:
+// Like in Scala, constructor arguments are listed on the first line of the class, and the resultant instance is built by running the class body line by line
+// Unlike Scala, Teko allows for default parameter values and keyword arguments, enabling much more flexible constructors
+class Foo(int n, bool b) {
+  int n_plus_3() -> n+3;
+  bool something(int m) -> n > m ? b : false;
+};
+let f = Foo(3, false);
+f.n; // 3 - all constructor arguments are already part of the closure just like function arguments, so no need for endless self.n = n like in Python
+f.n_plus_3(); // 6
+
+// This is the exact same thing as Foo:
+let Foo2(int n, bool b) -> {
+  int n_plus_3() -> n+3;
+  bool something(int m) -> n > m ? b : false;
+  closure();
+};
+typeof(Foo); // (int, bool) => {"n": int, "b": bool, "n_plus_3": () => int, "something": int => bool};
+typeof(Foo2); // same as above
+
+// Do I even need the "class" syntax? I'm not convinced I do.
+
+//---
+
+// Since all user-defined "classes" are simply functions that return objects of generic types,
+// it doesn't seem like there's a need for formal subtyping. Generic types can easily be compared structurally.
+class FooParent(int n) {
+  int n_plus_3() -> n+3;
+};
+typeof(FooParent); // (int) => {"n": int, "n_plus_3": () => int}
+FooParent.rtype; // remember, this is just the attribute that gives the return type of a function; in the case of "classes", it's the type of its "instances."
+Foo.rtype <: FooParent.rtype; // true - {"n": int, "n_plus_3": () => int} is a subset of {"n": int, "b": bool, "n_plus_3": () => int, "something": int => bool}
+
+let FooParentInstance = FooParent.rtype;
+bool bar(FooParentInstance p) -> true;
+let f = Foo(3, false);
+bar(f); // this passes typecheck because, structurally, f has all the members that FooParentInstance requires.
+
+//---
+
+// There will be a keyword `extract` that introduces labels from any object into the current closure:
+extract n from f;
+n; // 3
+
+// This can be used to accomplish partial imports:
+extract get from import("requests");
+// Or dump everything into the current closure, like Python's `import *`:
+extract * from import("requests");
+
+// It can also be used to mimic subclassing and interfaces:
+class Rectangle(int length, int width) {};
+class Square(int size) {
+  extract * from Rectangle(size, size);
+  delete size;
+}
+
+//---
+
+// The last thing to think about is visibility; I think all codeblocks, including "classes", should have a way to
+// export only a part of their closures.
+// For instance, it could be used to name public members of a class:
+let Bar(int n) -> {
+  int get_n() -> n;
+  void set_n(int new_n) -> @updates n {
+    n = new_n;
+  };
+
+  export(get_n, set_n);
+};
+
+let b = Bar(3);
+b.get_n(); // 3
+b.n; // error!
+
+// `export` may be a keyword, but it's still just a way to create a generic object, like closure():
+int n = 3;
+bool b = true;
+str s = "Hello";
+let partial_closure = export(n, s);
+partial_closure.s; // "Hello";
+typeof(partial_closure); // type({"n": 3, "s": str})
+
+// `export` can also be used at the end of a file, much like in Node.js, in which case only the named objects are available for import.
