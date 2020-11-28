@@ -4,25 +4,23 @@ Teko is a programming language of an unusual sort - a statically typed scripting
 
 **Major design features include:**
 
- * A robust type and visibility system reminiscient of Java, which provide safety and allow compiled code to run fast
+ * Static typing
  * The freedom of organization of a scripting language - put variable declarations, control blocks, or whatever you want right in the body of a file, no need to wrap it in a class or `main()`!
  * Zero type coercion - made up for with a variety of lightweight conversion syntax (`5$` means `5.to_str()`)
  * Consistency of semantics:
-   * Everything is an object, even types and functions
-     * `typeof(int)` yields `type`, `int.to_str()` yields `"int"`
-     * `typeof((int x) -> x^2)` yields `int(int x)`
+   * First-order functions
    * Everything is a method: e.g., `+` is *always* an alias for `.add()`; `3 + 4` *is* `(3).add(4)`
    * Everything is an expression - assignments and control blocks evaluate to a value
- * Powerful data structures, including primitive arrays, linked lists, labels, maps, sets, structs, and enums
- * Fastidiousness about reference vs. value - functions support a `&` argument operator to pass an argument by reference
- * Easy support for asynchrony, including `begin { }` syntax for threading, `parallel` loops, `async` variables and functions, and even updating and halting function types
- * Support for effect typing of functions, such as marking functions as `async` (asynchronous, and allowed to alter asynchronous variables), `hangs` (pausing execution and needing to be restarted), `updates` (returning multiple values asynchronously), and with `throws` annotation (to denote which errors a method may throw)
+ * Out of the box data structures, including amortized arrays, labels, maps, sets, structs, and enums
  * Elements of functional or functional-by-default style programming:
-   * First-order functions and function closures
+   * First-order functions and closures
    * Fastidiousness about mutability - mutable variables must be declared with the `var` keyword
    * `sees` and `modifies` annotation for all variables a function may read or write, `IO` annotation to permit functions to perform input/output actions
    * Type inference - type may be omitted from declarations
    * Lightweight currying with ellipsis `...` syntax
+ * Purely structural types
+   * Objects can be created without a constructor, by simply listing all members
+   * "Class" definitions are just syntactic sugar - they're actually functions!
 
 ## Overview
 
@@ -34,7 +32,7 @@ The syntax is most similar to Javascript:
 var str s;
 
 @IO
-for (int i in 1 to 15) {
+for (int i in 1..15) {
     s = "";
     (i % 3 == 0) ? s += "Fizz ";
     (i % 5 == 0) ? s += "Buzz ";
@@ -43,29 +41,44 @@ for (int i in 1 to 15) {
 };
 
 int square(int n) -> n*n;
-int add3(int other) = (3)._add;
+int add3(int other) = (3).add;
 let five = add3(2);
 
-enum() Location = <Brussels, Beijing, Cairo, Buenos_Aires>;
-struct coords = (int lat, int long);
-
-{Location: coords} city_coords = {Brussels:     (50,   4),
-                                  Beijing:      (39,   116),
-                                  Cairo:        (30,   31),
-                                  Buenos_Aires: (-34, -58)};
-
-class Vehicle {
-    static enum() modes = <Land, Sea, Air>;
-    private int topspeed;
-    public virtual void travel(Location destination);
+enum Location = {
+  Brussels, Beijing, Cairo, Buenos_Aires
 };
 
-class Car extends Vehicle {
-    public var Entity owner;
-    ...
+constructor coords(int lat, int long);
+
+[Location: coords] city_coords = [
+  Brussels:     coords(50,   4),
+  Beijing:      coords(39,   116),
+  Cairo:        coords(30,   31),
+  Buenos_Aires: coords(-34, -58)
+];
+
+
+
+static enum Mode = {Land, Sea, Air};
+
+type Vehicle {
+  int topspeed,
+  void travel(Location destination),
+  Mode mode
+}
+
+class Car(int topspeed, string owner) {
+  mode = Mode.Land;
+  private var Location currentLocation;
+
+  @modifies currentLocation
+  void travel(Location destination) {
+    println(owner + " is driving!");
+    currentLocation = destination;
+  }
 };
 
-void impound(Car &c) -> {
+void impound({string owner} &c) -> {
     c.owner = The_Government; // darn!
 };
 ```
@@ -78,13 +91,12 @@ Teko's primitive types include arbitrary-precision integers, floating-point numb
 
 ```
 int n = 3;
-real x;
+float x;
 bool q = true;
 char c = '?';
 str s1 = "Hello, World!", s2;
 bits b = 0b10010110101;
 bytes B = 0x1ac093e746f6;
-label THIS, THAT;
 ```
 
 A last, interesting primitive type is `unit`. These represent units of measure, or multiples of units. `unit`s support multiplication and division by reals and other units, as well as exponentiation.
@@ -95,7 +107,7 @@ unit olympic_pool_volume = 2500*(meter^3);
 unit us_median_salary = 56000*USD/year;
 ```
 
-Variables can also be declared using the keyword `let` - expressions in Teko are generally not ambiguous for type, so type can be immediately inferred if the variable is set on the same line. However, variables in Teko must always know their type, so variables declared with `let` *must* be simultaneously set.
+Variables can also be declared using the keyword `let` - expressions in Teko are not ambiguous for type, so type can be immediately inferred if the variable is set on the same line. However, variables in Teko must always know their type, so variables declared with `let` *must* be simultaneously set.
 
 ```
 let n; // bad!
@@ -109,20 +121,17 @@ Teko also boasts a several powerful composite data types:
 
 ```
 // Amortized Arrays
-int[] numarray1 = [1,2,3];
-typeof(numarray1); // int[]
+var int[] numarray1 = [1,2,3];
 numarray1[2]; // 3
 numarray1.size; // 3 and O(1)
 3 in numarray; // true and O(n)
-numarray.sort();
+sort<int>(numarray);
 
-numarray1[0 to 2]; // [1, 2] - ranges are exclusive at the end
-numarray1 = numarray1[0 to 2]; // resizing is supported
+numarray1[0..2]; // [1, 2] - ranges are exclusive at the end
+numarray1 = numarray1[0..2]; // resizing is supported
 
 int[4] numarray2 = [1,2,3,4]; // arrays can be declared a specific size
-numarray2 = numarray2[0 to 2]; // cannot be resized
-typeof(numarray2); // int[4]
-int[4] <: int[]; // true
+numarray2 = numarray2[0..2]; // error - cannot be resized
 
 // Sets
 int{} numset = {1,2,3,4};
@@ -130,26 +139,19 @@ numset; // {2,4,3,1} (or some other order - sets aren't ordered)
 3 in numset; // true and O(1)
 
 // Enums
-enum(int) numbers = {ONE = 1, TWO = 2, ANOTHERONE = 1};
-typeof(ONE); // numbers
-isa(ONE, int); // true
-numbers <: int; // true
-typeof(ONE + ANOTHERONE); // int - even though 1 + 1 = 2 has a corresponding element in numbers, verifying this is equivalent to the halting problem
-
-enum() Location = {Brussels, Beijing, Cairo, Buenos_Aires};
-typeof(Beijing); // Location
-isa(Beijing, label); // true
-
+enum<int> numbers = {ONE = 1, TWO = 2, ANOTHERONE = 1};
 ONE == ANOTHERONE; // true
 ONE is ANOTHERONE; // false
 
+enum Location = {Brussels, Beijing, Cairo, Buenos_Aires};
+
 // Maps
-{str:int} ages = {"Bob":42,"Alice":35};
-ages{"Bob"}; // 42
-ages{"Carol"} = 16;
+int[str] ages = ["Bob":42,"Alice":35];
+ages["Bob"]; // 42
+ages["Carol"] = 16;
 
 // Structs
-struct person = (str name, int age);
+class person(str name, int age);
 person bob = person("Bob", 42);
 bob; // (name = "Bob", age = 42)
 bob(0); // "Bob"

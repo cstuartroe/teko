@@ -1,2 +1,0 @@
-make
-./teko simple.to
