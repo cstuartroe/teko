@@ -2,14 +2,17 @@ package main
 
 import (
   "github.com/cstuartroe/teko/src/lexparse"
+  "fmt"
+  "os"
 )
 
 func main() {
-  l := lexparse.Line{
-    Num: 45,
-    Value: "let x = 3;",
-    Filename: "/this/is/not/a/file.to",
+  if len(os.Args) != 2 {
+    fmt.Println("Please supply exactly one argument, the filename")
+    os.Exit(0)
   }
-
-  lexparse.GrabTokens(l)
+  tokens := lexparse.LexFile(os.Args[1])
+  for _, t := range(tokens) {
+    fmt.Printf("col: %d type: %d value: %s\n", t.Col, t.TType, string(t.Value))
+  }
 }
