@@ -5,40 +5,41 @@ type tokenType int
 const (
   SymbolT tokenType = iota
 
-  StringT tokenType = iota
-  CharT tokenType = iota
-  IntT tokenType = iota
-  FloatT tokenType = iota
-  BoolT tokenType = iota
-  NullT tokenType = iota
+  StringT
+  CharT
+  IntT
+  FloatT
+  BoolT
+  NullT
 
-  ForT tokenType = iota
-  WhileT tokenType = iota
-  InT tokenType = iota
-  TypeT tokenType = iota
+  ForT
+  WhileT
+  InT
+  TypeT
+  LetT
 
-  BinopT tokenType = iota // + - * / ^ % & |
-  ComparisonT tokenType = iota // == != < > <= >=
-  SetterT tokenType = iota // = += -= *= /= ^= %= &= |= ->
-  PrefixT tokenType = iota // ! ~ ?
-  SuffixT tokenType = iota // $ # .
+  BinopT // + - * / ^ % & |
+  ComparisonT // == != < > <= >=
+  SetterT // = += -= *= /= ^= %= &= |= ->
+  PrefixT // ! ~ ?
+  SuffixT // $ # .
 
-  LParT tokenType = iota
-  RParT tokenType = iota
-  LSquareBrT tokenType = iota
-  RSquareBrT tokenType = iota
-  LCurlyBrT tokenType = iota
-  RCurlyBrT tokenType = iota
-  LAngleT tokenType = iota
-  RAngleT tokenType = iota
+  LParT
+  RParT
+  LSquareBrT
+  RSquareBrT
+  LCurlyBrT
+  RCurlyBrT
+  LAngleT
+  RAngleT
 
-  DotT tokenType = iota
-  QMarkT tokenType = iota
-  EllipsisT tokenType = iota
-  CommaT tokenType = iota
-  SemicolonT tokenType = iota
-  ColonT tokenType = iota
-  SubtypeT tokenType = iota
+  DotT
+  QMarkT
+  EllipsisT
+  CommaT
+  SemicolonT
+  ColonT
+  SubtypeT
 )
 
 // Go doesn't have sets, which is dumb.
