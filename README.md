@@ -17,12 +17,31 @@ Teko is a programming language of an unusual sort - a statically typed scripting
    * Fastidiousness about mutability - mutable variables must be declared with the `var` keyword
    * `sees` and `modifies` annotation for all variables a function may read or write, `IO` annotation to permit functions to perform input/output actions
    * Type inference - type may be omitted from declarations
-   * Lightweight currying with ellipsis `...` syntax
+   * Lightweight currying with ellipsis `..` syntax
  * Purely structural types
    * Objects can be created without a constructor, by simply listing all members
-   * "Class" definitions are just syntactic sugar - they're actually functions!
+   * Class constructors are just syntactic sugar and you often don't need them - they're actually just functions!
 
-## Overview
+## Installation
+
+1. Make sure you have the [Go programming language](https://golang.org/dl/) installed.
+
+2. Make sure `go install` works as expected. If you're not sure how to do that, try adding `export PATH=$PATH:$(go env GOPATH)/bin` to your `.bashrc` or something similar.
+
+3. Clone this repo.
+
+4. `cd` into it and run `go install`
+
+5. Try running `teko tests/simple.to`. Hopefully you get something that doesn't look like
+
+```
+Command 'teko' not found, did you mean:
+```
+
+If you do, revisit step 2.
+
+
+## Language Overview
 
 ### Syntax
 
