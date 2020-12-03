@@ -23,7 +23,7 @@ type Token struct {
 
 func (t Token) to_str() string {
   return fmt.Sprintf(
-    "{line: %d, col: %d, type: %d, value: %s}",
+    "{line: %d, col: %d, type: %s, value: %s}",
     t.Line.Num,
     t.Col,
     t.TType,
@@ -91,7 +91,7 @@ func (lexer *Lexer) startline(line Line) {
 
 func (lexer *Lexer) newToken() {
   lexer.CurrentBlob = []rune{}
-  lexer.CurrentTType = -1
+  lexer.CurrentTType = ""
 }
 
 func (lexer *Lexer) next() rune {
@@ -191,14 +191,12 @@ func (lexer *Lexer) grabDecimalNumber() {
 func (lexer *Lexer) grabPunctuation() {
   lexer.advance()
 
-  var blob string
   twochars := string(append(lexer.CurrentBlob, lexer.next()))
-
   if _, ok := punct_combos[twochars]; ok {
-    blob = twochars
-  } else {
-    blob = string(lexer.CurrentBlob)
+    lexer.advance()
   }
+
+  blob := string(lexer.CurrentBlob)
 
   // Need to check specific cases first because some
   // (such as angle brackets) can be interpreted as
@@ -223,7 +221,7 @@ func (lexer *Lexer) grabPunctuation() {
     default:
   }
 
-  if lexer.CurrentTType == -1 {
+  if lexer.CurrentTType == "" {
     if _, ok := binops[blob]; ok {
       lexer.CurrentTType = BinopT
     } else if _, ok := comparisons[blob]; ok {
