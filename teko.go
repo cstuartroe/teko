@@ -11,8 +11,8 @@ func main() {
     fmt.Println("Please supply exactly one argument, the filename")
     os.Exit(0)
   }
-  tokens := lexparse.LexFile(os.Args[1])
-  for _, t := range(tokens) {
-    fmt.Printf("col: %d type: %d value: %s\n", t.Col, t.TType, string(t.Value))
+  statements := lexparse.ParseFile(os.Args[1])
+  for _, s := range(statements) {
+    s.Printout(0)
   }
 }

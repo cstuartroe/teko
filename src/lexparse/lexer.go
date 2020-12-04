@@ -21,6 +21,16 @@ type Token struct {
   Value []rune
 }
 
+func (t Token) to_str() string {
+  return fmt.Sprintf(
+    "{line: %d, col: %d, type: %d, value: %s}",
+    t.Line.Num,
+    t.Col,
+    t.TType,
+    string(t.Value),
+  )
+}
+
 func lexparsePanic(line *Line, col int, width int, message string) {
   fmt.Printf(
     "Teko Parser Error (%s:%d)\n%s\n%s%s\n%s\n",
@@ -67,15 +77,15 @@ func LexFile(filename string) []Token {
   lexer := Lexer{InBlockComment: false}
 
   for _, line := range lines {
-    lexer.startline(&line)
+    lexer.startline(line)
     tokens = append(tokens, lexer.grabTokens()...)
   }
 
   return tokens
 }
 
-func (lexer *Lexer) startline(line *Line) {
-  lexer.Line = line
+func (lexer *Lexer) startline(line Line) {
+  lexer.Line = &line
   lexer.Col = 0
 }
 
@@ -95,7 +105,7 @@ func (lexer *Lexer) advance() {
 }
 
 func (lexer *Lexer) hasMore() bool {
-  return lexer.Col + 1 < len(lexer.Line.Value)
+  return lexer.Col < len(lexer.Line.Value)
 }
 
 func (lexer *Lexer) passWhitespace() {
@@ -155,6 +165,7 @@ func (lexer *Lexer) grabSymbol() {
     case "while": lexer.CurrentTType = WhileT
     case "in":    lexer.CurrentTType = InT
     case "type":  lexer.CurrentTType = TypeT
+    case "let":   lexer.CurrentTType = LetT
     default:      lexer.CurrentTType = SymbolT
   }
 }
