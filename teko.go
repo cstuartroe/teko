@@ -12,7 +12,7 @@ func main() {
 
   if len(os.Args) != 2 {
     fmt.Println("Please supply exactly one argument, the filename")
-    os.Exit(0)
+    os.Exit(1)
   }
   codeblock := checker.LoadFile(os.Args[1])
   for _,  stmt := range codeblock.GetStatements() {
