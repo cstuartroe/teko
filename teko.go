@@ -16,6 +16,6 @@ func main() {
   }
   codeblock := checker.LoadFile(os.Args[1])
   for _,  stmt := range codeblock.GetStatements() {
-    lexparse.PrintNode(stmt, 0)
+    lexparse.PrintNode(stmt)
   }
 }

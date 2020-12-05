@@ -8,6 +8,8 @@ import (
   "unicode"
 )
 
+const INDENT_AMOUNT int = 2
+
 type Line struct {
   Num int
   Value []rune
@@ -29,6 +31,10 @@ func (t Token) to_str() string {
     t.TType,
     string(t.Value),
   )
+}
+
+func (t Token) to_indented_str(indent int) string {
+  return strings.Repeat(" ", indent*INDENT_AMOUNT) + t.to_str() + "\n"
 }
 
 func lexparsePanic(line *Line, col int, width int, message string) {

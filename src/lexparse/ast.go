@@ -9,15 +9,20 @@ type Node interface {
   ntype() string
   children() []Node
   token() Token
+  child_strings(indent int) []string
 }
 
-func PrintNode(node Node, indent int) {
-  space := strings.Repeat(" ", indent*2)
-  fmt.Printf("%s%s\n", space, node.ntype())
-  fmt.Printf("%s%s\n", space, node.token().to_str())
-  for _, child := range node.children() {
-    PrintNode(child, indent+1)
+func node_to_str(node Node, indent int) string {
+  space := strings.Repeat(" ", indent*INDENT_AMOUNT)
+  out := fmt.Sprintf("%s%s\n", space, node.ntype())
+  for _, s := range node.child_strings(indent+1) {
+    out += s
   }
+  return out
+}
+
+func PrintNode(node Node) {
+  fmt.Print(node_to_str(node, 0))
 }
 
 type Expression interface {
@@ -48,6 +53,12 @@ func (s ExpressionStatement) token() Token {
   return s.expression.token()
 }
 
+func (s ExpressionStatement) child_strings(indent int) []string {
+  return []string{
+    node_to_str(s.expression, indent),
+  }
+}
+
 func (s ExpressionStatement) statementNode() { }
 
 //---
@@ -66,6 +77,12 @@ func (e SimpleExpression) children() []Node {
 
 func (e SimpleExpression) token() Token {
   return e.Token
+}
+
+func (e SimpleExpression) child_strings(indent int) []string {
+  return []string{
+    e.Token.to_indented_str(indent),
+  }
 }
 
 func (e SimpleExpression) expressionNode() { }
@@ -93,6 +110,16 @@ func (e DeclarationExpression) token() Token {
   return e.tekotype.token()
 }
 
+func (e DeclarationExpression) child_strings(indent int) []string {
+  out := []string{
+    node_to_str(e.tekotype, indent),
+  }
+  for _, d := range e.declareds {
+    out = append(out, node_to_str(d, indent))
+  }
+  return out
+}
+
 func (e DeclarationExpression) expressionNode() { }
 
 //---
@@ -109,6 +136,14 @@ func (d Declared) ntype() string {
 
 func (d Declared) children() []Node {
   return []Node{d.right}
+}
+
+func (d Declared) child_strings(indent int) []string {
+  return []string{
+    d.symbol.to_indented_str(indent),
+    d.setter.to_indented_str(indent),
+    node_to_str(d.right, indent),
+  }
 }
 
 func (d Declared) token() Token {
