@@ -21,6 +21,14 @@ func (ttype *BasicType) allFields() map[string]TekoType {
   return ttype.fields
 }
 
+func (ttype *BasicType) setField(name string, tekotype TekoType) {
+  if getField(ttype, name) != nil {
+    panic("Field " + name + " has already been declared")
+  }
+
+  ttype.fields[name] = tekotype
+}
+
 type FunctionArgDef struct {
   name string
   mutable bool

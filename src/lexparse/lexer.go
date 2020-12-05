@@ -39,8 +39,9 @@ func (t Token) to_indented_str(indent int) string {
 
 func lexparsePanic(line *Line, col int, width int, message string) {
   fmt.Printf(
-    "Teko Parser Error (%s:%d)\n%s\n%s%s\n%s\n",
+    "Teko Parser Error (%s:%d:%d)\n%s\n%s%s\n%s\n",
     line.Filename,
+    line.Num,
     col,
     string(line.Value),
     strings.Repeat(" ",col),
@@ -50,7 +51,7 @@ func lexparsePanic(line *Line, col int, width int, message string) {
   os.Exit(0)
 }
 
-func tokenPanic(token Token, message string) {
+func TokenPanic(token Token, message string) {
   lexparsePanic(token.Line, token.Col, len(token.Value), message)
 }
 
@@ -166,7 +167,6 @@ func (lexer *Lexer) grabSymbol() {
   switch symbol := string(lexer.CurrentBlob); symbol {
     case "true":  lexer.CurrentTType = BoolT
     case "false": lexer.CurrentTType = BoolT
-    case "null":  lexer.CurrentTType = NullT
     case "for":   lexer.CurrentTType = ForT
     case "while": lexer.CurrentTType = WhileT
     case "in":    lexer.CurrentTType = InT

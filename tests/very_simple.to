@@ -1,3 +1,5 @@
 int n -> 3;
 
-bool b = null;
+bool b = true;
+
+bool b = 3;

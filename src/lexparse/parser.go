@@ -11,7 +11,6 @@ var simpleExprTokenTypes map[tokenType]bool = map[tokenType]bool {
   IntT: true,
   FloatT: true,
   BoolT: true,
-  NullT: true,
 }
 
 type Parser struct {
@@ -43,7 +42,7 @@ func (parser *Parser) HasMore() bool {
 
 func (parser *Parser) Expect(ttype tokenType) {
   if parser.currentToken().TType != ttype {
-    tokenPanic(*parser.currentToken(), fmt.Sprintf("Expected %s", ttype))
+    TokenPanic(*parser.currentToken(), fmt.Sprintf("Expected %s", ttype))
   }
 }
 
@@ -51,12 +50,14 @@ func (parser *Parser) Expect(ttype tokenType) {
 // We'll see how sustainable that is
 
 func (parser *Parser) GrabStatement() Statement {
-  return parser.grabExpressionStmt()
+  stmt := parser.grabExpressionStmt()
+  parser.Expect(SemicolonT); parser.Advance()
+  return stmt
 }
 
 func (parser *Parser) grabExpressionStmt() ExpressionStatement {
   return ExpressionStatement{
-    expression: parser.grabExpression(add_sub_prec),
+    Expression: parser.grabExpression(add_sub_prec),
   }
 }
 
@@ -78,11 +79,11 @@ func (parser *Parser) grabExpression(prec precedence) Expression {
 func (parser *Parser) grabSimpleExpression() SimpleExpression {
   t := parser.currentToken()
   if _, ok := simpleExprTokenTypes[t.TType]; ok {
-    n := SimpleExpression{Token: *t}
+    n := SimpleExpression{token: *t}
     parser.Advance()
     return n
   } else {
-    tokenPanic(*parser.currentToken(), "Illegal start to simple expression")
+    TokenPanic(*parser.currentToken(), "Illegal start to simple expression")
     return SimpleExpression{} // unreachable code that the compiler requires
   }
 }
@@ -90,8 +91,8 @@ func (parser *Parser) grabSimpleExpression() SimpleExpression {
 func (parser *Parser) continueExpression(expr Expression, prec precedence) Expression {
   if parser.currentToken().TType == SymbolT && prec < max_prec {
     return DeclarationExpression{
-      tekotype: expr,
-      declareds: parser.grabDeclaredChain(),
+      Tekotype: expr,
+      Declareds: parser.grabDeclaredChain(),
     }
   }
 
@@ -130,8 +131,8 @@ func (parser *Parser) grabDeclared() Declared {
   right := parser.grabExpression(add_sub_prec)
 
   return Declared{
-    symbol: *symbol,
-    setter: *setter,
-    right: right,
+    Symbol: *symbol,
+    Setter: *setter,
+    Right: right,
   }
 }

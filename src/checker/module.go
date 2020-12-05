@@ -4,16 +4,16 @@ var LoadedFiles map[string]*Codeblock = map[string]*Codeblock{}
 
 
 func LoadFile(filename string) *Codeblock {
-  if codeblock, ok := LoadedFiles[filename]; ok {
-    return codeblock
+  if _, ok := LoadedFiles[filename]; !ok {
+    main_codeblock := NewCodeblock(&BaseCodeblock)
+    main_codeblock.startFile(filename)
+
+    for main_codeblock.hasMore() {
+      main_codeblock.checkNextStatement()
+    }
+
+    LoadedFiles[filename] = &main_codeblock
   }
 
-  main_codeblock := NewCodeblock(&BaseCodeblock)
-  main_codeblock.startFile(filename)
-
-  for main_codeblock.hasMore() {
-    main_codeblock.grabStatement()
-  }
-
-  return &main_codeblock
+  return LoadedFiles[filename]
 }

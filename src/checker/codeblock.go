@@ -43,32 +43,12 @@ type Codeblock struct {
   parser lexparse.Parser
 }
 
-func (c *Codeblock) GetStatements() []lexparse.Node {
-  return c.statements
-}
-
-func (c *Codeblock) getType() TekoType {
-  return c.ttype
-}
-
-func (c *Codeblock) getFieldValue(name string) TekoObject {
-  return c.symbolTable.get(name)
-}
-
-func (c *Codeblock) startFile(filename string) {
-  c.parser.LexFile(filename)
-}
-
-func (c *Codeblock) hasMore() bool {
-  return c.parser.HasMore()
-}
-
-func (c *Codeblock) grabStatement() {
-  c.statements = append(
-    c.statements,
-    c.parser.GrabStatement(),
-  )
-  c.parser.Expect(lexparse.SemicolonT); c.parser.Advance()
+var BaseCodeblock Codeblock = Codeblock{
+  statements: []lexparse.Node{},
+  typeTable: &stdlibTypeTable,
+  ttype: &BasicType{
+    fields: map[string]TekoType{},
+  },
 }
 
 func NewCodeblock(parent *Codeblock) Codeblock {
@@ -92,10 +72,34 @@ func NewCodeblock(parent *Codeblock) Codeblock {
   return c
 }
 
-var BaseCodeblock Codeblock = Codeblock{
-  statements: []lexparse.Node{},
-  typeTable: &stdlibTypeTable,
-  ttype: &BasicType{
-    fields: map[string]TekoType{},
-  },
+func (c *Codeblock) GetStatements() []lexparse.Node {
+  return c.statements
+}
+
+func (c *Codeblock) getType() TekoType {
+  return c.ttype
+}
+
+func (c *Codeblock) getFieldType(name string) TekoType {
+  return getField(c.ttype, name)
+}
+
+func (c *Codeblock) declareFieldType(name string, tekotype TekoType) {
+  c.ttype.setField(name, tekotype)
+}
+
+func (c *Codeblock) getFieldValue(name string) TekoObject {
+  return c.symbolTable.get(name)
+}
+
+func (c *Codeblock) getTypeByName(name string) TekoType {
+  return c.typeTable.get(name)
+}
+
+func (c *Codeblock) startFile(filename string) {
+  c.parser.LexFile(filename)
+}
+
+func (c *Codeblock) hasMore() bool {
+  return c.parser.HasMore()
 }

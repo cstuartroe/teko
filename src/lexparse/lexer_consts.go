@@ -10,7 +10,6 @@ const (
   IntT = "int"
   FloatT = "float"
   BoolT = "bool"
-  NullT = "null"
 
   ForT = "for"
   WhileT = "while"
