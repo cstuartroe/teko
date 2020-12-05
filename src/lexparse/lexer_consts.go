@@ -1,45 +1,45 @@
 package lexparse
 
-type tokenType int
+type tokenType string
 
 const (
-  SymbolT tokenType = iota
+  SymbolT tokenType = "symbol"
 
-  StringT
-  CharT
-  IntT
-  FloatT
-  BoolT
-  NullT
+  StringT = "string"
+  CharT = "char"
+  IntT = "int"
+  FloatT = "float"
+  BoolT = "bool"
+  NullT = "null"
 
-  ForT
-  WhileT
-  InT
-  TypeT
-  LetT
+  ForT = "for"
+  WhileT = "while"
+  InT = "in"
+  TypeT = "type"
+  LetT = "let"
 
-  BinopT // + - * / ^ % & |
-  ComparisonT // == != < > <= >=
-  SetterT // = += -= *= /= ^= %= &= |= ->
-  PrefixT // ! ~ ?
-  SuffixT // $ # .
+  BinopT = "binary operation" // + - * / ^ % & |
+  ComparisonT = "comparison" // == != < > <= >=
+  SetterT = "setter" // = += -= *= /= ^= %= &= |= ->
+  PrefixT = "prefix" // ! ~ ?
+  SuffixT = "suffix" // $ # .
 
-  LParT
-  RParT
-  LSquareBrT
-  RSquareBrT
-  LCurlyBrT
-  RCurlyBrT
-  LAngleT
-  RAngleT
+  LParT = "("
+  RParT = ")"
+  LSquareBrT = "["
+  RSquareBrT = "]"
+  LCurlyBrT = "{"
+  RCurlyBrT = "}"
+  LAngleT = "<"
+  RAngleT = ">"
 
-  DotT
-  QMarkT
-  EllipsisT
-  CommaT
-  SemicolonT
-  ColonT
-  SubtypeT
+  DotT = "."
+  QMarkT = "?"
+  EllipsisT = ".."
+  CommaT = ","
+  SemicolonT = ";"
+  ColonT = ":"
+  SubtypeT = "<:"
 )
 
 // Go doesn't have sets, which is dumb.

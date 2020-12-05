@@ -8,7 +8,9 @@ import (
 type NodeType int
 
 const (
-  DeclarationS NodeType = iota
+  ModuleN NodeType = iota
+
+  DeclarationS
   ExpressionS
   TypeDefnS
 
@@ -69,11 +71,23 @@ func (node Node) Printout(indent int) {
 type Parser struct {
   tokens []Token
   position int
-  typeLabels map[string]bool
+  isTypeName func(name string) bool
+}
+
+func (parser *Parser) LexFile(filename string) {
+  parser.tokens = LexFile(filename)
+}
+
+func NewParser(isTypeName func(string) bool) Parser {
+  return Parser{
+    tokens: []Token{},
+    position: 0,
+    isTypeName: isTypeName,
+  }
 }
 
 func (parser *Parser) next() *Token {
-  if parser.hasMore() {
+  if parser.HasMore() {
     return &(parser.tokens[parser.position])
   } else {
     t := parser.tokens[parser.position-1]
@@ -84,45 +98,25 @@ func (parser *Parser) next() *Token {
   }
 }
 
-func (parser *Parser) advance() {
+func (parser *Parser) Advance() {
   parser.position++
 }
 
-func (parser *Parser) hasMore() bool {
+func (parser *Parser) HasMore() bool {
   return parser.position < len(parser.tokens)
 }
 
-func (parser *Parser) expect(ttype tokenType) {
+func (parser *Parser) Expect(ttype tokenType) {
   if parser.next().TType != ttype {
-    tokenPanic(*parser.next(), fmt.Sprintf("Expected %d", ttype))
+    tokenPanic(*parser.next(), fmt.Sprintf("Expected %s", ttype))
   }
-}
-
-func ParseFile(filename string) []Node {
-  parser := Parser{
-    tokens: LexFile(filename),
-    position: 0,
-    typeLabels: map[string]bool {
-      "int": true,
-      "bool": true,
-    },
-  }
-
-  statements := []Node{}
-
-  for parser.hasMore() {
-    statements = append(statements, parser.grabStatement())
-    parser.expect(SemicolonT); parser.advance()
-  }
-
-  return statements
 }
 
 // I'm attempting to make the teko parser without needing lookahead
 // We'll see how sustainable that is
 
-func (parser *Parser) grabStatement() Node {
-  if _, ok := parser.typeLabels[string(parser.next().Value)]; ok {
+func (parser *Parser) GrabStatement() Node {
+  if parser.isTypeName(string(parser.next().Value)) {
     return parser.grabDeclaration()
   } else {
     return parser.grabExpressionStmt()
@@ -144,7 +138,7 @@ func (parser *Parser) grabType() *Node {
   }
 
   typenode := Node{ntype: SimpleExprN, token: parser.next()}
-  parser.advance()
+  parser.Advance()
 
   // TODO: arrays, sets, maps, functions
 
@@ -155,8 +149,8 @@ func (parser *Parser) grabDeclaredChain() *Node {
   left := parser.grabDeclared()
   var right *Node
 
-  if parser.hasMore() && (parser.next().TType == CommaT) {
-    parser.advance()
+  if parser.HasMore() && (parser.next().TType == CommaT) {
+    parser.Advance()
     right = parser.grabDeclaredChain()
   } else {
     right = nil
@@ -179,7 +173,7 @@ func (parser *Parser) grabDeclared() *Node {
 
   // TODO: function argdef
 
-  parser.expect(SetterT); setter_t := parser.next(); parser.advance()
+  parser.Expect(SetterT); setter_t := parser.next(); parser.Advance()
 
   right := parser.grabExpression()
 
@@ -209,7 +203,7 @@ func (parser *Parser) grabSimpleExpression() *Node {
       ntype: SimpleExprN,
       token: parser.next(),
     }
-    parser.advance()
+    parser.Advance()
     return &n
   } else {
     tokenPanic(*parser.next(), "Illegal start to simple expression")
