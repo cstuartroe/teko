@@ -165,6 +165,7 @@ func (lexer *Lexer) grabSymbol() {
     case "while": lexer.CurrentTType = WhileT
     case "in":    lexer.CurrentTType = InT
     case "type":  lexer.CurrentTType = TypeT
+    case "data": lexer.CurrentTType = DataT
     case "let":   lexer.CurrentTType = LetT
     default:      lexer.CurrentTType = SymbolT
   }

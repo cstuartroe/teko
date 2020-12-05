@@ -87,9 +87,7 @@ func NewCodeblock(parent *Codeblock) Codeblock {
     },
   }
 
-  c.parser = lexparse.NewParser(func(name string) bool {
-    return (c.typeTable.get(name) != nil)
-  })
+  c.parser = lexparse.Parser{}
 
   return c
 }

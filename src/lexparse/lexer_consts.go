@@ -16,6 +16,7 @@ const (
   WhileT = "while"
   InT = "in"
   TypeT = "type"
+  DataT = "data"
   LetT = "let"
 
   BinopT = "binary operation" // + - * / ^ % & |

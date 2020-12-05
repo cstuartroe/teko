@@ -3,6 +3,7 @@ package main
 import (
   "fmt"
   "os"
+  "github.com/cstuartroe/teko/src/lexparse"
   "github.com/cstuartroe/teko/src/checker"
 )
 
@@ -15,6 +16,6 @@ func main() {
   }
   codeblock := checker.LoadFile(os.Args[1])
   for _,  stmt := range codeblock.GetStatements() {
-    stmt.Printout(0)
+    lexparse.PrintNode(stmt, 0)
   }
 }
