@@ -37,6 +37,40 @@ type Statement interface {
 
 //---
 
+type Codeblock struct {
+  statements []Statement
+}
+
+func (c *Codeblock) ntype() string {
+  return "Codeblock"
+}
+
+func (c *Codeblock) children() []Node {
+  out := []Node{}
+  for _, stmt := range c.statements {
+    out = append(out, stmt)
+  }
+  return out
+}
+
+func (c *Codeblock) Token() Token {
+  return Token{}
+}
+
+func (c *Codeblock) child_strings(indent int) []string {
+  out := []string{}
+  for _, stmt := range c.statements {
+    out = append(out, node_to_str(stmt, indent))
+  }
+  return out
+}
+
+func (c *Codeblock) GetStatements() []Statement {
+  return c.statements
+}
+
+//---
+
 type ExpressionStatement struct {
   Expression Expression
 }

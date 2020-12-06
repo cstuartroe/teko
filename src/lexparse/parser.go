@@ -13,6 +13,21 @@ var simpleExprTokenTypes map[tokenType]bool = map[tokenType]bool {
   BoolT: true,
 }
 
+func ParseFile(filename string) Codeblock {
+  p := Parser{}
+  p.LexFile(filename)
+
+  c := Codeblock{}
+  for p.HasMore() {
+    c.statements = append(
+      c.statements,
+      p.GrabStatement(),
+    )
+  }
+
+  return c
+}
+
 type Parser struct {
   tokens []Token
   position int

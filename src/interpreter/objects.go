@@ -1,4 +1,4 @@
-package checker
+package interpreter
 
 type TekoObject interface {
   getType() TekoType

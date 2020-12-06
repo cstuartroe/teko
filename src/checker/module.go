@@ -1,18 +1,32 @@
 package checker
 
-var LoadedFiles map[string]*Codeblock = map[string]*Codeblock{}
+import (
+    "github.com/cstuartroe/teko/src/lexparse"
+)
+
+type TypeModule struct {
+  codeblock lexparse.Codeblock
+  checker Checker
+}
+
+var LoadedFiles map[string]*TypeModule = map[string]*TypeModule{}
 
 
-func LoadFile(filename string) *Codeblock {
+func LoadFile(filename string) *TypeModule {
   if _, ok := LoadedFiles[filename]; !ok {
-    main_codeblock := NewCodeblock(&BaseCodeblock)
-    main_codeblock.startFile(filename)
+    main_codeblock := lexparse.ParseFile(filename)
+    main_checker := NewChecker(&BaseChecker)
 
-    for main_codeblock.hasMore() {
-      main_codeblock.checkNextStatement()
+    for _, stmt := range main_codeblock.GetStatements() {
+      main_checker.checkStatement(stmt)
     }
 
-    LoadedFiles[filename] = &main_codeblock
+    main_module := TypeModule{
+      codeblock: main_codeblock,
+      checker: main_checker,
+    }
+
+    LoadedFiles[filename] = &main_module
   }
 
   return LoadedFiles[filename]
