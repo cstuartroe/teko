@@ -38,8 +38,10 @@ func (c *Codeblock) checkSimpleExpression(expr lexparse.SimpleExpression) TekoTy
       return ttype
     }
 
-  case lexparse.IntT: return &IntType
-  case lexparse.BoolT: return &BoolType
+  case lexparse.IntT:    return &IntType
+  case lexparse.BoolT:   return &BoolType
+  case lexparse.StringT: return &StringType
+  case lexparse.CharT:   return &CharType
   default: panic("Unknown simple expression type")
   }
 }
@@ -75,7 +77,7 @@ func (c *Codeblock) declare(declared lexparse.Declared, tekotype TekoType) TekoT
 
   right_tekotype := c.checkExpression(declared.Right)
 
-  if !isTekoEqType(tekotype, right_tekotype) {
+  if !isTekoSubtype(right_tekotype, tekotype) {
     lexparse.TokenPanic(declared.Right.Token(), "Incorrect type")
     return nil
   }

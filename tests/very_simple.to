@@ -2,4 +2,4 @@ int n -> 3;
 
 bool b = true;
 
-bool b = 3;
+str s = "hello\t";

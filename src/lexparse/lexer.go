@@ -150,6 +150,10 @@ func (lexer *Lexer) grabToken() Token {
     lexer.grabSymbol()
   } else if unicode.IsDigit(c) {
     lexer.grabDecimalNumber()
+  } else if c == '"' {
+    lexer.grabString()
+  } else if c == '\'' {
+    lexer.grabChar()
   } else {
     lexer.grabPunctuation()
   }
@@ -243,4 +247,58 @@ func (lexer *Lexer) grabPunctuation() {
       lexparsePanic(lexer.Line, lexer.Col-1, 1, "Invalid start to token")
     }
   }
+}
+
+func (lexer *Lexer) grabString() {
+  if lexer.next() != '"' {
+    panic("String didn't start with double quote")
+  }
+  lexer.CurrentTType = StringT
+  lexer.advance()
+
+  value := []rune{}
+
+  for lexer.next() != '"' {
+    value = append(value, lexer.grabCharacter())
+  }
+
+  lexer.advance()
+
+  lexer.CurrentBlob = value // a shameless hack
+}
+
+func (lexer *Lexer) grabChar() {
+  if lexer.next() != '\'' {
+    panic("Char didn't start with single quote")
+  }
+  lexer.CurrentTType = CharT
+  lexer.advance()
+
+  value := []rune{lexer.grabCharacter()}
+
+  if lexer.next() != '\'' {
+    panic("Char too long")
+  }
+  lexer.advance()
+
+  lexer.CurrentBlob = value // the same shameless hack - look any better this time?
+}
+
+func (lexer *Lexer) grabCharacter() rune {
+  if lexer.next() != '\\' {
+    c := lexer.next(); lexer.advance(); return c
+  }
+  lexer.advance()
+
+  var c rune
+  switch lexer.next() {
+  case 't': c = '\t'
+  case 'n': c = '\n'
+  case 'r': c = '\r'
+  case '"': c = '"'
+  case '\'': c = '\''
+  default: panic("Ahh! We still need octal and unicode escapes!!!1!!one!")
+  }
+
+  return c
 }

@@ -32,6 +32,8 @@ var stdlibTypeTable TypeTable = TypeTable{
   table: map[string]TekoType{
     "int": &IntType,
     "bool": &BoolType,
+    "str": &StringType,
+    "char": &CharType,
   },
 }
 
@@ -78,6 +80,10 @@ func (c *Codeblock) GetStatements() []lexparse.Node {
 
 func (c *Codeblock) getType() TekoType {
   return c.ttype
+}
+
+func (c *Codeblock) GetType() TekoType {
+  return c.getType()
 }
 
 func (c *Codeblock) getFieldType(name string) TekoType {

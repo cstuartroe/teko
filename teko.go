@@ -13,5 +13,6 @@ func main() {
     fmt.Println("Please supply exactly one argument, the filename")
     os.Exit(1)
   }
-  checker.LoadFile(os.Args[1])
+  cb := checker.LoadFile(os.Args[1])
+  fmt.Println(cb.GetType())
 }
