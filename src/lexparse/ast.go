@@ -183,3 +183,67 @@ func (d Declared) child_strings(indent int) []string {
 func (d Declared) Token() Token {
   return d.Symbol
 }
+
+//---
+
+type CallExpression struct {
+  Receiver Expression
+  Args []Expression
+  Kwargs []FunctionKwarg
+  ResolvedArgs map[string]Expression
+}
+
+func (e CallExpression) ntype() string {
+  return "CallExpression"
+}
+
+func (e CallExpression) children() []Node {
+  out := []Node{e.Receiver}
+  for _, arg := range e.Args {
+    out = append(out, arg)
+  }
+  for _, kwarg := range e.Kwargs {
+    out = append(out, kwarg)
+  }
+  return out
+}
+
+func (e CallExpression) child_strings(indent int) []string {
+  out := []string{}
+  for _, arg := range e.children() {
+    out = append(out, node_to_str(arg, indent))
+  }
+  return out
+}
+
+func (e CallExpression) Token() Token {
+  return e.Receiver.Token()
+}
+
+func (e CallExpression) expressionNode() { }
+
+//---
+
+type FunctionKwarg struct {
+  Symbol Token
+  Value Expression
+}
+
+func (k FunctionKwarg) ntype() string {
+  return "FunctionKwarg"
+}
+
+func (k FunctionKwarg) children() []Node {
+  return []Node{k.Value}
+}
+
+func (k FunctionKwarg) child_strings(indent int) []string {
+  return []string{
+    k.Symbol.to_indented_str(indent),
+    node_to_str(k.Value, indent),
+  }
+}
+
+func (k FunctionKwarg) Token() Token {
+  return k.Symbol
+}

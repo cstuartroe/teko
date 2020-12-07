@@ -33,16 +33,54 @@ var stdlibTypeTable TypeTable = TypeTable{
   },
 }
 
+type CheckerType struct {
+  fields map[string]TekoType
+  parent *CheckerType
+}
+
+func (ctype *CheckerType) allFields() map[string]TekoType {
+  var out map[string]TekoType
+
+  if ctype.parent == nil {
+    out = map[string]TekoType{}
+  } else {
+    out = ctype.parent.allFields()
+  }
+
+  for name, ttype := range ctype.fields {
+    if _, ok := out[name]; ok {
+      panic("Field somehow got declared twice: " + name)
+    }
+
+    out[name] = ttype
+  }
+
+  return out
+}
+
+func (ctype *CheckerType) setField(name string, tekotype TekoType) {
+  if getField(ctype, name) != nil {
+    panic("Field " + name + " has already been declared")
+  }
+
+  ctype.fields[name] = tekotype
+}
+
+var baseCheckerType CheckerType = CheckerType{
+  fields: map[string]TekoType{
+    "print": &PrintType,
+  },
+  parent: nil,
+}
+
 type Checker struct {
   typeTable *TypeTable
-  ttype *BasicType
+  ctype *CheckerType
 }
 
 var BaseChecker Checker = Checker{
   typeTable: &stdlibTypeTable,
-  ttype: &BasicType{
-    fields: map[string]TekoType{},
-  },
+  ctype: &baseCheckerType,
 }
 
 func NewChecker(parent *Checker) Checker {
@@ -51,8 +89,9 @@ func NewChecker(parent *Checker) Checker {
       parent: parent.typeTable,
       table: map[string]TekoType{},
     },
-    ttype: &BasicType{
+    ctype: &CheckerType{
       fields: map[string]TekoType{},
+      parent: parent.ctype,
     },
   }
 
@@ -60,7 +99,7 @@ func NewChecker(parent *Checker) Checker {
 }
 
 func (c *Checker) getType() TekoType {
-  return c.ttype
+  return c.ctype
 }
 
 func (c *Checker) GetType() TekoType {
@@ -68,11 +107,11 @@ func (c *Checker) GetType() TekoType {
 }
 
 func (c *Checker) getFieldType(name string) TekoType {
-  return getField(c.ttype, name)
+  return getField(c.ctype, name)
 }
 
 func (c *Checker) declareFieldType(name string, tekotype TekoType) {
-  c.ttype.setField(name, tekotype)
+  c.ctype.setField(name, tekotype)
 }
 
 func (c *Checker) getTypeByName(name string) TekoType {

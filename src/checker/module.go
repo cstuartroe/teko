@@ -18,6 +18,7 @@ func LoadFile(filename string) *TypeModule {
     main_checker := NewChecker(&BaseChecker)
 
     for _, stmt := range main_codeblock.GetStatements() {
+      lexparse.PrintNode(stmt)
       main_checker.checkStatement(stmt)
     }
 

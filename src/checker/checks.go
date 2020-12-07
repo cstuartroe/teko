@@ -1,7 +1,8 @@
 package checker
 
 import (
-    "github.com/cstuartroe/teko/src/lexparse"
+  "fmt"
+  "github.com/cstuartroe/teko/src/lexparse"
 )
 
 func (c *Checker) checkStatement(stmt lexparse.Statement) {
@@ -19,6 +20,7 @@ func (c *Checker) checkExpression(expr lexparse.Expression) TekoType {
   switch p := expr.(type) {
   case lexparse.SimpleExpression: return c.checkSimpleExpression(p)
   case lexparse.DeclarationExpression: return c.checkDeclaration(p)
+  case lexparse.CallExpression: return c.checkCallExpression(p)
   default: panic("Unknown expression type")
   }
 }
@@ -87,4 +89,77 @@ func (c *Checker) declare(declared lexparse.Declared, tekotype TekoType) TekoTyp
 
 
   return tekotype
+}
+
+func getArgTypeByName(argdefs []FunctionArgDef, name string) TekoType {
+  for _, argdef := range argdefs {
+    if argdef.name == name {
+      return argdef.ttype
+    }
+  }
+  return nil
+}
+
+func (c *Checker) checkCallExpression(expr lexparse.CallExpression) TekoType {
+  receiver_tekotype := c.checkExpression(expr.Receiver)
+
+  switch ftype := receiver_tekotype.(type) {
+  case *FunctionType:
+    args_by_name := map[string]lexparse.Expression{}
+
+    if (len(expr.Args) > len(ftype.argdefs)) {
+      lexparse.TokenPanic(
+        expr.Args[len(ftype.argdefs)].Token(),
+        fmt.Sprintf("Too many arguments (%d expected, %d given)", len(ftype.argdefs), len(expr.Args)),
+      )
+    }
+
+    for i, arg := range expr.Args {
+      args_by_name[ftype.argdefs[i].name] = arg
+    }
+
+    for _, kwarg := range expr.Kwargs {
+      name := string(kwarg.Symbol.Value)
+
+      if _, ok := args_by_name[name]; ok {
+        lexparse.TokenPanic(
+          kwarg.Token(),
+          fmt.Sprintf("Argument already passed: %s", name),
+        )
+      }
+
+      argtype := getArgTypeByName(ftype.argdefs, name)
+      if argtype != nil {
+        args_by_name[name] = kwarg.Value
+      } else {
+        lexparse.TokenPanic(
+          kwarg.Symbol,
+          fmt.Sprintf("Function doesn't take argument %s", name),
+        )
+      }
+    }
+
+    for _, argdef := range ftype.argdefs {
+      arg, ok := args_by_name[argdef.name]
+      if !ok {
+        lexparse.TokenPanic(
+          arg.Token(),
+          "Argument was not passed: " + argdef.name,
+        )
+      }
+
+      if !isTekoEqType(c.checkExpression(arg), argdef.ttype) {
+        lexparse.TokenPanic(
+          arg.Token(),
+          "Incorrect argument type",
+        )
+      }
+    }
+
+    return ftype.rtype
+
+  default:
+    lexparse.TokenPanic(expr.Token(), "Expression does not have a function type")
+    return nil
+  }
 }

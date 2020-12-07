@@ -292,11 +292,11 @@ func (lexer *Lexer) grabCharacter() rune {
 
   var c rune
   switch lexer.next() {
-  case 't': c = '\t'
-  case 'n': c = '\n'
-  case 'r': c = '\r'
-  case '"': c = '"'
-  case '\'': c = '\''
+  case 't': c = '\t'; lexer.advance()
+  case 'n': c = '\n'; lexer.advance()
+  case 'r': c = '\r'; lexer.advance()
+  case '"': c = '"'; lexer.advance()
+  case '\'': c = '\''; lexer.advance()
   default: panic("Ahh! We still need octal and unicode escapes!!!1!!one!")
   }
 

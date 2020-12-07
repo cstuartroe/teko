@@ -72,20 +72,23 @@ func (parser *Parser) GrabStatement() Statement {
 
 func (parser *Parser) grabExpressionStmt() ExpressionStatement {
   return ExpressionStatement{
-    Expression: parser.grabExpression(add_sub_prec),
+    Expression: parser.grabExpression(min_prec),
   }
 }
 
 type precedence int
 
 const (
-  add_sub_prec precedence = iota
+  min_prec precedence = iota
+  setter_prec
+  add_sub_prec
   mult_div_prec
   exp_prec
   max_prec
 )
 
 func (parser *Parser) grabExpression(prec precedence) Expression {
+  // TODO: prefixes
   expr := parser.grabSimpleExpression()
 
   return parser.continueExpression(expr, prec)
@@ -104,11 +107,16 @@ func (parser *Parser) grabSimpleExpression() SimpleExpression {
 }
 
 func (parser *Parser) continueExpression(expr Expression, prec precedence) Expression {
-  if parser.currentToken().TType == SymbolT && prec < max_prec {
+  if parser.currentToken().TType == SymbolT && prec <= min_prec {
     return DeclarationExpression{
       Tekotype: expr,
       Declareds: parser.grabDeclaredChain(),
     }
+  } else if parser.currentToken().TType == LParT {
+    return parser.continueExpression(
+      parser.makeCallExpression(expr),
+      prec,
+    )
   }
 
   return expr
@@ -143,11 +151,68 @@ func (parser *Parser) grabDeclared() Declared {
   setter := parser.currentToken()
   parser.Advance()
 
-  right := parser.grabExpression(add_sub_prec)
+  right := parser.grabExpression(min_prec)
 
   return Declared{
     Symbol: *symbol,
     Setter: *setter,
     Right: right,
+  }
+}
+
+func (parser *Parser) makeCallExpression(receiver Expression) CallExpression {
+  parser.Expect(LParT)
+  parser.Advance()
+
+  args := []Expression{}
+  kwargs := []FunctionKwarg{}
+  on_kwargs := false
+  cont := true
+
+  for cont {
+    arg := parser.grabExpression(add_sub_prec) // don't want it continuing past a setter!
+
+    if parser.currentToken().TType == SetterT {
+      if string(parser.currentToken().Value) != "=" {
+        TokenPanic(*parser.currentToken(), "Keyword argument must use =")
+      }
+      switch p := arg.(type) {
+      case SimpleExpression:
+        if p.token.TType != SymbolT {
+          TokenPanic(p.token, "Left-hand side of keyword argument cannot be a value")
+        }
+      default:
+        TokenPanic(p.Token(), "Left-hand side of keyword argument cannot be a value")
+      }
+
+      parser.Advance()
+      on_kwargs = true
+
+      kwargs = append(kwargs, FunctionKwarg{
+        Symbol: arg.Token(),
+        Value: parser.grabExpression(add_sub_prec),
+      })
+    } else {
+      if on_kwargs {
+        TokenPanic(*parser.currentToken(), "All positional arguments must be before all keyword arguments")
+      }
+
+      args = append(args, arg)
+    }
+
+    if parser.currentToken().TType == CommaT {
+      parser.Advance()
+      cont = (parser.currentToken().TType != RParT)
+    } else {
+      cont = false
+    }
+  }
+
+  parser.Expect(RParT); parser.Advance()
+
+  return CallExpression{
+    Receiver: receiver,
+    Args: args,
+    Kwargs: kwargs,
   }
 }
