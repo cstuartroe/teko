@@ -7,15 +7,12 @@ Teko is a programming language of an unusual sort - a statically typed scripting
  * Static typing
  * The freedom of organization of a scripting language - put variable declarations, control blocks, or whatever you want right in the body of a file, no need to wrap it in a class or `main()`!
  * Zero type coercion - made up for with a variety of lightweight conversion syntax (`5$` means `5.to_str()`)
- * Consistency of semantics:
-   * First-order functions
-   * Everything is a method: e.g., `+` is *always* an alias for `.add()`; `3 + 4` *is* `(3).add(4)`
-   * Everything is an expression - assignments and control blocks evaluate to a value
- * Out of the box data structures, including amortized arrays, labels, maps, sets, structs, and enums
+ * Everything is a method: e.g., `+` is *always* an alias for `.add()`; `3 + 4` *is* `(3).add(4)`
+ * Everything is an expression - assignments and control blocks evaluate to a value
+ * Out of the box data structures, including dynamic arrays, sets, maps, and algebraic data types
  * Elements of functional or functional-by-default style programming:
    * First-order functions and closures
    * Fastidiousness about mutability - mutable variables must be declared with the `var` keyword
-   * `sees` and `modifies` annotation for all variables a function may read or write, `IO` annotation to permit functions to perform input/output actions
    * Type inference - type may be omitted from declarations
    * Lightweight currying with ellipsis `..` syntax
  * Purely structural types
