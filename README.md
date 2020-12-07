@@ -26,20 +26,43 @@ Teko is a programming language of an unusual sort - a statically typed scripting
 
 1. Make sure you have the [Go programming language](https://golang.org/dl/) installed.
 
-2. Make sure `go install` works as expected. If you're not sure how to do that, try adding `export PATH=$PATH:$(go env GOPATH)/bin` to your `.bashrc` or something similar.
+3. Clone this repo and `cd` into it.
 
-3. Clone this repo.
+From here your road diverges in a yellow wood:
 
-4. `cd` into it and run `go install`
+### Using `go install`
 
-5. Try running `teko tests/simple.to`. Hopefully you get something that doesn't look like
+3. Make sure `go install` works as expected. If you're not sure how to do that, try adding `export PATH=$PATH:$(go env GOPATH)/bin` to your `.bashrc` or something similar.
+
+4. Run `go install`
+
+5. Try running `teko tests/simple.to`. Hopefully you don't get something that looks like
 
 ```
 Command 'teko' not found, did you mean:
 ```
 
-If you do, revisit step 2.
+If you do, revisit step 3.
 
+### Manually moving executable to `PATH`
+
+3. Run `go build`
+
+4. Move the newly created `teko` executable into any directory in your `PATH`
+
+5. Try running `teko tests/simple.to`. Hopefully you don't get something that looks like
+
+```
+Command 'teko' not found, did you mean:
+```
+
+If you do, revisit step 4.
+
+### Running executable from working directory
+
+3. Run `go build`
+
+4. Try running `./teko tests/simple.to`. If something doesn't look right, that's on us.
 
 ## Language Overview
 
@@ -745,4 +768,4 @@ I need to think more about multiple inheritance.
 
 ## Acknowledgements
 
-I want to thank [@iafisher](https://github.com/iafisher), [@Pierre-vh](https://github.com/Pierre-vh), and [@goldfirere](https://github.com/goldfirere/) for their assistance so far in thinking through the design and implementation of Teko.
+I want to thank [@iafisher](https://github.com/iafisher), [@Pierre-vh](https://github.com/Pierre-vh), [@goldfirere](https://github.com/goldfirere/), and [@lwpulsifer](https://github.com/lwpulsifer) for their assistance so far in thinking through the design and implementation of Teko.
