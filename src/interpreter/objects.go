@@ -1,66 +1,66 @@
 package interpreter
 
 type TekoObject interface {
-  getType() TekoType
-  getFieldValue(name string) TekoObject
+	getType() TekoType
+	getFieldValue(name string) TekoObject
 }
 
 type SymbolTable struct {
-  parent *SymbolTable
-  table map[string]TekoObject
+	parent *SymbolTable
+	table  map[string]TekoObject
 }
 
 func (stable *SymbolTable) get(name string) TekoObject {
-  if val, ok := stable.table[name]; ok {
-    return val
-  } else if stable.parent == nil {
-    return nil
-  } else {
-    return stable.parent.get(name)
-  }
+	if val, ok := stable.table[name]; ok {
+		return val
+	} else if stable.parent == nil {
+		return nil
+	} else {
+		return stable.parent.get(name)
+	}
 }
 
 func (stable *SymbolTable) set(name string, val TekoObject) {
-  if stable.get(name) != nil {
-    panic("Existing symbol")
-  } else {
-    stable.table[name] = val
-  }
+	if stable.get(name) != nil {
+		panic("Existing symbol")
+	} else {
+		stable.table[name] = val
+	}
 }
 
 type BasicObject struct {
-  ttype TekoType
-  symbolTable SymbolTable
+	ttype       TekoType
+	symbolTable SymbolTable
 }
 
 func (o *BasicObject) getType(name string) TekoType {
-  return o.ttype
+	return o.ttype
 }
 
 func (o *BasicObject) getFieldValue(name string) TekoObject {
-  return o.symbolTable.get(name)
+	return o.symbolTable.get(name)
 }
 
 type Integer struct {
-  value int
+	value int
 }
 
 func (n Integer) getType() TekoType {
-  return &IntType
+	return &IntType
 }
 
 func (n Integer) getFieldValue(name string) TekoObject {
-  return nil
+	return nil
 }
 
 type Boolean struct {
-  value bool
+	value bool
 }
 
 func (b Boolean) getType() TekoType {
-  return &BoolType
+	return &BoolType
 }
 
 func (b Boolean) getFieldValue(name string) TekoObject {
-  return nil
+	return nil
 }
