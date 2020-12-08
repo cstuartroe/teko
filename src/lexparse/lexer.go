@@ -404,7 +404,7 @@ func (lexer *Lexer) grabComment(nextTwoChars string) {
 
 func (lexer *Lexer) grabLineComment() {
 	lexer.CurrentTType = Comment
-	for lexer.next() != rune(0) {
+	for lexer.hasMore() {
 		lexer.advance()
 	}
 }
