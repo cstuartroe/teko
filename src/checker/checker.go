@@ -1,119 +1,119 @@
 package checker
 
 type TypeTable struct {
-  parent *TypeTable
-  table map[string]TekoType
+	parent *TypeTable
+	table  map[string]TekoType
 }
 
 func (ttable *TypeTable) get(name string) TekoType {
-  if val, ok := ttable.table[name]; ok {
-    return val
-  } else if ttable.parent == nil {
-    return nil
-  } else {
-    return ttable.parent.get(name)
-  }
+	if val, ok := ttable.table[name]; ok {
+		return val
+	} else if ttable.parent == nil {
+		return nil
+	} else {
+		return ttable.parent.get(name)
+	}
 }
 
 func (ttable *TypeTable) set(name string, val TekoType) {
-  if ttable.get(name) != nil {
-    panic("Existing type name")
-  } else {
-    ttable.table[name] = val
-  }
+	if ttable.get(name) != nil {
+		panic("Existing type name")
+	} else {
+		ttable.table[name] = val
+	}
 }
 
 var stdlibTypeTable TypeTable = TypeTable{
-  parent: nil,
-  table: map[string]TekoType{
-    "int": &IntType,
-    "bool": &BoolType,
-    "str": &StringType,
-    "char": &CharType,
-  },
+	parent: nil,
+	table: map[string]TekoType{
+		"int":  &IntType,
+		"bool": &BoolType,
+		"str":  &StringType,
+		"char": &CharType,
+	},
 }
 
 type CheckerType struct {
-  fields map[string]TekoType
-  parent *CheckerType
+	fields map[string]TekoType
+	parent *CheckerType
 }
 
 func (ctype *CheckerType) allFields() map[string]TekoType {
-  var out map[string]TekoType
+	var out map[string]TekoType
 
-  if ctype.parent == nil {
-    out = map[string]TekoType{}
-  } else {
-    out = ctype.parent.allFields()
-  }
+	if ctype.parent == nil {
+		out = map[string]TekoType{}
+	} else {
+		out = ctype.parent.allFields()
+	}
 
-  for name, ttype := range ctype.fields {
-    if _, ok := out[name]; ok {
-      panic("Field somehow got declared twice: " + name)
-    }
+	for name, ttype := range ctype.fields {
+		if _, ok := out[name]; ok {
+			panic("Field somehow got declared twice: " + name)
+		}
 
-    out[name] = ttype
-  }
+		out[name] = ttype
+	}
 
-  return out
+	return out
 }
 
 func (ctype *CheckerType) setField(name string, tekotype TekoType) {
-  if getField(ctype, name) != nil {
-    panic("Field " + name + " has already been declared")
-  }
+	if getField(ctype, name) != nil {
+		panic("Field " + name + " has already been declared")
+	}
 
-  ctype.fields[name] = tekotype
+	ctype.fields[name] = tekotype
 }
 
 var baseCheckerType CheckerType = CheckerType{
-  fields: map[string]TekoType{
-    "print": &PrintType,
-  },
-  parent: nil,
+	fields: map[string]TekoType{
+		"print": &PrintType,
+	},
+	parent: nil,
 }
 
 type Checker struct {
-  typeTable *TypeTable
-  ctype *CheckerType
+	typeTable *TypeTable
+	ctype     *CheckerType
 }
 
 var BaseChecker Checker = Checker{
-  typeTable: &stdlibTypeTable,
-  ctype: &baseCheckerType,
+	typeTable: &stdlibTypeTable,
+	ctype:     &baseCheckerType,
 }
 
 func NewChecker(parent *Checker) Checker {
-  c := Checker{
-    typeTable: &TypeTable{
-      parent: parent.typeTable,
-      table: map[string]TekoType{},
-    },
-    ctype: &CheckerType{
-      fields: map[string]TekoType{},
-      parent: parent.ctype,
-    },
-  }
+	c := Checker{
+		typeTable: &TypeTable{
+			parent: parent.typeTable,
+			table:  map[string]TekoType{},
+		},
+		ctype: &CheckerType{
+			fields: map[string]TekoType{},
+			parent: parent.ctype,
+		},
+	}
 
-  return c
+	return c
 }
 
 func (c *Checker) getType() TekoType {
-  return c.ctype
+	return c.ctype
 }
 
 func (c *Checker) GetType() TekoType {
-  return c.getType()
+	return c.getType()
 }
 
 func (c *Checker) getFieldType(name string) TekoType {
-  return getField(c.ctype, name)
+	return getField(c.ctype, name)
 }
 
 func (c *Checker) declareFieldType(name string, tekotype TekoType) {
-  c.ctype.setField(name, tekotype)
+	c.ctype.setField(name, tekotype)
 }
 
 func (c *Checker) getTypeByName(name string) TekoType {
-  return c.typeTable.get(name)
+	return c.typeTable.get(name)
 }
