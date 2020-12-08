@@ -108,7 +108,7 @@ func (lexer *Lexer) next() rune {
 	return lexer.Line.Value[lexer.Col]
 }
 
-func (lexer *Lexer) nextX(x int) []rune {
+func (lexer *Lexer) nextN(x int) []rune {
 	return lexer.Line.Value[lexer.Col : lexer.Col+x]
 }
 
@@ -117,7 +117,7 @@ func (lexer *Lexer) advance() {
 	lexer.Col++
 }
 
-func (lexer *Lexer) advanceX(x int) {
+func (lexer *Lexer) advanceN(x int) {
 	for i := 0; i < x; i++ {
 		lexer.advance()
 	}
@@ -127,16 +127,16 @@ func (lexer *Lexer) skip() {
 	lexer.Col++
 }
 
-func (lexer *Lexer) skipX(x int) {
-	lexer.Col += x
+func (lexer *Lexer) skipN(n int) {
+	lexer.Col += n
 }
 
 func (lexer *Lexer) hasMore() bool {
 	return lexer.Col < len(lexer.Line.Value)
 }
 
-func (lexer *Lexer) hasXMore(x int) bool {
-	return lexer.Col+x-1 < len(lexer.Line.Value)
+func (lexer *Lexer) hasNMore(n int) bool {
+	return lexer.Col+n-1 < len(lexer.Line.Value)
 }
 
 func (lexer *Lexer) inBlockComment() bool {
@@ -174,6 +174,8 @@ func (lexer *Lexer) grabTokens() []Token {
 }
 
 func (lexer *Lexer) grabToken() (bool, Token) {
+
+	// Only start a new token if we're not continuing with a multi-line comment/string
 	if !lexer.inBlockComment() {
 		lexer.newToken()
 	} else {
@@ -183,10 +185,10 @@ func (lexer *Lexer) grabToken() (bool, Token) {
 	}
 
 	// Check for the beginning of a comment
-	if lexer.hasXMore(2) {
-		next2 := string(lexer.nextX(2))
-		if _, ok := commentStarters[next2]; ok {
-			lexer.grabComment(next2)
+	if lexer.hasNMore(2) {
+		nextTwo := string(lexer.nextN(2))
+		if _, ok := commentStarters[nextTwo]; ok {
+			lexer.grabComment(nextTwo)
 			return !lexer.inBlockComment(), lexer.currentToken()
 		}
 	}
@@ -326,14 +328,16 @@ func (lexer *Lexer) grabString() {
 	lexer.CurrentTType = StringT
 	lexer.skip() // Skip leading double quote
 
+	value := []rune{}
 	for lexer.next() != '"' {
 		if !lexer.hasMore() {
 			lexparsePanic(lexer.Line, lexer.Col-1, 1, "Unexpected EOL while lexing string (multi-line strings aren't yet supported)")
 		}
-		lexer.advance()
+		value = append(value, lexer.grabCharacter())
 	}
 
-	lexer.skip() // Skip trailing double quote
+	lexer.skip()              // Skip trailing double quote
+	lexer.CurrentBlob = value // Shameless hack
 }
 
 func (lexer *Lexer) grabChar() {
@@ -385,9 +389,9 @@ func (lexer *Lexer) grabCharacter() rune {
 	return c
 }
 
-func (lexer *Lexer) grabComment(next2Chars string) {
-	lexer.skipX(2)
-	switch next2Chars {
+func (lexer *Lexer) grabComment(nextTwoChars string) {
+	lexer.skipN(2)
+	switch nextTwoChars {
 	case "//":
 		lexer.grabLineComment()
 	case "/*":
@@ -408,16 +412,16 @@ func (lexer *Lexer) grabLineComment() {
 func (lexer *Lexer) grabBlockComment() {
 	lexer.CurrentTType = Comment
 	for lexer.inBlockComment() && lexer.hasMore() {
-		if lexer.hasXMore(2) && string(lexer.nextX(2)) == "*/" {
+		if lexer.hasNMore(2) && string(lexer.nextN(2)) == "*/" {
 			lexer.BlockCommentLevel--
-			if lexer.BlockCommentLevel == 0 {
-				lexer.skipX(2) // Don't record the closing */ tag as part of the comment itself.
+			if !lexer.inBlockComment() {
+				lexer.skipN(2) // Don't record the closing */ tag as part of the comment itself.
 			} else {
-				lexer.advanceX(2)
+				lexer.advanceN(2)
 			}
-		} else if lexer.hasXMore(2) && string(lexer.nextX(2)) == "/*" {
+		} else if lexer.hasNMore(2) && string(lexer.nextN(2)) == "/*" {
 			lexer.BlockCommentLevel++
-			lexer.advanceX(2)
+			lexer.advanceN(2)
 		} else {
 			lexer.advance()
 		}
