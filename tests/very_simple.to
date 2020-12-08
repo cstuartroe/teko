@@ -1,7 +1,10 @@
-int n -> 3;
+int n -> 3; /* This statement is a comment /* With a nested comment */ */
 
-bool b = true;
+bool b = true; // Line Comment
 
-str s = "hello\t";
-
+str s = /* More comments! */ "hello\t";
+/*
+  Multi-line comment
+  Here is another line
+*/
 print(s);

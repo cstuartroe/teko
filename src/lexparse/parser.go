@@ -1,218 +1,227 @@
 package lexparse
 
 import (
-  "fmt"
+	"fmt"
+	"strings"
 )
 
-var simpleExprTokenTypes map[tokenType]bool = map[tokenType]bool {
-  SymbolT: true,
-  StringT: true,
-  CharT: true,
-  IntT: true,
-  FloatT: true,
-  BoolT: true,
+var simpleExprTokenTypes map[tokenType]bool = map[tokenType]bool{
+	SymbolT: true,
+	StringT: true,
+	CharT:   true,
+	IntT:    true,
+	FloatT:  true,
+	BoolT:   true,
 }
 
 func ParseFile(filename string) Codeblock {
-  p := Parser{}
-  p.LexFile(filename)
+	p := Parser{}
+	p.LexFile(filename)
+	c := Codeblock{}
+	for p.HasMore() {
+		c.statements = append(
+			c.statements,
+			p.GrabStatement(),
+		)
+	}
 
-  c := Codeblock{}
-  for p.HasMore() {
-    c.statements = append(
-      c.statements,
-      p.GrabStatement(),
-    )
-  }
-
-  return c
+	return c
 }
 
 type Parser struct {
-  tokens []Token
-  position int
+	tokens   []Token
+	position int
 }
 
 func (parser *Parser) LexFile(filename string) {
-  parser.tokens = LexFile(filename)
+	parser.tokens = LexFile(filename)
 }
 
 func (parser *Parser) currentToken() *Token {
-  if parser.HasMore() {
-    return &(parser.tokens[parser.position])
-  } else {
-    t := parser.tokens[parser.position-1]
-    lexparsePanic(t.Line, t.Col + len(t.Value), 1, "Unexpected EOF")
-    return nil
-  }
+	if parser.HasMore() {
+		return &(parser.tokens[parser.position])
+	} else {
+		t := parser.tokens[parser.position-1]
+		lexparsePanic(t.Line, t.Col+len(t.Value), 1, "Unexpected EOF")
+		return nil
+	}
 }
 
 func (parser *Parser) Advance() {
-  parser.position++
+	parser.position++
 }
 
 func (parser *Parser) HasMore() bool {
-  return parser.position < len(parser.tokens)
+	return parser.position < len(parser.tokens)
 }
 
 func (parser *Parser) Expect(ttype tokenType) {
-  if parser.currentToken().TType != ttype {
-    TokenPanic(*parser.currentToken(), fmt.Sprintf("Expected %s", ttype))
-  }
+	if parser.currentToken().TType != ttype {
+		TokenPanic(*parser.currentToken(), fmt.Sprintf("Expected %s", ttype))
+	}
 }
 
 // I'm attempting to make the teko parser without needing lookahead
 // We'll see how sustainable that is
 
 func (parser *Parser) GrabStatement() Statement {
-  stmt := parser.grabExpressionStmt()
-  parser.Expect(SemicolonT); parser.Advance()
-  return stmt
+	stmt := parser.grabExpressionStmt()
+	parser.Expect(SemicolonT)
+	parser.Advance()
+	return stmt
 }
 
 func (parser *Parser) grabExpressionStmt() ExpressionStatement {
-  return ExpressionStatement{
-    Expression: parser.grabExpression(min_prec),
-  }
+	return ExpressionStatement{
+		Expression: parser.grabExpression(min_prec),
+	}
 }
 
 type precedence int
 
 const (
-  min_prec precedence = iota
-  setter_prec
-  add_sub_prec
-  mult_div_prec
-  exp_prec
-  max_prec
+	min_prec precedence = iota
+	setter_prec
+	add_sub_prec
+	mult_div_prec
+	exp_prec
+	max_prec
 )
 
 func (parser *Parser) grabExpression(prec precedence) Expression {
-  // TODO: prefixes
-  expr := parser.grabSimpleExpression()
+	// TODO: prefixes
+	expr := parser.grabSimpleExpression()
 
-  return parser.continueExpression(expr, prec)
+	return parser.continueExpression(expr, prec)
 }
 
 func (parser *Parser) grabSimpleExpression() SimpleExpression {
-  t := parser.currentToken()
-  if _, ok := simpleExprTokenTypes[t.TType]; ok {
-    n := SimpleExpression{token: *t}
-    parser.Advance()
-    return n
-  } else {
-    TokenPanic(*parser.currentToken(), "Illegal start to simple expression")
-    return SimpleExpression{} // unreachable code that the compiler requires
-  }
+	t := parser.currentToken()
+	if _, ok := simpleExprTokenTypes[t.TType]; ok {
+		n := SimpleExpression{token: *t}
+		parser.Advance()
+		return n
+	} else if t.TType == Comment {
+		parser.Advance()
+		if parser.HasMore() {
+			return parser.grabSimpleExpression()
+		}
+		lexparsePanic(t.Line, t.Col, 1, "Can't currently end file with comment.")
+		return SimpleExpression{}
+	} else {
+		TokenPanic(*parser.currentToken(), strings.Join([]string{"Illegal start to simple expression ", string(parser.currentToken().TType)}, " "))
+		return SimpleExpression{} // unreachable code that the compiler requires
+	}
 }
 
 func (parser *Parser) continueExpression(expr Expression, prec precedence) Expression {
-  if parser.currentToken().TType == SymbolT && prec <= min_prec {
-    return DeclarationExpression{
-      Tekotype: expr,
-      Declareds: parser.grabDeclaredChain(),
-    }
-  } else if parser.currentToken().TType == LParT {
-    return parser.continueExpression(
-      parser.makeCallExpression(expr),
-      prec,
-    )
-  }
+	if parser.currentToken().TType == SymbolT && prec <= min_prec {
+		return DeclarationExpression{
+			Tekotype:  expr,
+			Declareds: parser.grabDeclaredChain(),
+		}
+	} else if parser.currentToken().TType == LParT {
+		return parser.continueExpression(
+			parser.makeCallExpression(expr),
+			prec,
+		)
+	}
 
-  return expr
+	return expr
 }
 
 func (parser *Parser) grabDeclaredChain() []Declared {
-  chain := []Declared{
-    parser.grabDeclared(),
-  }
+	chain := []Declared{
+		parser.grabDeclared(),
+	}
 
-  cont := true
-  for cont && parser.HasMore() && parser.currentToken().TType == CommaT {
-    parser.Advance()
-    if parser.HasMore() && parser.currentToken().TType == SymbolT {
-      chain = append(chain, parser.grabDeclared())
-    } else {
-      cont = false
-    }
-  }
+	cont := true
+	for cont && parser.HasMore() && parser.currentToken().TType == CommaT {
+		parser.Advance()
+		if parser.HasMore() && parser.currentToken().TType == SymbolT {
+			chain = append(chain, parser.grabDeclared())
+		} else {
+			cont = false
+		}
+	}
 
-  return chain
+	return chain
 }
 
 func (parser *Parser) grabDeclared() Declared {
-  parser.Expect(SymbolT)
-  symbol := parser.currentToken()
-  parser.Advance()
+	parser.Expect(SymbolT)
+	symbol := parser.currentToken()
+	parser.Advance()
 
-  // TODO: function argdef
+	// TODO: function argdef
 
-  parser.Expect(SetterT);
-  setter := parser.currentToken()
-  parser.Advance()
+	parser.Expect(SetterT)
+	setter := parser.currentToken()
+	parser.Advance()
 
-  right := parser.grabExpression(min_prec)
+	right := parser.grabExpression(min_prec)
 
-  return Declared{
-    Symbol: *symbol,
-    Setter: *setter,
-    Right: right,
-  }
+	return Declared{
+		Symbol: *symbol,
+		Setter: *setter,
+		Right:  right,
+	}
 }
 
 func (parser *Parser) makeCallExpression(receiver Expression) CallExpression {
-  parser.Expect(LParT)
-  parser.Advance()
+	parser.Expect(LParT)
+	parser.Advance()
 
-  args := []Expression{}
-  kwargs := []FunctionKwarg{}
-  on_kwargs := false
-  cont := true
+	args := []Expression{}
+	kwargs := []FunctionKwarg{}
+	on_kwargs := false
+	cont := true
 
-  for cont {
-    arg := parser.grabExpression(add_sub_prec) // don't want it continuing past a setter!
+	for cont {
+		arg := parser.grabExpression(add_sub_prec) // don't want it continuing past a setter!
 
-    if parser.currentToken().TType == SetterT {
-      if string(parser.currentToken().Value) != "=" {
-        TokenPanic(*parser.currentToken(), "Keyword argument must use =")
-      }
-      switch p := arg.(type) {
-      case SimpleExpression:
-        if p.token.TType != SymbolT {
-          TokenPanic(p.token, "Left-hand side of keyword argument cannot be a value")
-        }
-      default:
-        TokenPanic(p.Token(), "Left-hand side of keyword argument cannot be a value")
-      }
+		if parser.currentToken().TType == SetterT {
+			if string(parser.currentToken().Value) != "=" {
+				TokenPanic(*parser.currentToken(), "Keyword argument must use =")
+			}
+			switch p := arg.(type) {
+			case SimpleExpression:
+				if p.token.TType != SymbolT {
+					TokenPanic(p.token, "Left-hand side of keyword argument cannot be a value")
+				}
+			default:
+				TokenPanic(p.Token(), "Left-hand side of keyword argument cannot be a value")
+			}
 
-      parser.Advance()
-      on_kwargs = true
+			parser.Advance()
+			on_kwargs = true
 
-      kwargs = append(kwargs, FunctionKwarg{
-        Symbol: arg.Token(),
-        Value: parser.grabExpression(add_sub_prec),
-      })
-    } else {
-      if on_kwargs {
-        TokenPanic(*parser.currentToken(), "All positional arguments must be before all keyword arguments")
-      }
+			kwargs = append(kwargs, FunctionKwarg{
+				Symbol: arg.Token(),
+				Value:  parser.grabExpression(add_sub_prec),
+			})
+		} else {
+			if on_kwargs {
+				TokenPanic(*parser.currentToken(), "All positional arguments must be before all keyword arguments")
+			}
 
-      args = append(args, arg)
-    }
+			args = append(args, arg)
+		}
 
-    if parser.currentToken().TType == CommaT {
-      parser.Advance()
-      cont = (parser.currentToken().TType != RParT)
-    } else {
-      cont = false
-    }
-  }
+		if parser.currentToken().TType == CommaT {
+			parser.Advance()
+			cont = (parser.currentToken().TType != RParT)
+		} else {
+			cont = false
+		}
+	}
 
-  parser.Expect(RParT); parser.Advance()
+	parser.Expect(RParT)
+	parser.Advance()
 
-  return CallExpression{
-    Receiver: receiver,
-    Args: args,
-    Kwargs: kwargs,
-  }
+	return CallExpression{
+		Receiver: receiver,
+		Args:     args,
+		Kwargs:   kwargs,
+	}
 }
