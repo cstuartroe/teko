@@ -66,10 +66,12 @@ func (ctype *CheckerType) setField(name string, tekotype TekoType) {
 	ctype.fields[name] = tekotype
 }
 
+var BaseCheckerTypeFields map[string]TekoType = map[string]TekoType{
+	"print": &PrintType,
+}
+
 var baseCheckerType CheckerType = CheckerType{
-	fields: map[string]TekoType{
-		"print": &PrintType,
-	},
+	fields: BaseCheckerTypeFields,
 	parent: nil,
 }
 

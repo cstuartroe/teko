@@ -2,6 +2,8 @@ int n -> 3;
 
 bool b = true;
 
-str s = "hello\t";
+str s = "hello\n";
 
-print(s);
+str s2 = s;
+
+print(s2);

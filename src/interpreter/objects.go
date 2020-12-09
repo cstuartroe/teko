@@ -1,13 +1,19 @@
 package interpreter
 
 type TekoObject interface {
-	getType() TekoType
 	getFieldValue(name string) TekoObject
 }
 
 type SymbolTable struct {
 	parent *SymbolTable
 	table  map[string]TekoObject
+}
+
+func newSymbolTable(parent *SymbolTable) SymbolTable {
+	return SymbolTable{
+		parent: parent,
+		table:  map[string]TekoObject{},
+	}
 }
 
 func (stable *SymbolTable) get(name string) TekoObject {
@@ -29,12 +35,7 @@ func (stable *SymbolTable) set(name string, val TekoObject) {
 }
 
 type BasicObject struct {
-	ttype       TekoType
 	symbolTable SymbolTable
-}
-
-func (o *BasicObject) getType(name string) TekoType {
-	return o.ttype
 }
 
 func (o *BasicObject) getFieldValue(name string) TekoObject {
@@ -42,11 +43,7 @@ func (o *BasicObject) getFieldValue(name string) TekoObject {
 }
 
 type Integer struct {
-	value int
-}
-
-func (n Integer) getType() TekoType {
-	return &IntType
+	value int // TODO: arbitrary-precision integer
 }
 
 func (n Integer) getFieldValue(name string) TekoObject {
@@ -57,10 +54,14 @@ type Boolean struct {
 	value bool
 }
 
-func (b Boolean) getType() TekoType {
-	return &BoolType
+func (b Boolean) getFieldValue(name string) TekoObject {
+	return nil
 }
 
-func (b Boolean) getFieldValue(name string) TekoObject {
+type String struct {
+	value []rune
+}
+
+func (s String) getFieldValue(name string) TekoObject {
 	return nil
 }

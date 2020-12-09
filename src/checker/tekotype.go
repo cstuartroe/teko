@@ -29,22 +29,6 @@ func (ttype *BasicType) setField(name string, tekotype TekoType) {
 	ttype.fields[name] = tekotype
 }
 
-type FunctionArgDef struct {
-	name    string
-	mutable bool
-	byref   bool
-	ttype   TekoType
-}
-
-type FunctionType struct {
-	rtype   TekoType
-	argdefs []FunctionArgDef
-}
-
-func (ttype FunctionType) allFields() map[string]TekoType {
-	return map[string]TekoType{}
-}
-
 // type checking
 
 func isTekoSubtype(sub TekoType, sup TekoType) bool {

@@ -1,7 +1,6 @@
 package checker
 
 import (
-	"fmt"
 	"github.com/cstuartroe/teko/src/lexparse"
 )
 
@@ -25,7 +24,8 @@ func (c *Checker) checkExpression(expr lexparse.Expression) TekoType {
 	case lexparse.DeclarationExpression:
 		return c.checkDeclaration(p)
 	case lexparse.CallExpression:
-		return c.checkCallExpression(p)
+		out := c.checkCallExpression(p)
+		return out
 	default:
 		panic("Unknown expression type")
 	}
@@ -104,53 +104,12 @@ func (c *Checker) declare(declared lexparse.Declared, tekotype TekoType) TekoTyp
 	return tekotype
 }
 
-func getArgTypeByName(argdefs []FunctionArgDef, name string) TekoType {
-	for _, argdef := range argdefs {
-		if argdef.name == name {
-			return argdef.ttype
-		}
-	}
-	return nil
-}
-
 func (c *Checker) checkCallExpression(expr lexparse.CallExpression) TekoType {
 	receiver_tekotype := c.checkExpression(expr.Receiver)
 
 	switch ftype := receiver_tekotype.(type) {
 	case *FunctionType:
-		args_by_name := map[string]lexparse.Expression{}
-
-		if len(expr.Args) > len(ftype.argdefs) {
-			lexparse.TokenPanic(
-				expr.Args[len(ftype.argdefs)].Token(),
-				fmt.Sprintf("Too many arguments (%d expected, %d given)", len(ftype.argdefs), len(expr.Args)),
-			)
-		}
-
-		for i, arg := range expr.Args {
-			args_by_name[ftype.argdefs[i].name] = arg
-		}
-
-		for _, kwarg := range expr.Kwargs {
-			name := string(kwarg.Symbol.Value)
-
-			if _, ok := args_by_name[name]; ok {
-				lexparse.TokenPanic(
-					kwarg.Token(),
-					fmt.Sprintf("Argument already passed: %s", name),
-				)
-			}
-
-			argtype := getArgTypeByName(ftype.argdefs, name)
-			if argtype != nil {
-				args_by_name[name] = kwarg.Value
-			} else {
-				lexparse.TokenPanic(
-					kwarg.Symbol,
-					fmt.Sprintf("Function doesn't take argument %s", name),
-				)
-			}
-		}
+		args_by_name := ResolveArgs(ftype.argdefs, expr)
 
 		for _, argdef := range ftype.argdefs {
 			arg, ok := args_by_name[argdef.name]

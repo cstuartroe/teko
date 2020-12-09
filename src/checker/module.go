@@ -9,25 +9,15 @@ type TypeModule struct {
 	checker   Checker
 }
 
-var LoadedFiles map[string]*TypeModule = map[string]*TypeModule{}
+func CheckTree(codeblock lexparse.Codeblock) TypeModule {
+	main_checker := NewChecker(&BaseChecker)
 
-func LoadFile(filename string) *TypeModule {
-	if _, ok := LoadedFiles[filename]; !ok {
-		main_codeblock := lexparse.ParseFile(filename)
-		main_checker := NewChecker(&BaseChecker)
-
-		for _, stmt := range main_codeblock.GetStatements() {
-			lexparse.PrintNode(stmt)
-			main_checker.checkStatement(stmt)
-		}
-
-		main_module := TypeModule{
-			codeblock: main_codeblock,
-			checker:   main_checker,
-		}
-
-		LoadedFiles[filename] = &main_module
+	for _, stmt := range codeblock.GetStatements() {
+		main_checker.checkStatement(stmt)
 	}
 
-	return LoadedFiles[filename]
+	return TypeModule{
+		codeblock: codeblock,
+		checker:   main_checker,
+	}
 }
