@@ -6,7 +6,7 @@ import (
 )
 
 type Node interface {
-	ntype() string
+	Ntype() string
 	children() []Node
 	Token() Token
 	child_strings(indent int) []string
@@ -14,7 +14,7 @@ type Node interface {
 
 func node_to_str(node Node, indent int) string {
 	space := strings.Repeat(" ", indent*INDENT_AMOUNT)
-	out := fmt.Sprintf("%s%s\n", space, node.ntype())
+	out := fmt.Sprintf("%s%s\n", space, node.Ntype())
 	for _, s := range node.child_strings(indent + 1) {
 		out += s
 	}
@@ -41,7 +41,7 @@ type Codeblock struct {
 	statements []Statement
 }
 
-func (c *Codeblock) ntype() string {
+func (c *Codeblock) Ntype() string {
 	return "Codeblock"
 }
 
@@ -75,7 +75,7 @@ type ExpressionStatement struct {
 	Expression Expression
 }
 
-func (s ExpressionStatement) ntype() string {
+func (s ExpressionStatement) Ntype() string {
 	return "ExpressionStatement"
 }
 
@@ -101,7 +101,7 @@ type SimpleExpression struct {
 	token Token
 }
 
-func (e SimpleExpression) ntype() string {
+func (e SimpleExpression) Ntype() string {
 	return "SimpleExpression"
 }
 
@@ -128,7 +128,7 @@ type DeclarationExpression struct {
 	Declareds []Declared
 }
 
-func (e DeclarationExpression) ntype() string {
+func (e DeclarationExpression) Ntype() string {
 	return "DeclarationExpression"
 }
 
@@ -164,7 +164,7 @@ type Declared struct {
 	Right  Expression
 }
 
-func (d Declared) ntype() string {
+func (d Declared) Ntype() string {
 	return "Declared"
 }
 
@@ -187,13 +187,12 @@ func (d Declared) Token() Token {
 //---
 
 type CallExpression struct {
-	Receiver     Expression
-	Args         []Expression
-	Kwargs       []FunctionKwarg
-	ResolvedArgs map[string]Expression
+	Receiver Expression
+	Args     []Expression
+	Kwargs   []FunctionKwarg
 }
 
-func (e CallExpression) ntype() string {
+func (e CallExpression) Ntype() string {
 	return "CallExpression"
 }
 
@@ -229,7 +228,7 @@ type FunctionKwarg struct {
 	Value  Expression
 }
 
-func (k FunctionKwarg) ntype() string {
+func (k FunctionKwarg) Ntype() string {
 	return "FunctionKwarg"
 }
 
@@ -256,7 +255,7 @@ type BinopExpression struct {
 	Right     Expression
 }
 
-func (e BinopExpression) ntype() string {
+func (e BinopExpression) Ntype() string {
 	return "BinopExpression"
 }
 
@@ -277,3 +276,31 @@ func (e BinopExpression) Token() Token {
 }
 
 func (e BinopExpression) expressionNode() {}
+
+//---
+
+type AttributeExpression struct {
+	Left   Expression
+	Symbol Token
+}
+
+func (e AttributeExpression) Ntype() string {
+	return "AttributeExpression"
+}
+
+func (e AttributeExpression) children() []Node {
+	return []Node{e.Left}
+}
+
+func (e AttributeExpression) child_strings(indent int) []string {
+	return []string{
+		node_to_str(e.Left, indent),
+		e.Symbol.to_indented_str(indent),
+	}
+}
+
+func (e AttributeExpression) Token() Token {
+	return e.Symbol
+}
+
+func (e AttributeExpression) expressionNode() {}

@@ -17,7 +17,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	main_codeblock := lexparse.ParseFile(os.Args[1])
+	main_codeblock := lexparse.ParseFile(os.Args[1], true)
 
 	// for _, stmt := range main_codeblock.GetStatements() {
 	// 	lexparse.PrintNode(stmt)

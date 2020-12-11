@@ -13,8 +13,8 @@ var simpleExprTokenTypes map[tokenType]bool = map[tokenType]bool{
 	BoolT:   true,
 }
 
-func ParseFile(filename string) Codeblock {
-	p := Parser{}
+func ParseFile(filename string, transform bool) Codeblock {
+	p := Parser{transform: transform}
 	p.LexFile(filename)
 
 	c := Codeblock{}
@@ -29,8 +29,9 @@ func ParseFile(filename string) Codeblock {
 }
 
 type Parser struct {
-	tokens   []Token
-	position int
+	tokens    []Token
+	position  int
+	transform bool
 }
 
 func (parser *Parser) LexFile(filename string) {
@@ -119,10 +120,28 @@ func (parser *Parser) continueExpression(expr Expression, prec int) Expression {
 		if prec <= op_prec {
 			op := *parser.currentToken()
 			parser.Advance()
-			out = BinopExpression{
-				Left:      expr,
-				Operation: op,
-				Right:     parser.grabExpression(op_prec + 1),
+			right := parser.grabExpression(op_prec + 1)
+
+			if parser.transform {
+				out = CallExpression{
+					Receiver: AttributeExpression{
+						Left: expr,
+						Symbol: Token{
+							Line:  op.Line,
+							Col:   op.Col,
+							TType: SymbolT,
+							Value: []rune(binops[value]),
+						},
+					},
+					Args: []Expression{right},
+				}
+
+			} else {
+				out = BinopExpression{
+					Left:      expr,
+					Operation: op,
+					Right:     right,
+				}
 			}
 		}
 	}

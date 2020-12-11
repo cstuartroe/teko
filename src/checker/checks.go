@@ -27,7 +27,8 @@ func (c *Checker) checkExpression(expr lexparse.Expression) TekoType {
 		out := c.checkCallExpression(p)
 		return out
 	default:
-		panic("Unknown expression type")
+		lexparse.TokenPanic(expr.Token(), "Unknown expression type: " + expr.Ntype())
+		return nil
 	}
 }
 
