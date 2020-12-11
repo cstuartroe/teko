@@ -12,16 +12,18 @@ func main() {
 	interpreter.VerifyStdlibDeclarations()
 	checker.SetupFunctionTypes()
 
-	if len(os.Args) != 2 {
+	if len(os.Args) < 2 {
 		fmt.Println("Please supply exactly one argument, the filename")
 		os.Exit(1)
 	}
 
 	main_codeblock := lexparse.ParseFile(os.Args[1], true)
 
-	// for _, stmt := range main_codeblock.GetStatements() {
-	// 	lexparse.PrintNode(stmt)
-	// }
+	if len(os.Args) >= 3 && os.Args[2] == "-p" {
+		for _, stmt := range main_codeblock.GetStatements() {
+			lexparse.PrintNode(stmt)
+		}
+	}
 
 	checker.CheckTree(main_codeblock)
 	interpreter.ExecuteTree(main_codeblock)

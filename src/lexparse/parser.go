@@ -79,8 +79,14 @@ func (parser *Parser) grabExpressionStmt() ExpressionStatement {
 }
 
 func (parser *Parser) grabExpression(prec int) Expression {
-	// TODO: prefixes
-	expr := parser.grabSimpleExpression()
+	var expr Expression
+
+	switch parser.currentToken().TType {
+	case LParT:
+		expr = parser.grabTuple()
+	default:
+		expr = parser.grabSimpleExpression()
+	}
 
 	return parser.continueExpression(expr, prec)
 }
@@ -246,5 +252,44 @@ func (parser *Parser) makeCallExpression(receiver Expression) CallExpression {
 		Receiver: receiver,
 		Args:     args,
 		Kwargs:   kwargs,
+	}
+}
+
+func (parser *Parser) grabSequence(closingType tokenType) []Expression {
+	seq := []Expression{}
+
+	for parser.currentToken().TType != closingType {
+		seq = append(seq, parser.grabExpression(min_prec))
+
+		if parser.currentToken().TType == CommaT {
+			parser.Advance()
+		} else {
+			break
+		}
+	}
+
+	parser.Expect(closingType)
+	parser.Advance()
+
+	return seq
+}
+
+func (parser *Parser) grabTuple() Expression {
+	parser.Expect(LParT)
+	lpar := *parser.currentToken()
+	parser.Advance()
+
+	seq := parser.grabSequence(RParT)
+	switch len(seq) {
+	case 0:
+		TokenPanic(lpar, "Cannot have empty tuple")
+		return nil
+	case 1:
+		return seq[0]
+	default:
+		return TupleExpression{
+			Elements: seq,
+			LPar:     lpar,
+		}
 	}
 }

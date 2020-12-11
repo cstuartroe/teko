@@ -304,3 +304,36 @@ func (e AttributeExpression) Token() Token {
 }
 
 func (e AttributeExpression) expressionNode() {}
+
+//---
+
+type TupleExpression struct {
+	Elements []Expression
+	LPar     Token
+}
+
+func (e TupleExpression) Ntype() string {
+	return "TupleExpression"
+}
+
+func (e TupleExpression) children() []Node {
+	out := []Node{}
+	for _, expr := range e.Elements {
+		out = append(out, expr)
+	}
+	return out
+}
+
+func (e TupleExpression) child_strings(indent int) []string {
+	out := []string{}
+	for _, expr := range e.Elements {
+		out = append(out, node_to_str(expr, indent))
+	}
+	return out
+}
+
+func (e TupleExpression) Token() Token {
+	return e.LPar
+}
+
+func (e TupleExpression) expressionNode() {}
