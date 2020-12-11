@@ -48,7 +48,7 @@ func (m InterpreterModule) evaluateExpression(expr lexparse.Expression) TekoObje
 	case lexparse.CallExpression:
 		return m.evaluateFunctionCall(p)
 	default:
-		lexparse.TokenPanic(expr.Token(), "Expression type not implemented")
+		lexparse.TokenPanic(expr.Token(), "Intepretation of expression type not implemented: " + expr.Ntype())
 		return nil
 	}
 }

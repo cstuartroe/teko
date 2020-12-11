@@ -19,13 +19,19 @@ func (c *Checker) checkExpressionStatement(stmt lexparse.ExpressionStatement) {
 
 func (c *Checker) checkExpression(expr lexparse.Expression) TekoType {
 	switch p := expr.(type) {
+
 	case lexparse.SimpleExpression:
 		return c.checkSimpleExpression(p)
+
 	case lexparse.DeclarationExpression:
 		return c.checkDeclaration(p)
+
 	case lexparse.CallExpression:
-		out := c.checkCallExpression(p)
-		return out
+		return c.checkCallExpression(p)
+
+	case lexparse.AttributeExpression:
+		return c.checkAttributeExpression(p)
+
 	default:
 		lexparse.TokenPanic(expr.Token(), "Unknown expression type: " + expr.Ntype())
 		return nil
@@ -133,6 +139,18 @@ func (c *Checker) checkCallExpression(expr lexparse.CallExpression) TekoType {
 
 	default:
 		lexparse.TokenPanic(expr.Token(), "Expression does not have a function type")
+		return nil
+	}
+}
+
+func (c *Checker) checkAttributeExpression(expr lexparse.AttributeExpression) TekoType {
+	left_tekotype := c.checkExpression(expr.Left)
+
+	tekotype := getField(left_tekotype, string(expr.Symbol.Value))
+	if tekotype != nil {
+		return tekotype
+	} else {
+		lexparse.TokenPanic(expr.Symbol, "No such field: " + string(expr.Symbol.Value))
 		return nil
 	}
 }
