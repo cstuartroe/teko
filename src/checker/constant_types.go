@@ -1,13 +1,16 @@
 package checker
 
+var ToStrType FunctionType
+
 var IntType BasicType = BasicType{
 	fields: map[string]TekoType{
-		"add":  &IntBinopType,
-		"sub":  &IntBinopType,
-		"mult": &IntBinopType,
-		"div":  &IntBinopType,
-		"exp":  &IntBinopType,
-		"mod":  &IntBinopType,
+		"add":    &IntBinopType,
+		"sub":    &IntBinopType,
+		"mult":   &IntBinopType,
+		"div":    &IntBinopType,
+		"exp":    &IntBinopType,
+		"mod":    &IntBinopType,
+		"to_str": &ToStrType,
 	},
 }
 
@@ -81,4 +84,7 @@ func SetupFunctionTypes() {
 			ttype: &BoolType,
 		},
 	}
+
+	ToStrType.rtype = &StringType
+	ToStrType.argdefs = []FunctionArgDef{}
 }

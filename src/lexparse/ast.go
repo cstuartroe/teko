@@ -337,3 +337,31 @@ func (e TupleExpression) Token() Token {
 }
 
 func (e TupleExpression) expressionNode() {}
+
+//--
+
+type SuffixExpression struct {
+	Left   Expression
+	Suffix Token
+}
+
+func (e SuffixExpression) Ntype() string {
+	return "SuffixExpression"
+}
+
+func (e SuffixExpression) children() []Node {
+	return []Node{e.Left}
+}
+
+func (e SuffixExpression) child_strings(indent int) []string {
+	return []string{
+		node_to_str(e.Left, indent),
+		e.Suffix.to_indented_str(indent),
+	}
+}
+
+func (e SuffixExpression) Token() Token {
+	return e.Suffix
+}
+
+func (e SuffixExpression) expressionNode() {}

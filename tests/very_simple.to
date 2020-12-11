@@ -10,4 +10,4 @@ print(s2);
 
 int num = 1 + 2 * 3 / 4 - 5 ^ 6 * 7;
 
-(5,"foo");
+print(num$);

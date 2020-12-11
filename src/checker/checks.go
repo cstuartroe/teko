@@ -33,7 +33,7 @@ func (c *Checker) checkExpression(expr lexparse.Expression) TekoType {
 		return c.checkAttributeExpression(p)
 
 	default:
-		lexparse.TokenPanic(expr.Token(), "Unknown expression type: " + expr.Ntype())
+		lexparse.TokenPanic(expr.Token(), "Unknown expression type: "+expr.Ntype())
 		return nil
 	}
 }
@@ -150,7 +150,7 @@ func (c *Checker) checkAttributeExpression(expr lexparse.AttributeExpression) Te
 	if tekotype != nil {
 		return tekotype
 	} else {
-		lexparse.TokenPanic(expr.Symbol, "No such field: " + string(expr.Symbol.Value))
+		lexparse.TokenPanic(expr.Symbol, "No such field: "+string(expr.Symbol.Value))
 		return nil
 	}
 }

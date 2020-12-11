@@ -150,6 +150,28 @@ func (parser *Parser) continueExpression(expr Expression, prec int) Expression {
 				}
 			}
 		}
+	case SuffixT:
+		suffix := *parser.currentToken()
+		parser.Advance()
+
+		if parser.transform {
+			out = CallExpression{
+				Receiver: AttributeExpression{
+					Left: expr,
+					Symbol: Token{
+						Line:  suffix.Line,
+						Col:   suffix.Col,
+						TType: SymbolT,
+						Value: []rune(suffixes[value]),
+					},
+				},
+			}
+		} else {
+			out = SuffixExpression{
+				Left:   expr,
+				Suffix: suffix,
+			}
+		}
 	}
 
 	if out != nil {

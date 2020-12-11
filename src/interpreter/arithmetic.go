@@ -4,6 +4,7 @@ import (
 	"github.com/cstuartroe/teko/src/checker"
 	"github.com/cstuartroe/teko/src/lexparse"
 	"math"
+	"strconv"
 )
 
 var INT_CACHE map[int]Integer = map[int]Integer{}
@@ -56,14 +57,41 @@ var intOps map[string]intOpType = map[string]intOpType{
 	"exp":  func(n1 int, n2 int) int { return int(math.Pow(float64(n1), float64(n2))) },
 }
 
+func IntToStrExecutor(receiverValue int) executorType {
+	return func(function TekoFunction, evaluatedArgs map[string]TekoObject) TekoObject {
+		return String{
+			value: []rune(strconv.Itoa(receiverValue)),
+		}
+	}
+}
+
+func IntToStr(receiverValue int) TekoFunction {
+	return TekoFunction{
+		context:  blankInterpreter,
+		body:     lexparse.Codeblock{},
+		ftype:    checker.ToStrType,
+		executor: IntToStrExecutor(receiverValue),
+	}
+}
+
+func set_and_return(n Integer, name string, f TekoFunction) TekoFunction {
+	n.symbolTable.set(name, f)
+	return f
+}
+
 func (n Integer) getFieldValue(name string) TekoObject {
 	if attr := n.symbolTable.get(name); attr != nil {
 		return attr
 	} else if op, ok := intOps[name]; ok {
-		f := IntBinop(n.value, op)
-		n.symbolTable.set(name, f)
-		return f
-	} else {
+		return set_and_return(n, name, IntBinop(n.value, op))
+	}
+
+	switch name {
+
+	case "to_str":
+		return set_and_return(n, name, IntToStr(n.value))
+
+	default:
 		panic("Operation not implemented: " + name)
 	}
 }
