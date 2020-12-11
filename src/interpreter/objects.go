@@ -43,11 +43,8 @@ func (o *BasicObject) getFieldValue(name string) TekoObject {
 }
 
 type Integer struct {
-	value int // TODO: arbitrary-precision integer
-}
-
-func (n Integer) getFieldValue(name string) TekoObject {
-	return nil
+	value       int // TODO: arbitrary-precision integer
+	symbolTable SymbolTable
 }
 
 type Boolean struct {

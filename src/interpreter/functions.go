@@ -5,14 +5,13 @@ import (
 	"github.com/cstuartroe/teko/src/lexparse"
 )
 
+type executorType func(function TekoFunction, evaluatedArgs map[string]TekoObject) TekoObject
+
 type TekoFunction struct {
 	context  InterpreterModule
 	body     lexparse.Codeblock
 	ftype    checker.FunctionType
-	executor func(
-		function TekoFunction,
-		evaluatedArgs map[string]TekoObject,
-	) TekoObject
+	executor executorType
 }
 
 func (f TekoFunction) getFieldValue(name string) TekoObject { return nil }

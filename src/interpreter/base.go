@@ -31,7 +31,7 @@ var TekoPrint TekoFunction = TekoFunction{
 }
 
 var BaseInterpreterFieldValues map[string]TekoObject = map[string]TekoObject{
-	"print": &TekoPrint,
+	"print": TekoPrint,
 }
 
 var BaseSymbolTable SymbolTable = SymbolTable{

@@ -41,14 +41,21 @@ func (m InterpreterModule) executeStatement(stmt lexparse.Statement) {
 
 func (m InterpreterModule) evaluateExpression(expr lexparse.Expression) TekoObject {
 	switch p := expr.(type) {
+
 	case lexparse.SimpleExpression:
 		return m.evaluateSimpleExpression(p)
+
 	case lexparse.DeclarationExpression:
 		return m.evaluateDeclaration(p)
+
 	case lexparse.CallExpression:
 		return m.evaluateFunctionCall(p)
+
+	case lexparse.AttributeExpression:
+		return m.evaluateAttributeExpression(p)
+
 	default:
-		lexparse.TokenPanic(expr.Token(), "Intepretation of expression type not implemented: " + expr.Ntype())
+		lexparse.TokenPanic(expr.Token(), "Intepretation of expression type not implemented: "+expr.Ntype())
 		return nil
 	}
 }
@@ -75,7 +82,7 @@ func (m InterpreterModule) evaluateSimpleExpression(expr lexparse.SimpleExpressi
 	case lexparse.IntT:
 		n, ok := strconv.Atoi(string(value))
 		if ok == nil {
-			return Integer{n}
+			return getInteger(n)
 		} else {
 			lexparse.TokenPanic(expr.Token(), "Invalid integer - how did this make it past the lexer?")
 		}
@@ -100,9 +107,10 @@ func (m InterpreterModule) evaluateSimpleExpression(expr lexparse.SimpleExpressi
 func (m InterpreterModule) evaluateFunctionCall(call lexparse.CallExpression) TekoObject {
 	receiver := m.evaluateExpression(call.Receiver)
 	switch p := receiver.(type) {
-	case *TekoFunction:
+	case TekoFunction:
 		resolved_args := checker.ResolveArgs(p.ftype.GetArgdefs(), call)
 		return p.execute(m, resolved_args)
+
 	default:
 		lexparse.TokenPanic(call.Token(), "Non-function was the receiver of a call. Where was the type checker??")
 		return nil
@@ -116,4 +124,9 @@ func (m InterpreterModule) evaluateDeclaration(decl lexparse.DeclarationExpressi
 	}
 
 	return nil // TODO: tuple?
+}
+
+func (m InterpreterModule) evaluateAttributeExpression(expr lexparse.AttributeExpression) TekoObject {
+	left := m.evaluateExpression(expr.Left)
+	return left.getFieldValue(string(expr.Symbol.Value))
 }
