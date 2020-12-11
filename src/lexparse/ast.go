@@ -247,3 +247,33 @@ func (k FunctionKwarg) child_strings(indent int) []string {
 func (k FunctionKwarg) Token() Token {
 	return k.Symbol
 }
+
+//---
+
+type BinopExpression struct {
+	Left      Expression
+	Operation Token
+	Right     Expression
+}
+
+func (e BinopExpression) ntype() string {
+	return "BinopExpression"
+}
+
+func (e BinopExpression) children() []Node {
+	return []Node{e.Left, e.Right}
+}
+
+func (e BinopExpression) child_strings(indent int) []string {
+	return []string{
+		node_to_str(e.Left, indent),
+		e.Operation.to_indented_str(indent),
+		node_to_str(e.Right, indent),
+	}
+}
+
+func (e BinopExpression) Token() Token {
+	return e.Operation
+}
+
+func (e BinopExpression) expressionNode() {}

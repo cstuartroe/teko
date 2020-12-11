@@ -77,18 +77,7 @@ func (parser *Parser) grabExpressionStmt() ExpressionStatement {
 	}
 }
 
-type precedence int
-
-const (
-	min_prec precedence = iota
-	setter_prec
-	add_sub_prec
-	mult_div_prec
-	exp_prec
-	max_prec
-)
-
-func (parser *Parser) grabExpression(prec precedence) Expression {
+func (parser *Parser) grabExpression(prec int) Expression {
 	// TODO: prefixes
 	expr := parser.grabSimpleExpression()
 
@@ -107,20 +96,42 @@ func (parser *Parser) grabSimpleExpression() SimpleExpression {
 	}
 }
 
-func (parser *Parser) continueExpression(expr Expression, prec precedence) Expression {
-	if parser.currentToken().TType == SymbolT && prec <= min_prec {
-		return DeclarationExpression{
-			Tekotype:  expr,
-			Declareds: parser.grabDeclaredChain(),
+func (parser *Parser) continueExpression(expr Expression, prec int) Expression {
+	ttype := parser.currentToken().TType
+	value := string(parser.currentToken().Value)
+
+	var out Expression
+
+	switch ttype {
+	case SymbolT:
+		if prec <= min_prec {
+			out = DeclarationExpression{
+				Tekotype:  expr,
+				Declareds: parser.grabDeclaredChain(),
+			}
 		}
-	} else if parser.currentToken().TType == LParT {
-		return parser.continueExpression(
-			parser.makeCallExpression(expr),
-			prec,
-		)
+
+	case LParT:
+		out = parser.makeCallExpression(expr)
+
+	case BinopT:
+		op_prec := binop_precs[binops[value]]
+		if prec <= op_prec {
+			op := *parser.currentToken()
+			parser.Advance()
+			out = BinopExpression{
+				Left:      expr,
+				Operation: op,
+				Right:     parser.grabExpression(op_prec + 1),
+			}
+		}
 	}
 
-	return expr
+	if out != nil {
+		return parser.continueExpression(out, prec)
+	} else {
+		return expr
+	}
 }
 
 func (parser *Parser) grabDeclaredChain() []Declared {

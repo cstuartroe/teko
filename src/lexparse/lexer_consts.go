@@ -63,14 +63,18 @@ var punct_combos map[string]bool = map[string]bool{
 }
 
 var binops map[string]string = map[string]string{
-	"+": "add",
-	"-": "sub",
-	"*": "mult",
-	"/": "div",
-	"^": "exp",
-	"%": "mod",
 	"&": "and",
 	"|": "or",
+
+	"+": "add",
+	"-": "sub",
+
+	"%": "mod",
+
+	"*": "mult",
+	"/": "div",
+
+	"^": "exp",
 }
 
 var comparisons map[string]string = map[string]string{
@@ -106,4 +110,28 @@ var suffixes map[string]string = map[string]string{
 	"$": "to_str",
 	"#": "to_int",
 	".": "to_float",
+}
+
+const (
+	min_prec int = iota
+	setter_prec
+	add_sub_prec
+	mult_div_prec
+	exp_prec
+	max_prec
+)
+
+var binop_precs map[string]int = map[string]int{
+	"and": add_sub_prec,
+	"or":  add_sub_prec,
+
+	"add": add_sub_prec,
+	"sub": add_sub_prec,
+
+	"mod": mult_div_prec, // is this right??
+
+	"mult": mult_div_prec,
+	"div":  mult_div_prec,
+
+	"exp": exp_prec,
 }
