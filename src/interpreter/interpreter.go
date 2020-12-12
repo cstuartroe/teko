@@ -54,6 +54,9 @@ func (m InterpreterModule) evaluateExpression(expr lexparse.Expression) TekoObje
 	case lexparse.AttributeExpression:
 		return m.evaluateAttributeExpression(p)
 
+	case lexparse.IfExpression:
+		return m.evaluateIfExpression(p)
+
 	default:
 		lexparse.TokenPanic(expr.Token(), "Intepretation of expression type not implemented: "+expr.Ntype())
 		return nil
@@ -91,11 +94,11 @@ func (m InterpreterModule) evaluateSimpleExpression(expr lexparse.SimpleExpressi
 		return nil // TODO
 
 	case lexparse.BoolT:
-		b := false
 		if string(value) == "true" {
-			b = true
+			return True
+		} else {
+			return False
 		}
-		return Boolean{b}
 
 	default:
 		lexparse.TokenPanic(expr.Token(), fmt.Sprintf("Invalid or unimplemented simple expression type: %s", ttype))
@@ -129,4 +132,23 @@ func (m InterpreterModule) evaluateDeclaration(decl lexparse.DeclarationExpressi
 func (m InterpreterModule) evaluateAttributeExpression(expr lexparse.AttributeExpression) TekoObject {
 	left := m.evaluateExpression(expr.Left)
 	return left.getFieldValue(string(expr.Symbol.Value))
+}
+
+func (m InterpreterModule) evaluateIfExpression(expr lexparse.IfExpression) TekoObject {
+	cond := m.evaluateExpression(expr.Condition)
+
+	var cond_value bool
+	switch p := cond.(type) {
+	case Boolean:
+		cond_value = p.value
+	default:
+		panic("How did a non-boolean slip in here?")
+	}
+
+	// It's lazy!
+	if cond_value {
+		return m.evaluateExpression(expr.Then)
+	} else {
+		return m.evaluateExpression(expr.Else)
+	}
 }

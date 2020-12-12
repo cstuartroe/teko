@@ -48,7 +48,18 @@ type Integer struct {
 }
 
 type Boolean struct {
-	value bool
+	value       bool
+	symbolTable SymbolTable
+}
+
+var True Boolean = Boolean{
+	value:       true,
+	symbolTable: newSymbolTable(nil),
+}
+
+var False Boolean = Boolean{
+	value:       false,
+	symbolTable: newSymbolTable(nil),
 }
 
 func (b Boolean) getFieldValue(name string) TekoObject {

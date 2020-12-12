@@ -365,3 +365,38 @@ func (e SuffixExpression) Token() Token {
 }
 
 func (e SuffixExpression) expressionNode() {}
+
+//---
+
+type IfExpression struct {
+	If        Token
+	Condition Expression
+	Then      Expression
+	Else      Expression
+}
+
+func (e IfExpression) Ntype() string {
+	return "IfExpression"
+}
+
+func (e IfExpression) children() []Node {
+	return []Node{
+		e.Condition,
+		e.Then,
+		e.Else,
+	}
+}
+
+func (e IfExpression) child_strings(indent int) []string {
+	return []string{
+		node_to_str(e.Condition, indent),
+		node_to_str(e.Then, indent),
+		node_to_str(e.Else, indent),
+	}
+}
+
+func (e IfExpression) Token() Token {
+	return e.If
+}
+
+func (e IfExpression) expressionNode() {}

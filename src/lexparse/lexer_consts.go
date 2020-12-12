@@ -17,6 +17,8 @@ const (
 	TypeT  = "type"
 	DataT  = "data"
 	LetT   = "let"
+	IfT    = "if"
+	ElseT  = "else"
 
 	BinopT      = "binary operation" // + - * / ^ % & |
 	ComparisonT = "comparison"       // == != < > <= >=
@@ -30,8 +32,6 @@ const (
 	RSquareBrT = "]"
 	LCurlyBrT  = "{"
 	RCurlyBrT  = "}"
-	LAngleT    = "<"
-	RAngleT    = ">"
 
 	DotT       = "."
 	QMarkT     = "?"

@@ -84,6 +84,10 @@ func (parser *Parser) grabExpression(prec int) Expression {
 	switch parser.currentToken().TType {
 	case LParT:
 		expr = parser.grabTuple()
+
+	case IfT:
+		expr = parser.grabIf(prec)
+
 	default:
 		expr = parser.grabSimpleExpression()
 	}
@@ -313,5 +317,27 @@ func (parser *Parser) grabTuple() Expression {
 			Elements: seq,
 			LPar:     lpar,
 		}
+	}
+}
+
+func (parser *Parser) grabIf(prec int) IfExpression {
+	parser.Expect(IfT)
+	if_token := *parser.currentToken()
+	parser.Advance()
+
+	cond := parser.grabExpression(prec)
+	then := parser.grabExpression(prec)
+	var else_expr Expression = nil
+
+	if parser.currentToken().TType == ElseT {
+		parser.Advance()
+		else_expr = parser.grabExpression(prec)
+	}
+
+	return IfExpression{
+		If:        if_token,
+		Condition: cond,
+		Then:      then,
+		Else:      else_expr,
 	}
 }

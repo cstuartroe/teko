@@ -32,8 +32,11 @@ func (c *Checker) checkExpression(expr lexparse.Expression) TekoType {
 	case lexparse.AttributeExpression:
 		return c.checkAttributeExpression(p)
 
+	case lexparse.IfExpression:
+		return c.checkIfExpression(p)
+
 	default:
-		lexparse.TokenPanic(expr.Token(), "Unknown expression type: "+expr.Ntype())
+		lexparse.TokenPanic(expr.Token(), "Cannot typecheck expression type: "+expr.Ntype())
 		return nil
 	}
 }
@@ -153,4 +156,28 @@ func (c *Checker) checkAttributeExpression(expr lexparse.AttributeExpression) Te
 		lexparse.TokenPanic(expr.Symbol, "No such field: "+string(expr.Symbol.Value))
 		return nil
 	}
+}
+
+func (c *Checker) checkIfExpression(expr lexparse.IfExpression) TekoType {
+	condition_tekotype := c.checkExpression(expr.Condition)
+
+	cond_is_bool := false
+	switch p := condition_tekotype.(type) {
+	case *BasicType:
+		if p == &BoolType {
+			cond_is_bool = true
+		}
+	}
+	if !cond_is_bool {
+		lexparse.TokenPanic(expr.Condition.Token(), "Condition does not have boolean type")
+	}
+
+	then_tekotype := c.checkExpression(expr.Then)
+	else_tekotype := c.checkExpression(expr.Else)
+
+	if then_tekotype != else_tekotype {
+		lexparse.TokenPanic(expr.Else.Token(), "Then and else blocks have mismatching types")
+	}
+
+	return then_tekotype
 }

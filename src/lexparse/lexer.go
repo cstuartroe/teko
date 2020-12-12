@@ -163,6 +163,19 @@ func (lexer *Lexer) grabToken() Token {
 	return lexer.currentToken()
 }
 
+var keywords map[string]tokenType = map[string]tokenType{
+	"true":  BoolT,
+	"false": BoolT,
+	"for":   ForT,
+	"while": WhileT,
+	"in":    InT,
+	"type":  TypeT,
+	"data":  DataT,
+	"let":   LetT,
+	"if":    IfT,
+	"else":  ElseT,
+}
+
 func (lexer *Lexer) grabSymbol() {
 	c := lexer.next()
 	for unicode.IsLetter(c) || unicode.IsDigit(c) || (c == '_') {
@@ -170,24 +183,9 @@ func (lexer *Lexer) grabSymbol() {
 		c = lexer.next()
 	}
 
-	switch symbol := string(lexer.CurrentBlob); symbol {
-	case "true":
-		lexer.CurrentTType = BoolT
-	case "false":
-		lexer.CurrentTType = BoolT
-	case "for":
-		lexer.CurrentTType = ForT
-	case "while":
-		lexer.CurrentTType = WhileT
-	case "in":
-		lexer.CurrentTType = InT
-	case "type":
-		lexer.CurrentTType = TypeT
-	case "data":
-		lexer.CurrentTType = DataT
-	case "let":
-		lexer.CurrentTType = LetT
-	default:
+	if ttype, ok := keywords[string(lexer.CurrentBlob)]; ok {
+		lexer.CurrentTType = ttype
+	} else {
 		lexer.CurrentTType = SymbolT
 	}
 }
@@ -210,6 +208,22 @@ func (lexer *Lexer) grabDecimalNumber() {
 	}
 }
 
+var uniquePuncts map[string]tokenType = map[string]tokenType{
+	"(":  LParT,
+	")":  RParT,
+	"[":  LSquareBrT,
+	"]":  RSquareBrT,
+	"{":  LCurlyBrT,
+	"}":  RCurlyBrT,
+	".":  DotT,
+	"?":  QMarkT,
+	"..": EllipsisT,
+	",":  CommaT,
+	";":  SemicolonT,
+	":":  ColonT,
+	"<:": SubtypeT,
+}
+
 func (lexer *Lexer) grabPunctuation() {
 	lexer.advance()
 
@@ -220,58 +234,20 @@ func (lexer *Lexer) grabPunctuation() {
 
 	blob := string(lexer.CurrentBlob)
 
-	// Need to check specific cases first because some
-	// (such as angle brackets) can be interpreted as
-	// multiple categories and may be reassigned a token
-	// type later based on context
-	switch blob {
-	case "(":
-		lexer.CurrentTType = LParT
-	case ")":
-		lexer.CurrentTType = RParT
-	case "[":
-		lexer.CurrentTType = LSquareBrT
-	case "]":
-		lexer.CurrentTType = RSquareBrT
-	case "{":
-		lexer.CurrentTType = LCurlyBrT
-	case "}":
-		lexer.CurrentTType = RCurlyBrT
-	case "<":
-		lexer.CurrentTType = LAngleT
-	case ">":
-		lexer.CurrentTType = RAngleT
-	case ".":
-		lexer.CurrentTType = DotT
-	case "?":
-		lexer.CurrentTType = QMarkT
-	case "..":
-		lexer.CurrentTType = EllipsisT
-	case ",":
-		lexer.CurrentTType = CommaT
-	case ";":
-		lexer.CurrentTType = SemicolonT
-	case ":":
-		lexer.CurrentTType = ColonT
-	case "<:":
-		lexer.CurrentTType = SubtypeT
-	default:
-	}
-
-	if lexer.CurrentTType == "" {
-		if _, ok := binops[blob]; ok {
-			lexer.CurrentTType = BinopT
-		} else if _, ok := comparisons[blob]; ok {
-			lexer.CurrentTType = ComparisonT
-		} else if _, ok := setters[blob]; ok {
-			lexer.CurrentTType = SetterT
-		} else if _, ok := prefixes[blob]; ok {
-			lexer.CurrentTType = PrefixT
-		} else if _, ok := suffixes[blob]; ok {
-			lexer.CurrentTType = SuffixT
-		} else {
-			lexparsePanic(lexer.Line, lexer.Col-1, 1, "Invalid start to token")
-		}
+	if ttype, ok := uniquePuncts[blob]; ok {
+		lexer.CurrentTType = ttype
+	} else if _, ok := binops[blob]; ok {
+		lexer.CurrentTType = BinopT
+	} else if _, ok := comparisons[blob]; ok {
+		lexer.CurrentTType = ComparisonT
+	} else if _, ok := setters[blob]; ok {
+		lexer.CurrentTType = SetterT
+	} else if _, ok := prefixes[blob]; ok {
+		lexer.CurrentTType = PrefixT
+	} else if _, ok := suffixes[blob]; ok {
+		lexer.CurrentTType = SuffixT
+	} else {
+		lexparsePanic(lexer.Line, lexer.Col-1, 1, "Invalid start to token")
 	}
 }
 

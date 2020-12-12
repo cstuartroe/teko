@@ -17,7 +17,7 @@ type BasicType struct {
 	fields map[string]TekoType
 }
 
-func (ttype *BasicType) allFields() map[string]TekoType {
+func (ttype BasicType) allFields() map[string]TekoType {
 	return ttype.fields
 }
 
