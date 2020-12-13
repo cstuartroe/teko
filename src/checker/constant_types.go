@@ -25,47 +25,11 @@ var BoolType BasicType = BasicType{
 
 var BoolBinopType FunctionType
 
-func atType(keyType TekoType, valueType TekoType) FunctionType {
-	return FunctionType{
-		rtype: valueType,
-		argdefs: []FunctionArgDef{
-			{
-				name:  "key",
-				ttype: keyType,
-			},
-		},
-	}
-}
-
-func mapType(keyType TekoType, valueType TekoType) BasicType {
-	t := atType(keyType, valueType)
-	return BasicType{
-		fields: map[string]TekoType{
-			"at":   &t,
-			"size": &IntType,
-		},
-	}
-}
-
-func arrayType(memberType TekoType) BasicType {
-	return mapType(&IntType, memberType)
-}
-
 var CharType BasicType = BasicType{
 	fields: map[string]TekoType{},
 }
 
-var StringType BasicType = arrayType(&CharType)
-
-var PrintType FunctionType = FunctionType{
-	rtype: nil,
-	argdefs: []FunctionArgDef{
-		{
-			name:  "s",
-			ttype: &StringType,
-		},
-	},
-}
+var VoidType BasicType
 
 // avoids circular initialization
 func SetupFunctionTypes() {

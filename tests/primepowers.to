@@ -2,13 +2,13 @@
 
 int MAX = 10^8;
 int[] primes = [2,3,5,7,11,13,17,19,23,29,31,37];
-struct prime_power = (int prime, int exp, int N);
+constructor prime_power(int prime, int exp, int N);
 
-int[] pps = for prime in primes {
+int[] pps = for prime in primes do {
     var exp = -1;
     ~while( prime^(exp++) <= MAX ) {
         prime_power(prime, exp, prime^exp);
-    };
+    }
 };
 
 pps.sort(key = (pp) -> pp.N);

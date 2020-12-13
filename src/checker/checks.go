@@ -17,28 +17,37 @@ func (c *Checker) checkExpressionStatement(stmt lexparse.ExpressionStatement) {
 	c.checkExpression(stmt.Expression)
 }
 
-func (c *Checker) checkExpression(expr lexparse.Expression) TekoType {
+func (c *Checker) checkExpression(expr lexparse.Expression, expectedType TekoType) TekoType {
+	var ttype TekoType
+
 	switch p := expr.(type) {
 
 	case lexparse.SimpleExpression:
-		return c.checkSimpleExpression(p)
+		ttype = c.checkSimpleExpression(p)
 
 	case lexparse.DeclarationExpression:
-		return c.checkDeclaration(p)
+		ttype = c.checkDeclaration(p)
 
 	case lexparse.CallExpression:
-		return c.checkCallExpression(p)
+		ttype = c.checkCallExpression(p)
 
 	case lexparse.AttributeExpression:
-		return c.checkAttributeExpression(p)
+		ttype = c.checkAttributeExpression(p)
 
 	case lexparse.IfExpression:
-		return c.checkIfExpression(p)
+		ttype = c.checkIfExpression(p)
+
+	case lexparse.SequenceExpression:
+		ttype = c.checkSequenceExpression(p, expectedType)
 
 	default:
 		lexparse.TokenPanic(expr.Token(), "Cannot typecheck expression type: "+expr.Ntype())
-		return nil
 	}
+
+	if (ttype != nil) && !isTekoEqType(ttype, expectedType) {
+		lexparse.TokenPanic(expr.Token(), "Incorrect type")
+	}
+	return ttype
 }
 
 func (c *Checker) checkSimpleExpression(expr lexparse.SimpleExpression) TekoType {
@@ -180,4 +189,28 @@ func (c *Checker) checkIfExpression(expr lexparse.IfExpression) TekoType {
 	}
 
 	return then_tekotype
+}
+
+// func (c *Checker) checkSequenceExpression(expr lexparse.SequenceExpression, expectedType TekoType) TekoType {
+// 	switch expr.Stype {
+// 	case ArraySeqType: return c.checkArray(expr, expectedType)
+// case SetSeqType: return c.
+// 	}
+// }
+
+func (c *Checker) checkSequenceExpression(expr lexparse.SequenceExpression, expectedType TekoType) TekoType {
+	var etype TekoType
+
+	switch p := expectedType.(type) {
+	case ArrayType:
+		if (expr.Stype == ArraySeqType) {
+			etype = p.etype
+		} else {
+			
+		}
+	default:
+		return nil
+	}
+
+	for _, element := range expr.Elements
 }

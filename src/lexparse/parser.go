@@ -88,6 +88,12 @@ func (parser *Parser) grabExpression(prec int) Expression {
 	case IfT:
 		expr = parser.grabIf(prec)
 
+	case LSquareBrT:
+		expr = parser.grabArray()
+
+	case LCurlyBrT:
+		expr = parser.grabSet()
+
 	default:
 		expr = parser.grabSimpleExpression()
 	}
@@ -317,6 +323,30 @@ func (parser *Parser) grabTuple() Expression {
 			Elements: seq,
 			LPar:     lpar,
 		}
+	}
+}
+
+func (parser *Parser) grabArray() SequenceExpression {
+	parser.Expect(LSquareBrT)
+	open := *parser.currentToken()
+	parser.Advance()
+
+	return SequenceExpression{
+		OpenBrace: open,
+		Stype:     ArraySeqType,
+		Elements:  parser.grabSequence(RSquareBrT),
+	}
+}
+
+func (parser *Parser) grabSet() SequenceExpression {
+	parser.Expect(LCurlyBrT)
+	open := *parser.currentToken()
+	parser.Advance()
+
+	return SequenceExpression{
+		OpenBrace: open,
+		Stype:     SetSeqType,
+		Elements:  parser.grabSequence(RCurlyBrT),
 	}
 }
 

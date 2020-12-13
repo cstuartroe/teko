@@ -400,3 +400,42 @@ func (e IfExpression) Token() Token {
 }
 
 func (e IfExpression) expressionNode() {}
+
+//---
+
+type seqType string
+
+const ArraySeqType seqType = "array"
+const SetSeqType seqType = "set"
+
+type SequenceExpression struct {
+	OpenBrace Token
+	Stype     seqType
+	Elements  []Expression
+}
+
+func (e SequenceExpression) Ntype() string {
+	return "SequenceExpression (" + string(e.Stype) + ")"
+}
+
+func (e SequenceExpression) children() []Node {
+	out := []Node{}
+	for _, expr := range e.Elements {
+		out = append(out, expr)
+	}
+	return out
+}
+
+func (e SequenceExpression) child_strings(indent int) []string {
+	out := []string{}
+	for _, expr := range e.Elements {
+		out = append(out, node_to_str(expr, indent))
+	}
+	return out
+}
+
+func (e SequenceExpression) Token() Token {
+	return e.OpenBrace
+}
+
+func (e SequenceExpression) expressionNode() {}
