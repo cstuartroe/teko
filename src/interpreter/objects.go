@@ -48,22 +48,22 @@ type Integer struct {
 }
 
 type Boolean struct {
-	value       bool
-	symbolTable SymbolTable
+	value bool
 }
 
 var True Boolean = Boolean{
-	value:       true,
-	symbolTable: newSymbolTable(nil),
+	value: true,
 }
 
 var False Boolean = Boolean{
-	value:       false,
-	symbolTable: newSymbolTable(nil),
+	value: false,
 }
 
 func (b Boolean) getFieldValue(name string) TekoObject {
-	return nil
+	switch name {
+	default:
+		panic("Attributes haven't been implemented for bools yet")
+	}
 }
 
 type String struct {
@@ -71,5 +71,8 @@ type String struct {
 }
 
 func (s String) getFieldValue(name string) TekoObject {
-	return nil
+	switch name {
+	default:
+		panic("Attributes haven't been implemented for strings yet")
+	}
 }

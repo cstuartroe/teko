@@ -61,17 +61,33 @@ func makeSetFields(etype TekoType) map[string]TekoType {
 }
 
 func newSetType(etype TekoType) SetType {
-	return SetType{
+	stype := SetType{
 		etype:  etype,
 		fields: makeSetFields(etype),
 	}
+
+	setOpType := FunctionType{
+		rtype: stype,
+		argdefs: []FunctionArgDef{
+			{
+				name:  "other",
+				ttype: &stype,
+			},
+		},
+	}
+
+	stype.fields["and"] = &setOpType
+	stype.fields["or"] = &setOpType
+	stype.fields["sub"] = &setOpType
+
+	return stype
 }
 
 // Maps
 
 type MapType struct {
 	ktype  TekoType
-	vtype  Tekotype
+	vtype  TekoType
 	fields map[string]TekoType
 }
 
@@ -109,29 +125,29 @@ func (t ArrayType) allFields() map[string]TekoType {
 	return t.fields
 }
 
-func makeArrayFields(etype TekoType) map[string]TekoType {
-	fields := makeMapFields(&IntType, memberType)
-	fields["add"] = FunctionType{
-		rtype: &fields,
+func newArrayType(etype TekoType) ArrayType {
+	atype := ArrayType{
+		etype:  etype,
+		fields: makeMapFields(&IntType, etype),
+	}
+
+	atype.fields["add"] = &FunctionType{
+		rtype: &atype,
 		argdefs: []FunctionArgDef{
-			name:  "other",
-			ttype: &fields,
+			{
+				name:  "other",
+				ttype: &atype,
+			},
 		},
 	}
-	return fields
+
+	return atype
 }
 
-func newArrayType(etype TekoType) BasicType {
-	return ArrayType{
-		etype:  etype,
-		fields: makeArrayFields(etype),
-	}
-}
-
-var StringType BasicType = newArrayType(&CharType)
+var StringType ArrayType = newArrayType(&CharType)
 
 var PrintType FunctionType = FunctionType{
-	rtype: nil,
+	rtype: &VoidType,
 	argdefs: []FunctionArgDef{
 		{
 			name:  "s",

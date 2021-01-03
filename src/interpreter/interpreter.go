@@ -57,6 +57,9 @@ func (m InterpreterModule) evaluateExpression(expr lexparse.Expression) TekoObje
 	case lexparse.IfExpression:
 		return m.evaluateIfExpression(p)
 
+	case lexparse.SequenceExpression:
+		return m.evaluateSequenceExpression(p)
+
 	default:
 		lexparse.TokenPanic(expr.Token(), "Intepretation of expression type not implemented: "+expr.Ntype())
 		return nil
@@ -151,4 +154,31 @@ func (m InterpreterModule) evaluateIfExpression(expr lexparse.IfExpression) Teko
 	} else {
 		return m.evaluateExpression(expr.Else)
 	}
+}
+
+func (m InterpreterModule) evaluateSequenceExpression(expr lexparse.SequenceExpression) TekoObject {
+	switch expr.Stype {
+	case lexparse.ArraySeqType:
+		return m.evaluateArray(expr)
+	case lexparse.SetSeqType:
+		return m.evaluateSet(expr)
+	default:
+		panic("Unknown sequence type to interpret: " + expr.Stype)
+	}
+}
+
+func (m InterpreterModule) evaluateArray(expr lexparse.SequenceExpression) Array {
+	elements := []TekoObject{}
+	for _, o := range expr.Elements {
+		elements = append(elements, m.evaluateExpression(o))
+	}
+	return Array{elements}
+}
+
+func (m InterpreterModule) evaluateSet(expr lexparse.SequenceExpression) Set {
+	elements := []TekoObject{}
+	for _, o := range expr.Elements {
+		elements = append(elements, m.evaluateExpression(o))
+	}
+	return Set{elements}
 }
