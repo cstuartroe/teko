@@ -8,13 +8,13 @@ import (
 
 var blankInterpreter InterpreterModule = InterpreterModule{}
 
-func TekoPrintExecutor(function TekoFunction, evaluatedArgs map[string]TekoObject) TekoObject {
+func TekoPrintExecutor(function TekoFunction, evaluatedArgs map[string]*TekoObject) *TekoObject {
 	s, ok := evaluatedArgs["s"]
 	if !ok {
 		panic("No parameter passed to print")
 	}
 
-	switch p := s.(type) {
+	switch p := (*s).(type) {
 	case String:
 		fmt.Printf(string(p.value))
 	default:
@@ -23,15 +23,15 @@ func TekoPrintExecutor(function TekoFunction, evaluatedArgs map[string]TekoObjec
 	return nil
 }
 
-var TekoPrint TekoFunction = TekoFunction{
+var TekoPrint TekoObject = TekoFunction{
 	context:  blankInterpreter,
 	body:     lexparse.Codeblock{},
 	ftype:    checker.PrintType,
 	executor: TekoPrintExecutor,
 }
 
-var BaseInterpreterFieldValues map[string]TekoObject = map[string]TekoObject{
-	"print": TekoPrint,
+var BaseInterpreterFieldValues map[string]*TekoObject = map[string]*TekoObject{
+	"print": &TekoPrint,
 }
 
 var BaseSymbolTable SymbolTable = SymbolTable{

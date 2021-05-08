@@ -25,15 +25,16 @@ func getInteger(n int) Integer {
 type intOpType func(n1 int, n2 int) int
 
 func IntBinopExecutor(receiverValue int, op intOpType) executorType {
-	return func(function TekoFunction, evaluatedArgs map[string]TekoObject) TekoObject {
+	return func(function TekoFunction, evaluatedArgs map[string]*TekoObject) *TekoObject {
 		other, ok := evaluatedArgs["other"]
 		if !ok {
 			panic("No parameter passed to int arithmetic function")
 		}
 
-		switch p := other.(type) {
+		switch p := (*other).(type) {
 		case Integer:
-			return getInteger(op(receiverValue, p.value))
+			var n TekoObject = getInteger(op(receiverValue, p.value))
+			return &n
 		default:
 			panic("Non-int somehow made it past the type checker as an argument to int arithmetic!")
 		}
@@ -58,10 +59,11 @@ var intOps map[string]intOpType = map[string]intOpType{
 }
 
 func IntToStrExecutor(receiverValue int) executorType {
-	return func(function TekoFunction, evaluatedArgs map[string]TekoObject) TekoObject {
-		return String{
+	return func(function TekoFunction, evaluatedArgs map[string]*TekoObject) *TekoObject {
+		var s TekoObject = String{
 			value: []rune(strconv.Itoa(receiverValue)),
 		}
+		return &s
 	}
 }
 
@@ -74,22 +76,24 @@ func IntToStr(receiverValue int) TekoFunction {
 	}
 }
 
-func set_and_return(n Integer, name string, f TekoFunction) TekoFunction {
+func set_and_return(n Integer, name string, f *TekoObject) *TekoObject {
 	n.symbolTable.set(name, f)
 	return f
 }
 
-func (n Integer) getFieldValue(name string) TekoObject {
+func (n Integer) getFieldValue(name string) *TekoObject {
 	if attr := n.symbolTable.get(name); attr != nil {
 		return attr
 	} else if op, ok := intOps[name]; ok {
-		return set_and_return(n, name, IntBinop(n.value, op))
+		var f TekoObject = IntBinop(n.value, op)
+		return set_and_return(n, name, &f)
 	}
 
 	switch name {
 
 	case "to_str":
-		return set_and_return(n, name, IntToStr(n.value))
+		var f TekoObject = IntToStr(n.value)
+		return set_and_return(n, name, &f)
 
 	default:
 		panic("Operation not implemented: " + name)

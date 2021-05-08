@@ -91,8 +91,11 @@ func (parser *Parser) grabExpression(prec int) Expression {
 	case LSquareBrT:
 		expr = parser.grabArray()
 
-	case LCurlyBrT:
+	case SetT:
 		expr = parser.grabSet()
+
+	case LCurlyBrT:
+		expr = parser.grabObject()
 
 	default:
 		expr = parser.grabSimpleExpression()
@@ -339,8 +342,11 @@ func (parser *Parser) grabArray() SequenceExpression {
 }
 
 func (parser *Parser) grabSet() SequenceExpression {
-	parser.Expect(LCurlyBrT)
+	parser.Expect(SetT)
 	open := *parser.currentToken()
+	parser.Advance()
+
+	parser.Expect(LCurlyBrT)
 	parser.Advance()
 
 	return SequenceExpression{
@@ -369,5 +375,45 @@ func (parser *Parser) grabIf(prec int) IfExpression {
 		Condition: cond,
 		Then:      then,
 		Else:      else_expr,
+	}
+}
+
+func (parser *Parser) grabObject() ObjectExpression {
+	parser.Expect(LCurlyBrT)
+	open := *parser.currentToken()
+	parser.Advance()
+
+	fields := []ObjectField{}
+
+	for parser.currentToken().TType != RCurlyBrT {
+		fields = append(fields, parser.grabObjectField())
+
+		if parser.currentToken().TType == CommaT {
+			parser.Advance()
+		} else {
+			break
+		}
+	}
+
+	parser.Expect(RCurlyBrT)
+	parser.Advance()
+
+	return ObjectExpression{
+		OpenBrace: open,
+		Fields:    fields,
+	}
+}
+
+func (parser *Parser) grabObjectField() ObjectField {
+	parser.Expect(SymbolT)
+	symbol := *parser.currentToken()
+	parser.Advance()
+
+	parser.Expect(ColonT)
+	parser.Advance()
+
+	return ObjectField{
+		Symbol: symbol,
+		Value:  parser.grabExpression(min_prec),
 	}
 }

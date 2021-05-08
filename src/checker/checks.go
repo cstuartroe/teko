@@ -40,6 +40,9 @@ func (c *Checker) checkExpression(expr lexparse.Expression, expectedType TekoTyp
 	case lexparse.SequenceExpression:
 		ttype = c.checkSequenceExpression(p, expectedType)
 
+	case lexparse.ObjectExpression:
+		ttype = c.checkObjectExpression(p)
+
 	default:
 		lexparse.TokenPanic(expr.Token(), "Cannot typecheck expression type: "+expr.Ntype())
 	}
@@ -216,4 +219,18 @@ func (c *Checker) checkSequenceExpression(expr lexparse.SequenceExpression, expe
 	}
 
 	return seqtype
+}
+
+func (c *Checker) checkObjectExpression(expr lexparse.ObjectExpression) TekoType {
+	fields := map[string]TekoType{}
+
+	for _, of := range expr.Fields {
+		if _, ok := fields[string(of.Symbol.Value)]; ok {
+			lexparse.TokenPanic(of.Symbol, "Duplicate member")
+		}
+
+		fields[string(of.Symbol.Value)] = c.checkExpression(of.Value, nil)
+	}
+
+	return BasicType{fields}
 }

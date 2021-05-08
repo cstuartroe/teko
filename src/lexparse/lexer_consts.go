@@ -11,14 +11,21 @@ const (
 	FloatT  = "float"
 	BoolT   = "bool"
 
+	VarT = "var"
+	LetT = "let"
+
+	InT    = "in"
 	ForT   = "for"
 	WhileT = "while"
-	InT    = "in"
-	TypeT  = "type"
-	DataT  = "data"
-	LetT   = "let"
 	IfT    = "if"
+	ThenT  = "then"
 	ElseT  = "else"
+
+	SetT  = "set"
+	MapT  = "map"
+	DataT = "data"
+	TypeT = "type"
+	DoT   = "do"
 
 	BinopT      = "binary operation" // + - * / ^ % & |
 	ComparisonT = "comparison"       // == != < > <= >=
@@ -102,7 +109,6 @@ var setters map[string]string = map[string]string{
 
 var prefixes map[string]string = map[string]string{
 	"!": "not",
-	"?": "to_bool",
 	"~": "explode",
 }
 
@@ -110,6 +116,7 @@ var suffixes map[string]string = map[string]string{
 	"$": "to_str",
 	"#": "to_int",
 	".": "to_float",
+	"?": "to_bool",
 }
 
 const (

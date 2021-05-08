@@ -1,22 +1,22 @@
 package interpreter
 
 type TekoObject interface {
-	getFieldValue(name string) TekoObject
+	getFieldValue(name string) *TekoObject
 }
 
 type SymbolTable struct {
 	parent *SymbolTable
-	table  map[string]TekoObject
+	table  map[string]*TekoObject
 }
 
 func newSymbolTable(parent *SymbolTable) SymbolTable {
 	return SymbolTable{
 		parent: parent,
-		table:  map[string]TekoObject{},
+		table:  map[string]*TekoObject{},
 	}
 }
 
-func (stable *SymbolTable) get(name string) TekoObject {
+func (stable *SymbolTable) get(name string) *TekoObject {
 	if val, ok := stable.table[name]; ok {
 		return val
 	} else if stable.parent == nil {
@@ -26,7 +26,7 @@ func (stable *SymbolTable) get(name string) TekoObject {
 	}
 }
 
-func (stable *SymbolTable) set(name string, val TekoObject) {
+func (stable *SymbolTable) set(name string, val *TekoObject) {
 	if stable.get(name) != nil {
 		panic("Existing symbol")
 	} else {
@@ -38,7 +38,7 @@ type BasicObject struct {
 	symbolTable SymbolTable
 }
 
-func (o *BasicObject) getFieldValue(name string) TekoObject {
+func (o BasicObject) getFieldValue(name string) *TekoObject {
 	return o.symbolTable.get(name)
 }
 
@@ -59,7 +59,7 @@ var False Boolean = Boolean{
 	value: false,
 }
 
-func (b Boolean) getFieldValue(name string) TekoObject {
+func (b Boolean) getFieldValue(name string) *TekoObject {
 	switch name {
 	default:
 		panic("Attributes haven't been implemented for bools yet")
@@ -70,7 +70,7 @@ type String struct {
 	value []rune
 }
 
-func (s String) getFieldValue(name string) TekoObject {
+func (s String) getFieldValue(name string) *TekoObject {
 	switch name {
 	default:
 		panic("Attributes haven't been implemented for strings yet")

@@ -166,14 +166,22 @@ func (lexer *Lexer) grabToken() Token {
 var keywords map[string]tokenType = map[string]tokenType{
 	"true":  BoolT,
 	"false": BoolT,
+
+	"var": VarT,
+	"let": LetT,
+
+	"in":    InT,
 	"for":   ForT,
 	"while": WhileT,
-	"in":    InT,
-	"type":  TypeT,
-	"data":  DataT,
-	"let":   LetT,
 	"if":    IfT,
+	"then":  ThenT,
 	"else":  ElseT,
+
+	"set":  SetT,
+	"map":  MapT,
+	"data": DataT,
+	"type": TypeT,
+	"do":   DoT,
 }
 
 func (lexer *Lexer) grabSymbol() {

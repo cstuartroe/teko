@@ -439,3 +439,60 @@ func (e SequenceExpression) Token() Token {
 }
 
 func (e SequenceExpression) expressionNode() {}
+
+//---
+
+type ObjectField struct {
+	Symbol Token
+	Value  Expression
+}
+
+func (of ObjectField) Ntype() string {
+	return "ObjectField"
+}
+
+func (of ObjectField) children() []Node {
+	return []Node{of.Value}
+}
+
+func (of ObjectField) child_strings(indent int) []string {
+	return []string{
+		of.Symbol.to_indented_str(indent),
+		node_to_str(of.Value, indent),
+	}
+}
+
+func (of ObjectField) Token() Token {
+	return of.Symbol
+}
+
+type ObjectExpression struct {
+	OpenBrace Token
+	Fields    []ObjectField
+}
+
+func (e ObjectExpression) Ntype() string {
+	return "ObjectExpression"
+}
+
+func (e ObjectExpression) children() []Node {
+	out := []Node{}
+	for _, of := range e.Fields {
+		out = append(out, of)
+	}
+	return out
+}
+
+func (e ObjectExpression) child_strings(indent int) []string {
+	out := []string{}
+	for _, of := range e.Fields {
+		out = append(out, node_to_str(of, indent))
+	}
+	return out
+}
+
+func (e ObjectExpression) Token() Token {
+	return e.OpenBrace
+}
+
+func (e ObjectExpression) expressionNode() {}
