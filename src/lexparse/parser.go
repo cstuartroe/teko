@@ -97,6 +97,9 @@ func (parser *Parser) grabExpression(prec int) Expression {
 	case LCurlyBrT:
 		expr = parser.grabObject()
 
+	case LetT:
+		expr = parser.grabLetDeclaration()
+
 	default:
 		expr = parser.grabSimpleExpression()
 	}
@@ -191,6 +194,19 @@ func (parser *Parser) continueExpression(expr Expression, prec int) Expression {
 		return parser.continueExpression(out, prec)
 	} else {
 		return expr
+	}
+}
+
+func (parser *Parser) grabLetDeclaration() DeclarationExpression {
+	parser.Expect(LetT)
+	letExpr := SimpleExpression{
+		*parser.currentToken(),
+	}
+	parser.Advance()
+
+	return DeclarationExpression{
+		Tekotype: letExpr,
+		Declareds: parser.grabDeclaredChain(),
 	}
 }
 

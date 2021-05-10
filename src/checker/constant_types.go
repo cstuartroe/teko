@@ -1,54 +1,54 @@
 package checker
 
-var ToStrType FunctionType
+var ToStrType *FunctionType = &FunctionType{}
 
-var IntType BasicType = BasicType{
+var IntType *BasicType = &BasicType{
 	fields: map[string]TekoType{
-		"add":    &IntBinopType,
-		"sub":    &IntBinopType,
-		"mult":   &IntBinopType,
-		"div":    &IntBinopType,
-		"exp":    &IntBinopType,
-		"mod":    &IntBinopType,
-		"to_str": &ToStrType,
+		"add":    IntBinopType,
+		"sub":    IntBinopType,
+		"mult":   IntBinopType,
+		"div":    IntBinopType,
+		"exp":    IntBinopType,
+		"mod":    IntBinopType,
+		"to_str": ToStrType,
 	},
 }
 
-var IntBinopType FunctionType
+var IntBinopType *FunctionType = &FunctionType{}
 
-var BoolType BasicType = BasicType{
+var BoolType *BasicType = &BasicType{
 	fields: map[string]TekoType{
-		"and": &BoolBinopType,
-		"or":  &BoolBinopType,
+		"and": BoolBinopType,
+		"or":  BoolBinopType,
 	},
 }
 
-var BoolBinopType FunctionType
+var BoolBinopType *FunctionType = &FunctionType{}
 
-var CharType BasicType = BasicType{
+var CharType *BasicType = &BasicType{
 	fields: map[string]TekoType{},
 }
 
-var VoidType BasicType
+var VoidType *BasicType = &BasicType{}
 
 // avoids circular initialization
 func SetupFunctionTypes() {
-	IntBinopType.rtype = &IntType
+	IntBinopType.rtype = IntType
 	IntBinopType.argdefs = []FunctionArgDef{
 		{
 			name:  "other",
-			ttype: &IntType,
+			ttype: IntType,
 		},
 	}
 
-	BoolBinopType.rtype = &BoolType
+	BoolBinopType.rtype = BoolType
 	BoolBinopType.argdefs = []FunctionArgDef{
 		{
 			name:  "other",
-			ttype: &BoolType,
+			ttype: BoolType,
 		},
 	}
 
-	ToStrType.rtype = &StringType
+	ToStrType.rtype = StringType
 	ToStrType.argdefs = []FunctionArgDef{}
 }

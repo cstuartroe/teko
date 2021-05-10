@@ -69,13 +69,13 @@ func (c *Checker) checkSimpleExpression(expr lexparse.SimpleExpression) TekoType
 		}
 
 	case lexparse.IntT:
-		return &IntType
+		return IntType
 	case lexparse.BoolT:
-		return &BoolType
+		return BoolType
 	case lexparse.StringT:
-		return &StringType
+		return StringType
 	case lexparse.CharT:
-		return &CharType
+		return CharType
 	default:
 		panic("Unknown simple expression type")
 	}
@@ -84,44 +84,49 @@ func (c *Checker) checkSimpleExpression(expr lexparse.SimpleExpression) TekoType
 func (c *Checker) checkDeclaration(decl lexparse.DeclarationExpression) TekoType {
 	var tekotype TekoType = c.evaluateType(decl.Tekotype)
 
+	var evaluated_ttype TekoType = nil
+
 	for _, declared := range decl.Declareds {
-		c.declare(declared, tekotype)
+		evaluated_ttype = c.declare(declared, tekotype)
 	}
 
-	return tekotype // TODO: decide what type declarations return and return it
+	return evaluated_ttype // TODO: decide what type declarations return and return it
 }
 
 func (c *Checker) evaluateType(expr lexparse.Expression) TekoType {
 	switch p := expr.(type) {
 	case lexparse.SimpleExpression:
-		return c.evaluateNamedType(p)
+		return c.evaluateSimpleType(p)
 	default:
 		panic("Unknown type format!")
 	}
 }
 
-func (c *Checker) evaluateNamedType(expr lexparse.SimpleExpression) TekoType {
-	if expr.Token().TType != lexparse.SymbolT {
+func (c *Checker) evaluateSimpleType(expr lexparse.SimpleExpression) TekoType {
+	switch expr.Token().TType {
+	case lexparse.LetT:
+		return nil
+	case lexparse.SymbolT:
+		return c.getTypeByName(string(expr.Token().Value))
+	default:
 		lexparse.TokenPanic(expr.Token(), "Invalid type expression")
 		return nil
 	}
-
-	return c.getTypeByName(string(expr.Token().Value))
 }
 
 func (c *Checker) declare(declared lexparse.Declared, tekotype TekoType) TekoType {
 	// TODO: function types
 
-	c.checkExpression(declared.Right, tekotype)
+	evaluated_ttype := c.checkExpression(declared.Right, tekotype)
 
 	name := string(declared.Symbol.Value)
 	if c.getFieldType(name) == nil {
-		c.declareFieldType(name, tekotype)
+		c.declareFieldType(name, evaluated_ttype)
 	} else {
 		lexparse.TokenPanic(declared.Symbol, "Name has already been declared")
 	}
 
-	return tekotype
+	return evaluated_ttype
 }
 
 func (c *Checker) checkCallExpression(expr lexparse.CallExpression) TekoType {
@@ -167,7 +172,7 @@ func (c *Checker) checkAttributeExpression(expr lexparse.AttributeExpression) Te
 }
 
 func (c *Checker) checkIfExpression(expr lexparse.IfExpression) TekoType {
-	c.checkExpression(expr.Condition, &BoolType)
+	c.checkExpression(expr.Condition, BoolType)
 
 	then_tekotype := c.checkExpression(expr.Then, nil)
 	else_tekotype := c.checkExpression(expr.Else, nil)

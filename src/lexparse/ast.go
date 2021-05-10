@@ -221,8 +221,6 @@ func (e CallExpression) Token() Token {
 
 func (e CallExpression) expressionNode() {}
 
-//---
-
 type FunctionKwarg struct {
 	Symbol Token
 	Value  Expression

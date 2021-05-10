@@ -23,13 +23,13 @@ func (ttable *TypeTable) set(name string, val TekoType) {
 	}
 }
 
-var stdlibTypeTable TypeTable = TypeTable{
+var stdlibTypeTable *TypeTable = &TypeTable{
 	parent: nil,
 	table: map[string]TekoType{
-		"int":  &IntType,
-		"bool": &BoolType,
-		"str":  &StringType,
-		"char": &CharType,
+		"int":  IntType,
+		"bool": BoolType,
+		"str":  StringType,
+		"char": CharType,
 	},
 }
 
@@ -67,10 +67,10 @@ func (ctype *CheckerType) setField(name string, tekotype TekoType) {
 }
 
 var BaseCheckerTypeFields map[string]TekoType = map[string]TekoType{
-	"print": &PrintType,
+	"print": PrintType,
 }
 
-var baseCheckerType CheckerType = CheckerType{
+var baseCheckerType *CheckerType = &CheckerType{
 	fields: BaseCheckerTypeFields,
 	parent: nil,
 }
@@ -80,9 +80,9 @@ type Checker struct {
 	ctype     *CheckerType
 }
 
-var BaseChecker Checker = Checker{
-	typeTable: &stdlibTypeTable,
-	ctype:     &baseCheckerType,
+var BaseChecker *Checker = &Checker{
+	typeTable: stdlibTypeTable,
+	ctype:     baseCheckerType,
 }
 
 func NewChecker(parent *Checker) Checker {

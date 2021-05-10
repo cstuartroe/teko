@@ -2,8 +2,8 @@ package checker
 
 // Common function types
 
-func atType(keyType TekoType, valueType TekoType) FunctionType {
-	return FunctionType{
+func atType(keyType TekoType, valueType TekoType) *FunctionType {
+	return &FunctionType{
 		rtype: valueType,
 		argdefs: []FunctionArgDef{
 			{
@@ -14,9 +14,9 @@ func atType(keyType TekoType, valueType TekoType) FunctionType {
 	}
 }
 
-func includesType(etype TekoType) FunctionType {
-	return FunctionType{
-		rtype: &BoolType,
+func includesType(etype TekoType) *FunctionType {
+	return &FunctionType{
+		rtype: BoolType,
 		argdefs: []FunctionArgDef{
 			{
 				name:  "element",
@@ -26,9 +26,9 @@ func includesType(etype TekoType) FunctionType {
 	}
 }
 
-func setAddType(etype TekoType) FunctionType {
-	return FunctionType{
-		rtype: &VoidType,
+func setAddType(etype TekoType) *FunctionType {
+	return &FunctionType{
+		rtype: VoidType,
 		argdefs: []FunctionArgDef{
 			{
 				name:  "element",
@@ -54,31 +54,31 @@ func makeSetFields(etype TekoType) map[string]TekoType {
 	add_t := setAddType(etype)
 
 	return map[string]TekoType{
-		"add":      &add_t,
-		"size":     &IntType,
-		"includes": &in_t,
+		"add":      add_t,
+		"size":     IntType,
+		"includes": in_t,
 	}
 }
 
-func newSetType(etype TekoType) SetType {
-	stype := SetType{
+func newSetType(etype TekoType) *SetType {
+	stype := &SetType{
 		etype:  etype,
 		fields: makeSetFields(etype),
 	}
 
-	setOpType := FunctionType{
+	setOpType := &FunctionType{
 		rtype: stype,
 		argdefs: []FunctionArgDef{
 			{
 				name:  "other",
-				ttype: &stype,
+				ttype: stype,
 			},
 		},
 	}
 
-	stype.fields["and"] = &setOpType
-	stype.fields["or"] = &setOpType
-	stype.fields["sub"] = &setOpType
+	stype.fields["and"] = setOpType
+	stype.fields["or"] = setOpType
+	stype.fields["sub"] = setOpType
 
 	return stype
 }
@@ -100,14 +100,14 @@ func makeMapFields(keyType TekoType, valueType TekoType) map[string]TekoType {
 	in_t := includesType(valueType)
 
 	return map[string]TekoType{
-		"at":       &at_t,
-		"size":     &IntType,
-		"includes": &in_t,
+		"at":       at_t,
+		"size":     IntType,
+		"includes": in_t,
 	}
 }
 
-func newMapType(keyType TekoType, valueType TekoType) MapType {
-	return MapType{
+func newMapType(keyType TekoType, valueType TekoType) *MapType {
+	return &MapType{
 		ktype:  keyType,
 		vtype:  valueType,
 		fields: makeMapFields(keyType, valueType),
@@ -125,18 +125,18 @@ func (t ArrayType) allFields() map[string]TekoType {
 	return t.fields
 }
 
-func newArrayType(etype TekoType) ArrayType {
-	atype := ArrayType{
+func newArrayType(etype TekoType) *ArrayType {
+	atype := &ArrayType{
 		etype:  etype,
-		fields: makeMapFields(&IntType, etype),
+		fields: makeMapFields(IntType, etype),
 	}
 
 	atype.fields["add"] = &FunctionType{
-		rtype: &atype,
+		rtype: atype,
 		argdefs: []FunctionArgDef{
 			{
 				name:  "other",
-				ttype: &atype,
+				ttype: atype,
 			},
 		},
 	}
@@ -144,14 +144,14 @@ func newArrayType(etype TekoType) ArrayType {
 	return atype
 }
 
-var StringType ArrayType = newArrayType(&CharType)
+var StringType *ArrayType = newArrayType(CharType)
 
-var PrintType FunctionType = FunctionType{
-	rtype: &VoidType,
+var PrintType *FunctionType = &FunctionType{
+	rtype: VoidType,
 	argdefs: []FunctionArgDef{
 		{
 			name:  "s",
-			ttype: &StringType,
+			ttype: StringType,
 		},
 	},
 }

@@ -14,7 +14,7 @@ print(num$);
 
 int m = if (b) 0 else 1;
 
-{
+let o = {
   foo: "bar",
   n: 3,
 };

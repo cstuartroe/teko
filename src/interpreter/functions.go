@@ -10,7 +10,7 @@ type executorType func(function TekoFunction, evaluatedArgs map[string]*TekoObje
 type TekoFunction struct {
 	context  InterpreterModule
 	body     lexparse.Codeblock
-	ftype    checker.FunctionType
+	ftype    *checker.FunctionType
 	executor executorType
 }
 
