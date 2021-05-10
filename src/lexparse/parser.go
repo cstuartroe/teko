@@ -137,6 +137,9 @@ func (parser *Parser) continueExpression(expr Expression, prec int) Expression {
 	case LParT:
 		out = parser.makeCallExpression(expr)
 
+	case DotT:
+		out = parser.makeAttributeExpression(expr)
+
 	case BinopT:
 		op_prec := binop_precs[binops[value]]
 		if prec <= op_prec {
@@ -166,6 +169,7 @@ func (parser *Parser) continueExpression(expr Expression, prec int) Expression {
 				}
 			}
 		}
+
 	case SuffixT:
 		suffix := *parser.currentToken()
 		parser.Advance()
@@ -205,7 +209,7 @@ func (parser *Parser) grabLetDeclaration() DeclarationExpression {
 	parser.Advance()
 
 	return DeclarationExpression{
-		Tekotype: letExpr,
+		Tekotype:  letExpr,
 		Declareds: parser.grabDeclaredChain(),
 	}
 }
@@ -303,6 +307,20 @@ func (parser *Parser) makeCallExpression(receiver Expression) CallExpression {
 		Receiver: receiver,
 		Args:     args,
 		Kwargs:   kwargs,
+	}
+}
+
+func (parser *Parser) makeAttributeExpression(left Expression) AttributeExpression {
+	parser.Expect(DotT)
+	parser.Advance()
+
+	parser.Expect(SymbolT)
+	symbol := *parser.currentToken()
+	parser.Advance()
+
+	return AttributeExpression{
+		Left:   left,
+		Symbol: symbol,
 	}
 }
 
