@@ -2,7 +2,6 @@ package interpreter
 
 import (
 	"fmt"
-	"github.com/cstuartroe/teko/src/checker"
 	"github.com/cstuartroe/teko/src/lexparse"
 	"strconv"
 )
@@ -118,8 +117,7 @@ func (m InterpreterModule) evaluateFunctionCall(call lexparse.CallExpression) Te
 	receiver := m.evaluateExpression(call.Receiver)
 	switch p := (receiver).(type) {
 	case *TekoFunction:
-		resolved_args := checker.ResolveArgs(p.ftype.GetArgdefs(), call)
-		return p.execute(m, resolved_args)
+		return p.execute(m, call)
 
 	default:
 		lexparse.TokenPanic(call.Token(), "Non-function was the receiver of a call. Where was the type checker??")
@@ -177,7 +175,7 @@ func (m InterpreterModule) evaluateArray(expr lexparse.SequenceExpression) *Arra
 		o := m.evaluateExpression(e)
 		elements = append(elements, o)
 	}
-	return &Array{elements}
+	return &Array{elements, newSymbolTable(nil)}
 }
 
 func (m InterpreterModule) evaluateSet(expr lexparse.SequenceExpression) *Set {

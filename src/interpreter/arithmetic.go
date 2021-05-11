@@ -1,8 +1,6 @@
 package interpreter
 
 import (
-	"github.com/cstuartroe/teko/src/checker"
-	"github.com/cstuartroe/teko/src/lexparse"
 	"math"
 	"strconv"
 )
@@ -40,15 +38,6 @@ func IntBinopExecutor(receiverValue int, op intOpType) executorType {
 	}
 }
 
-func IntBinop(receiverValue int, op intOpType) *TekoFunction {
-	return &TekoFunction{
-		context:  blankInterpreter,
-		body:     lexparse.Codeblock{},
-		ftype:    checker.IntBinopType,
-		executor: IntBinopExecutor(receiverValue, op),
-	}
-}
-
 var intOps map[string]intOpType = map[string]intOpType{
 	"add":  func(n1 int, n2 int) int { return n1 + n2 },
 	"sub":  func(n1 int, n2 int) int { return n1 - n2 },
@@ -65,33 +54,19 @@ func IntToStrExecutor(receiverValue int) executorType {
 	}
 }
 
-func IntToStr(receiverValue int) *TekoFunction {
-	return &TekoFunction{
-		context:  blankInterpreter,
-		body:     lexparse.Codeblock{},
-		ftype:    checker.ToStrType,
-		executor: IntToStrExecutor(receiverValue),
-	}
-}
-
-func set_and_return(n Integer, name string, f TekoObject) TekoObject {
-	n.symbolTable.set(name, f)
-	return f
-}
-
 func (n Integer) getFieldValue(name string) TekoObject {
-	if attr := n.symbolTable.get(name); attr != nil {
-		return attr
-	} else if op, ok := intOps[name]; ok {
-		return set_and_return(n, name, IntBinop(n.value, op))
-	}
+	return cached_get(n.symbolTable, name, func() TekoObject {
+		if op, ok := intOps[name]; ok {
+			return customExecutedFunction(IntBinopExecutor(n.value, op), []string{"other"})
+		}
 
-	switch name {
+		switch name {
 
-	case "to_str":
-		return set_and_return(n, name, IntToStr(n.value))
+		case "to_str":
+			return customExecutedFunction(IntToStrExecutor(n.value), []string{})
 
-	default:
-		panic("Operation not implemented: " + name)
-	}
+		default:
+			panic("Operation not implemented: " + name)
+		}
+	})
 }

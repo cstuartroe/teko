@@ -34,6 +34,16 @@ func (stable *SymbolTable) set(name string, val TekoObject) {
 	}
 }
 
+func cached_get(t *SymbolTable, name string, f func() TekoObject) TekoObject {
+	if attr := t.get(name); attr != nil {
+		return attr
+	} else {
+		v := f()
+		t.set(name, v)
+		return v
+	}
+}
+
 type BasicObject struct {
 	symbolTable *SymbolTable
 }

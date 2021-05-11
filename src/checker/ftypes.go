@@ -21,31 +21,37 @@ func (ftype FunctionType) allFields() map[string]TekoType {
 	return map[string]TekoType{}
 }
 
-func (ftype FunctionType) GetArgdefs() []FunctionArgDef {
-	return ftype.argdefs
+func (ftype FunctionType) argnames() []string {
+	var out []string = []string{}
+
+	for _, argdef := range ftype.argdefs {
+		out = append(out, argdef.name)
+	}
+
+	return out
 }
 
-func getArgTypeByName(argdefs []FunctionArgDef, name string) TekoType {
-	for _, argdef := range argdefs {
-		if argdef.name == name {
-			return argdef.ttype
+func contains(strings []string, s string) bool {
+	for _, e := range strings {
+		if s == e {
+			return true
 		}
 	}
-	return nil
+	return false
 }
 
-func ResolveArgs(argdefs []FunctionArgDef, expr lexparse.CallExpression) map[string]lexparse.Expression {
+func ResolveArgs(argnames []string, expr lexparse.CallExpression) map[string]lexparse.Expression {
 	args_by_name := map[string]lexparse.Expression{}
 
-	if len(expr.Args) > len(argdefs) {
+	if len(expr.Args) > len(argnames) {
 		lexparse.TokenPanic(
-			expr.Args[len(argdefs)].Token(),
-			fmt.Sprintf("Too many arguments (%d expected, %d given)", len(argdefs), len(expr.Args)),
+			expr.Args[len(argnames)].Token(),
+			fmt.Sprintf("Too many arguments (%d expected, %d given)", len(argnames), len(expr.Args)),
 		)
 	}
 
 	for i, arg := range expr.Args {
-		args_by_name[argdefs[i].name] = arg
+		args_by_name[argnames[i]] = arg
 	}
 
 	for _, kwarg := range expr.Kwargs {
@@ -58,8 +64,7 @@ func ResolveArgs(argdefs []FunctionArgDef, expr lexparse.CallExpression) map[str
 			)
 		}
 
-		argtype := getArgTypeByName(argdefs, name)
-		if argtype != nil {
+		if contains(argnames, name) {
 			args_by_name[name] = kwarg.Value
 		} else {
 			lexparse.TokenPanic(

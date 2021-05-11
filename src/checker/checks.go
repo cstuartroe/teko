@@ -134,7 +134,7 @@ func (c *Checker) checkCallExpression(expr lexparse.CallExpression) TekoType {
 
 	switch ftype := receiver_tekotype.(type) {
 	case *FunctionType:
-		args_by_name := ResolveArgs(ftype.argdefs, expr)
+		args_by_name := ResolveArgs(ftype.argnames(), expr)
 
 		for _, argdef := range ftype.argdefs {
 			arg, ok := args_by_name[argdef.name]

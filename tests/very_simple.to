@@ -20,6 +20,15 @@ let o = {
 };
 
 print(o.foo);
+print("\n");
 
-[1,2,3,4,5] + [6,7,8,9,10];
+let arr = [1,2,3,4,5] + [6,7,8,9,10];
+print(arr.at(0)$);
+print("\n");
+print(arr.size$);
+print("\n");
+print(if arr.includes(1) "yeppers" else "nopers");
+print("\n");
+
+
 set {1,2,3,4,5} & set {6,7,8,9,10};

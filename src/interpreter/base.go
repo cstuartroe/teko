@@ -2,7 +2,6 @@ package interpreter
 
 import (
 	"fmt"
-	"github.com/cstuartroe/teko/src/checker"
 	"github.com/cstuartroe/teko/src/lexparse"
 )
 
@@ -26,7 +25,7 @@ func TekoPrintExecutor(function *TekoFunction, evaluatedArgs map[string]TekoObje
 var TekoPrint *TekoFunction = &TekoFunction{
 	context:  blankInterpreter,
 	body:     lexparse.Codeblock{},
-	ftype:    checker.PrintType,
+	argnames: []string{"s"},
 	executor: TekoPrintExecutor,
 }
 
