@@ -396,6 +396,11 @@ func (parser *Parser) grabIf(prec int) IfExpression {
 	parser.Advance()
 
 	cond := parser.grabExpression(prec)
+
+	if parser.currentToken().TType == ThenT {
+		parser.Advance()
+	}
+
 	then := parser.grabExpression(prec)
 	var else_expr Expression = nil
 
