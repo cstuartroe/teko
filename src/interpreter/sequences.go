@@ -1,10 +1,10 @@
 package interpreter
 
 type Array struct {
-	elements []*TekoObject
+	elements []TekoObject
 }
 
-func (a Array) getFieldValue(name string) *TekoObject {
+func (a Array) getFieldValue(name string) TekoObject {
 	switch name {
 	default:
 		panic("Attributes haven't been implemented for arrays yet")
@@ -12,10 +12,10 @@ func (a Array) getFieldValue(name string) *TekoObject {
 }
 
 type Set struct {
-	elements []*TekoObject
+	elements []TekoObject
 }
 
-func (s Set) getFieldValue(name string) *TekoObject {
+func (s Set) getFieldValue(name string) TekoObject {
 	switch name {
 	default:
 		panic("Attributes haven't been implemented for sets yet")

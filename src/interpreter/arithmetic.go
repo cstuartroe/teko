@@ -7,13 +7,13 @@ import (
 	"strconv"
 )
 
-var INT_CACHE map[int]Integer = map[int]Integer{}
+var INT_CACHE map[int]*Integer = map[int]*Integer{}
 
-func getInteger(n int) Integer {
+func getInteger(n int) *Integer {
 	if obj, ok := INT_CACHE[n]; ok {
 		return obj
 	} else {
-		obj = Integer{
+		obj = &Integer{
 			value:       n,
 			symbolTable: newSymbolTable(nil),
 		}
@@ -25,24 +25,23 @@ func getInteger(n int) Integer {
 type intOpType func(n1 int, n2 int) int
 
 func IntBinopExecutor(receiverValue int, op intOpType) executorType {
-	return func(function TekoFunction, evaluatedArgs map[string]*TekoObject) *TekoObject {
+	return func(function TekoFunction, evaluatedArgs map[string]TekoObject) TekoObject {
 		other, ok := evaluatedArgs["other"]
 		if !ok {
 			panic("No parameter passed to int arithmetic function")
 		}
 
-		switch p := (*other).(type) {
-		case Integer:
-			var n TekoObject = getInteger(op(receiverValue, p.value))
-			return &n
+		switch p := (other).(type) {
+		case *Integer:
+			return getInteger(op(receiverValue, p.value))
 		default:
 			panic("Non-int somehow made it past the type checker as an argument to int arithmetic!")
 		}
 	}
 }
 
-func IntBinop(receiverValue int, op intOpType) TekoFunction {
-	return TekoFunction{
+func IntBinop(receiverValue int, op intOpType) *TekoFunction {
+	return &TekoFunction{
 		context:  blankInterpreter,
 		body:     lexparse.Codeblock{},
 		ftype:    checker.IntBinopType,
@@ -59,16 +58,15 @@ var intOps map[string]intOpType = map[string]intOpType{
 }
 
 func IntToStrExecutor(receiverValue int) executorType {
-	return func(function TekoFunction, evaluatedArgs map[string]*TekoObject) *TekoObject {
-		var s TekoObject = String{
+	return func(function TekoFunction, evaluatedArgs map[string]TekoObject) TekoObject {
+		return &String{
 			value: []rune(strconv.Itoa(receiverValue)),
 		}
-		return &s
 	}
 }
 
-func IntToStr(receiverValue int) TekoFunction {
-	return TekoFunction{
+func IntToStr(receiverValue int) *TekoFunction {
+	return &TekoFunction{
 		context:  blankInterpreter,
 		body:     lexparse.Codeblock{},
 		ftype:    checker.ToStrType,
@@ -76,24 +74,22 @@ func IntToStr(receiverValue int) TekoFunction {
 	}
 }
 
-func set_and_return(n Integer, name string, f *TekoObject) *TekoObject {
+func set_and_return(n Integer, name string, f TekoObject) TekoObject {
 	n.symbolTable.set(name, f)
 	return f
 }
 
-func (n Integer) getFieldValue(name string) *TekoObject {
+func (n Integer) getFieldValue(name string) TekoObject {
 	if attr := n.symbolTable.get(name); attr != nil {
 		return attr
 	} else if op, ok := intOps[name]; ok {
-		var f TekoObject = IntBinop(n.value, op)
-		return set_and_return(n, name, &f)
+		return set_and_return(n, name, IntBinop(n.value, op))
 	}
 
 	switch name {
 
 	case "to_str":
-		var f TekoObject = IntToStr(n.value)
-		return set_and_return(n, name, &f)
+		return set_and_return(n, name, IntToStr(n.value))
 
 	default:
 		panic("Operation not implemented: " + name)
