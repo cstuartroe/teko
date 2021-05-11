@@ -8,7 +8,7 @@ import (
 
 var blankInterpreter *InterpreterModule = &InterpreterModule{}
 
-func TekoPrintExecutor(function TekoFunction, evaluatedArgs map[string]TekoObject) TekoObject {
+func TekoPrintExecutor(function *TekoFunction, evaluatedArgs map[string]TekoObject) TekoObject {
 	s, ok := evaluatedArgs["s"]
 	if !ok {
 		panic("No parameter passed to print")

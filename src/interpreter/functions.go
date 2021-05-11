@@ -5,7 +5,7 @@ import (
 	"github.com/cstuartroe/teko/src/lexparse"
 )
 
-type executorType func(function TekoFunction, evaluatedArgs map[string]TekoObject) TekoObject
+type executorType func(function *TekoFunction, evaluatedArgs map[string]TekoObject) TekoObject
 
 type TekoFunction struct {
 	context  *InterpreterModule
@@ -16,7 +16,7 @@ type TekoFunction struct {
 
 func (f TekoFunction) getFieldValue(name string) TekoObject { return nil }
 
-func (t TekoFunction) execute(callingContext InterpreterModule, resolvedArgs map[string]lexparse.Expression) TekoObject {
+func (t *TekoFunction) execute(callingContext InterpreterModule, resolvedArgs map[string]lexparse.Expression) TekoObject {
 	evaluatedArgs := t.evaluateArgs(callingContext, resolvedArgs)
 	return t.executor(t, evaluatedArgs)
 }

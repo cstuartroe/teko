@@ -25,7 +25,7 @@ func getInteger(n int) *Integer {
 type intOpType func(n1 int, n2 int) int
 
 func IntBinopExecutor(receiverValue int, op intOpType) executorType {
-	return func(function TekoFunction, evaluatedArgs map[string]TekoObject) TekoObject {
+	return func(function *TekoFunction, evaluatedArgs map[string]TekoObject) TekoObject {
 		other, ok := evaluatedArgs["other"]
 		if !ok {
 			panic("No parameter passed to int arithmetic function")
@@ -58,7 +58,7 @@ var intOps map[string]intOpType = map[string]intOpType{
 }
 
 func IntToStrExecutor(receiverValue int) executorType {
-	return func(function TekoFunction, evaluatedArgs map[string]TekoObject) TekoObject {
+	return func(function *TekoFunction, evaluatedArgs map[string]TekoObject) TekoObject {
 		return &String{
 			value: []rune(strconv.Itoa(receiverValue)),
 		}
