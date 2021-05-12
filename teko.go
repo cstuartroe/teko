@@ -26,5 +26,5 @@ func main() {
 	}
 
 	checker.CheckTree(main_codeblock)
-	interpreter.ExecuteTree(main_codeblock)
+	interpreter.ExecuteTree(&main_codeblock)
 }

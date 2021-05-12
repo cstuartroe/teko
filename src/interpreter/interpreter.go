@@ -6,7 +6,7 @@ import (
 	"strconv"
 )
 
-func ExecuteTree(codeblock lexparse.Codeblock) {
+func ExecuteTree(codeblock *lexparse.Codeblock) {
 	interpreter := InterpreterModule{
 		codeblock: codeblock,
 		scope: &BasicObject{
@@ -18,11 +18,11 @@ func ExecuteTree(codeblock lexparse.Codeblock) {
 }
 
 type InterpreterModule struct {
-	codeblock lexparse.Codeblock
+	codeblock *lexparse.Codeblock
 	scope     *BasicObject
 }
 
-func (m InterpreterModule) execute() TekoObject {
+func (m InterpreterModule) execute() *TekoObject {
 	for _, stmt := range m.codeblock.GetStatements() {
 		m.executeStatement(stmt)
 	}
@@ -38,7 +38,7 @@ func (m InterpreterModule) executeStatement(stmt lexparse.Statement) {
 	}
 }
 
-func (m InterpreterModule) evaluateExpression(expr lexparse.Expression) TekoObject {
+func (m InterpreterModule) evaluateExpression(expr lexparse.Expression) *TekoObject {
 	switch p := expr.(type) {
 
 	case lexparse.SimpleExpression:
@@ -68,7 +68,7 @@ func (m InterpreterModule) evaluateExpression(expr lexparse.Expression) TekoObje
 	}
 }
 
-func (m InterpreterModule) evaluateSimpleExpression(expr lexparse.SimpleExpression) TekoObject {
+func (m InterpreterModule) evaluateSimpleExpression(expr lexparse.SimpleExpression) *TekoObject {
 	ttype := expr.Token().TType
 	value := expr.Token().Value
 
@@ -83,7 +83,7 @@ func (m InterpreterModule) evaluateSimpleExpression(expr lexparse.SimpleExpressi
 		}
 
 	case lexparse.StringT:
-		return &String{value}
+		return tp(String{value})
 
 	case lexparse.CharT:
 		return nil // TODO
@@ -91,7 +91,7 @@ func (m InterpreterModule) evaluateSimpleExpression(expr lexparse.SimpleExpressi
 	case lexparse.IntT:
 		n, ok := strconv.Atoi(string(value))
 		if ok == nil {
-			return getInteger(n)
+			return tp(getInteger(n))
 		} else {
 			lexparse.TokenPanic(expr.Token(), "Invalid integer - how did this make it past the lexer?")
 			return nil
@@ -113,10 +113,10 @@ func (m InterpreterModule) evaluateSimpleExpression(expr lexparse.SimpleExpressi
 	}
 }
 
-func (m InterpreterModule) evaluateFunctionCall(call lexparse.CallExpression) TekoObject {
+func (m InterpreterModule) evaluateFunctionCall(call lexparse.CallExpression) *TekoObject {
 	receiver := m.evaluateExpression(call.Receiver)
-	switch p := (receiver).(type) {
-	case *TekoFunction:
+	switch p := (*receiver).(type) {
+	case TekoFunction:
 		return p.execute(m, call)
 
 	default:
@@ -125,26 +125,26 @@ func (m InterpreterModule) evaluateFunctionCall(call lexparse.CallExpression) Te
 	}
 }
 
-func (m InterpreterModule) evaluateDeclaration(decl lexparse.DeclarationExpression) TekoObject {
+func (m InterpreterModule) evaluateDeclaration(decl lexparse.DeclarationExpression) *TekoObject {
 	for _, declared := range decl.Declareds {
 		name := string(declared.Symbol.Value)
-		m.scope.symbolTable.set(name, m.evaluateExpression(declared.Right))
+		m.scope.symbolTable.set(name, sc(m.evaluateExpression(declared.Right)))
 	}
 
 	return nil // TODO: tuple?
 }
 
-func (m InterpreterModule) evaluateAttributeExpression(expr lexparse.AttributeExpression) TekoObject {
+func (m InterpreterModule) evaluateAttributeExpression(expr lexparse.AttributeExpression) *TekoObject {
 	left := m.evaluateExpression(expr.Left)
-	return left.getFieldValue(string(expr.Symbol.Value))
+	return (*left).getFieldValue(string(expr.Symbol.Value))
 }
 
-func (m InterpreterModule) evaluateIfExpression(expr lexparse.IfExpression) TekoObject {
+func (m InterpreterModule) evaluateIfExpression(expr lexparse.IfExpression) *TekoObject {
 	cond := m.evaluateExpression(expr.Condition)
 
 	var cond_value bool
-	switch p := (cond).(type) {
-	case *Boolean:
+	switch p := (*cond).(type) {
+	case Boolean:
 		cond_value = p.value
 	default:
 		panic("How did a non-boolean slip in here?")
@@ -158,40 +158,40 @@ func (m InterpreterModule) evaluateIfExpression(expr lexparse.IfExpression) Teko
 	}
 }
 
-func (m InterpreterModule) evaluateSequenceExpression(expr lexparse.SequenceExpression) TekoObject {
+func (m InterpreterModule) evaluateSequenceExpression(expr lexparse.SequenceExpression) *TekoObject {
 	switch expr.Stype {
 	case lexparse.ArraySeqType:
-		return m.evaluateArray(expr)
+		return tp(m.evaluateArray(expr))
 	case lexparse.SetSeqType:
-		return m.evaluateSet(expr)
+		return tp(m.evaluateSet(expr))
 	default:
 		panic("Unknown sequence type to interpret: " + expr.Stype)
 	}
 }
 
-func (m InterpreterModule) evaluateArray(expr lexparse.SequenceExpression) *Array {
-	elements := []TekoObject{}
+func (m InterpreterModule) evaluateArray(expr lexparse.SequenceExpression) Array {
+	elements := []*TekoObject{}
 	for _, e := range expr.Elements {
 		o := m.evaluateExpression(e)
 		elements = append(elements, o)
 	}
-	return &Array{elements, newSymbolTable(nil)}
+	return Array{elements, newSymbolTable(nil)}
 }
 
-func (m InterpreterModule) evaluateSet(expr lexparse.SequenceExpression) *Set {
-	elements := []TekoObject{}
+func (m InterpreterModule) evaluateSet(expr lexparse.SequenceExpression) Set {
+	elements := []*TekoObject{}
 	for _, e := range expr.Elements {
 		o := m.evaluateExpression(e)
 		elements = append(elements, o)
 	}
-	return &Set{elements}
+	return Set{elements}
 }
 
-func (m InterpreterModule) evaluateObjectExpression(expr lexparse.ObjectExpression) TekoObject {
+func (m InterpreterModule) evaluateObjectExpression(expr lexparse.ObjectExpression) *TekoObject {
 	symbolTable := newSymbolTable(nil)
 	for _, of := range expr.Fields {
 		o := m.evaluateExpression(of.Value)
 		symbolTable.set(string(of.Symbol.Value), o)
 	}
-	return &BasicObject{symbolTable}
+	return tp(BasicObject{symbolTable})
 }

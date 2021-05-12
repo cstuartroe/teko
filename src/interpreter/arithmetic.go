@@ -5,33 +5,25 @@ import (
 	"strconv"
 )
 
-var INT_CACHE map[int]*Integer = map[int]*Integer{}
-
-func getInteger(n int) *Integer {
-	if obj, ok := INT_CACHE[n]; ok {
-		return obj
-	} else {
-		obj = &Integer{
-			value:       n,
-			symbolTable: newSymbolTable(nil),
-		}
-		INT_CACHE[n] = obj
-		return obj
+func getInteger(n int) Integer {
+	return Integer{
+		value:       n,
+		symbolTable: newSymbolTable(nil),
 	}
 }
 
 type intOpType func(n1 int, n2 int) int
 
 func IntBinopExecutor(receiverValue int, op intOpType) executorType {
-	return func(function *TekoFunction, evaluatedArgs map[string]TekoObject) TekoObject {
+	return func(function TekoFunction, evaluatedArgs map[string]*TekoObject) *TekoObject {
 		other, ok := evaluatedArgs["other"]
 		if !ok {
 			panic("No parameter passed to int arithmetic function")
 		}
 
-		switch p := (other).(type) {
-		case *Integer:
-			return getInteger(op(receiverValue, p.value))
+		switch p := (*other).(type) {
+		case Integer:
+			return tp(getInteger(op(receiverValue, p.value)))
 		default:
 			panic("Non-int somehow made it past the type checker as an argument to int arithmetic!")
 		}
@@ -47,23 +39,23 @@ var intOps map[string]intOpType = map[string]intOpType{
 }
 
 func IntToStrExecutor(receiverValue int) executorType {
-	return func(function *TekoFunction, evaluatedArgs map[string]TekoObject) TekoObject {
-		return &String{
+	return func(function TekoFunction, evaluatedArgs map[string]*TekoObject) *TekoObject {
+		return tp(String{
 			value: []rune(strconv.Itoa(receiverValue)),
-		}
+		})
 	}
 }
 
-func (n Integer) getFieldValue(name string) TekoObject {
-	return cached_get(n.symbolTable, name, func() TekoObject {
+func (n Integer) getFieldValue(name string) *TekoObject {
+	return cached_get(n.symbolTable, name, func() *TekoObject {
 		if op, ok := intOps[name]; ok {
-			return customExecutedFunction(IntBinopExecutor(n.value, op), []string{"other"})
+			return tp(customExecutedFunction(IntBinopExecutor(n.value, op), []string{"other"}))
 		}
 
 		switch name {
 
 		case "to_str":
-			return customExecutedFunction(IntToStrExecutor(n.value), []string{})
+			return tp(customExecutedFunction(IntToStrExecutor(n.value), []string{}))
 
 		default:
 			panic("Operation not implemented: " + name)
