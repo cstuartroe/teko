@@ -47,6 +47,9 @@ func (m InterpreterModule) evaluateExpression(expr lexparse.Expression) *TekoObj
 	case lexparse.DeclarationExpression:
 		return m.evaluateDeclaration(p)
 
+	case lexparse.UpdateExpression:
+		return m.evaluateUpdate(p)
+
 	case lexparse.CallExpression:
 		return m.evaluateFunctionCall(p)
 
@@ -132,6 +135,13 @@ func (m InterpreterModule) evaluateDeclaration(decl lexparse.DeclarationExpressi
 	}
 
 	return nil // TODO: tuple?
+}
+
+func (m InterpreterModule) evaluateUpdate(update lexparse.UpdateExpression) *TekoObject {
+	var lhs *TekoObject = m.evaluateExpression(update.Updated)
+	var value *TekoObject = m.evaluateExpression(update.Right)
+	*lhs = *value
+	return lhs
 }
 
 func (m InterpreterModule) evaluateAttributeExpression(expr lexparse.AttributeExpression) *TekoObject {

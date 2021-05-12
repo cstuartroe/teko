@@ -28,6 +28,9 @@ func (c *Checker) checkExpression(expr lexparse.Expression, expectedType TekoTyp
 	case lexparse.DeclarationExpression:
 		ttype = c.checkDeclaration(p)
 
+	case lexparse.UpdateExpression:
+		ttype = c.checkUpdate(p)
+
 	case lexparse.CallExpression:
 		ttype = c.checkCallExpression(p)
 
@@ -91,6 +94,27 @@ func (c *Checker) checkDeclaration(decl lexparse.DeclarationExpression) TekoType
 	}
 
 	return evaluated_ttype // TODO: decide what type declarations return and return it
+}
+
+func validUpdated(updated lexparse.Expression) bool {
+	switch p := updated.(type) {
+	case lexparse.SimpleExpression:
+		return p.Token().TType == lexparse.SymbolT
+	case lexparse.AttributeExpression:
+		return validUpdated(p.Left)
+	default:
+		return false
+	}
+}
+
+func (c *Checker) checkUpdate(update lexparse.UpdateExpression) TekoType {
+	if !validUpdated(update.Updated) {
+		lexparse.TokenPanic(update.Updated.Token(), "Invalid left hand side")
+	}
+
+	ttype := c.checkExpression(update.Updated, nil)
+	c.checkExpression(update.Right, ttype)
+	return ttype
 }
 
 func (c *Checker) evaluateType(expr lexparse.Expression) TekoType {

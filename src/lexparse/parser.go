@@ -192,6 +192,23 @@ func (parser *Parser) continueExpression(expr Expression, prec int) Expression {
 				Suffix: suffix,
 			}
 		}
+
+	case UpdaterT:
+		if prec <= setter_prec {
+			updater := *parser.currentToken()
+			parser.Advance()
+
+			if value == "<-" {
+				out = UpdateExpression{
+					Updated: expr,
+					Setter:  updater,
+					Right:   parser.grabExpression(setter_prec + 1),
+				}
+
+			} else {
+				panic("Other updaters not supported yet")
+			}
+		}
 	}
 
 	if out != nil {
@@ -239,15 +256,15 @@ func (parser *Parser) grabDeclared() Declared {
 
 	// TODO: function argdef
 
-	parser.Expect(SetterT)
-	setter := parser.currentToken()
+	parser.Expect(DefinerT)
+	definer := parser.currentToken()
 	parser.Advance()
 
 	right := parser.grabExpression(min_prec)
 
 	return Declared{
 		Symbol: *symbol,
-		Setter: *setter,
+		Setter: *definer,
 		Right:  right,
 	}
 }
@@ -264,7 +281,7 @@ func (parser *Parser) makeCallExpression(receiver Expression) CallExpression {
 	for cont {
 		arg := parser.grabExpression(add_sub_prec) // don't want it continuing past a setter!
 
-		if parser.currentToken().TType == SetterT {
+		if parser.currentToken().TType == DefinerT {
 			if string(parser.currentToken().Value) != "=" {
 				TokenPanic(*parser.currentToken(), "Keyword argument must use =")
 			}

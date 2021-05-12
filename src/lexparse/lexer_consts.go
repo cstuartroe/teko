@@ -29,7 +29,8 @@ const (
 
 	BinopT      = "binary operation" // + - * / ^ % & |
 	ComparisonT = "comparison"       // == != < > <= >=
-	SetterT     = "setter"           // = += -= *= /= ^= %= &= |= ->
+	DefinerT    = "definer"          // = ->
+	UpdaterT    = "updater"          // <- += -= *= /= ^= %= &= |=
 	PrefixT     = "prefix"           // ! ~ ?
 	SuffixT     = "suffix"           // $ # .
 
@@ -93,8 +94,12 @@ var comparisons map[string]string = map[string]string{
 	">=": "geq",
 }
 
-var setters map[string]string = map[string]string{
+var definers map[string]string = map[string]string{
 	"=":  "=",
+	"->": "->",
+}
+
+var updaters map[string]string = map[string]string{
 	"+=": "add",
 	"-=": "sub",
 	"*=": "mult",
@@ -103,8 +108,7 @@ var setters map[string]string = map[string]string{
 	"%=": "mod",
 	"&=": "and",
 	"|=": "or",
-	"->": "->",
-	"<-": "<-",
+	"<-": "update",
 }
 
 var prefixes map[string]string = map[string]string{

@@ -1,4 +1,8 @@
-int n -> 3;
+int n = 3;
+let n2 = n;
+n <- 4;
+print(n2$);
+print("\n");
 
 bool b = true;
 
@@ -29,6 +33,3 @@ print(arr.size$);
 print("\n");
 print(if arr.includes(1) then "yeppers" else "nopers");
 print("\n");
-
-
-set {1,2,3,4,5} & set {6,7,8,9,10};

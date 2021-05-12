@@ -186,6 +186,36 @@ func (d Declared) Token() Token {
 
 //---
 
+type UpdateExpression struct {
+	Updated Expression
+	Setter  Token
+	Right   Expression
+}
+
+func (n UpdateExpression) Ntype() string {
+	return "UpdateNode"
+}
+
+func (n UpdateExpression) children() []Node {
+	return []Node{n.Updated, n.Right}
+}
+
+func (n UpdateExpression) Token() Token {
+	return n.Setter
+}
+
+func (n UpdateExpression) child_strings(indent int) []string {
+	return []string{
+		node_to_str(n.Updated, indent),
+		n.Setter.to_indented_str(indent),
+		node_to_str(n.Right, indent),
+	}
+}
+
+func (n UpdateExpression) expressionNode() {}
+
+//---
+
 type CallExpression struct {
 	Receiver Expression
 	Args     []Expression

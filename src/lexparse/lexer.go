@@ -248,8 +248,10 @@ func (lexer *Lexer) grabPunctuation() {
 		lexer.CurrentTType = BinopT
 	} else if _, ok := comparisons[blob]; ok {
 		lexer.CurrentTType = ComparisonT
-	} else if _, ok := setters[blob]; ok {
-		lexer.CurrentTType = SetterT
+	} else if _, ok := definers[blob]; ok {
+		lexer.CurrentTType = DefinerT
+	} else if _, ok := updaters[blob]; ok {
+		lexer.CurrentTType = UpdaterT
 	} else if _, ok := prefixes[blob]; ok {
 		lexer.CurrentTType = PrefixT
 	} else if _, ok := suffixes[blob]; ok {
