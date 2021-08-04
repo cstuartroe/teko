@@ -103,6 +103,10 @@ func makeMapFields(keyType TekoType, valueType TekoType) map[string]TekoType {
 		"at":       at_t,
 		"size":     IntType,
 		"includes": in_t,
+		"to_str": &FunctionType{
+			rtype:   StringType,
+			argdefs: []FunctionArgDef{},
+		},
 	}
 }
 
@@ -144,7 +148,7 @@ func newArrayType(etype TekoType) *ArrayType {
 	return atype
 }
 
-var StringType *ArrayType = newArrayType(CharType)
+var StringType *ArrayType = &ArrayType{}
 
 var PrintType *FunctionType = &FunctionType{
 	rtype: VoidType,
@@ -154,4 +158,19 @@ var PrintType *FunctionType = &FunctionType{
 			ttype: StringType,
 		},
 	},
+}
+
+func SetupStringTypes() {
+	StringType.etype = CharType
+	StringType.fields = makeMapFields(IntType, CharType)
+
+	StringType.fields["add"] = &FunctionType{
+		rtype: StringType,
+		argdefs: []FunctionArgDef{
+			{
+				name:  "other",
+				ttype: StringType,
+			},
+		},
+	}
 }

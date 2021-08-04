@@ -11,6 +11,7 @@ import (
 func main() {
 	interpreter.VerifyStdlibDeclarations()
 	checker.SetupFunctionTypes()
+	checker.SetupStringTypes()
 
 	if len(os.Args) < 2 {
 		fmt.Println("Please supply exactly one argument, the filename")

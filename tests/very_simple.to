@@ -33,3 +33,5 @@ print(arr.size$);
 print("\n");
 print(if arr.includes(1) then "yeppers" else "nopers");
 print("\n");
+
+print(arr$);
