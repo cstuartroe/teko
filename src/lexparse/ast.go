@@ -124,8 +124,10 @@ func (e SimpleExpression) expressionNode() {}
 //---
 
 type DeclarationExpression struct {
-	Tekotype  Expression
-	Declareds []Declared
+	Symbol Token
+	Tekotype  *Expression
+	Setter Token
+	Right  Expression
 }
 
 func (e DeclarationExpression) Ntype() string {
@@ -133,56 +135,23 @@ func (e DeclarationExpression) Ntype() string {
 }
 
 func (e DeclarationExpression) children() []Node {
-	out := []Node{}
-	for _, d := range e.Declareds {
-		out = append(out, d)
-	}
-	return out
+	return []Node{*e.Tekotype, e.Right}
 }
 
 func (e DeclarationExpression) Token() Token {
-	return e.Tekotype.Token()
+	return e.Symbol
 }
 
 func (e DeclarationExpression) child_strings(indent int) []string {
-	out := []string{
-		node_to_str(e.Tekotype, indent),
+	return []string{
+		e.Symbol.to_indented_str(indent),
+		node_to_str(*e.Tekotype, indent),
+		e.Setter.to_indented_str(indent),
+		node_to_str(e.Right, indent),
 	}
-	for _, d := range e.Declareds {
-		out = append(out, node_to_str(d, indent))
-	}
-	return out
 }
 
 func (e DeclarationExpression) expressionNode() {}
-
-//---
-
-type Declared struct {
-	Symbol Token
-	Setter Token
-	Right  Expression
-}
-
-func (d Declared) Ntype() string {
-	return "Declared"
-}
-
-func (d Declared) children() []Node {
-	return []Node{d.Right}
-}
-
-func (d Declared) child_strings(indent int) []string {
-	return []string{
-		d.Symbol.to_indented_str(indent),
-		d.Setter.to_indented_str(indent),
-		node_to_str(d.Right, indent),
-	}
-}
-
-func (d Declared) Token() Token {
-	return d.Symbol
-}
 
 //---
 

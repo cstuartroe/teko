@@ -129,10 +129,8 @@ func (m InterpreterModule) evaluateFunctionCall(call lexparse.CallExpression) *T
 }
 
 func (m InterpreterModule) evaluateDeclaration(decl lexparse.DeclarationExpression) *TekoObject {
-	for _, declared := range decl.Declareds {
-		name := string(declared.Symbol.Value)
-		m.scope.symbolTable.set(name, sc(m.evaluateExpression(declared.Right)))
-	}
+	name := string(decl.Symbol.Value)
+	m.scope.symbolTable.set(name, sc(m.evaluateExpression(decl.Right)))
 
 	return nil // TODO: tuple?
 }

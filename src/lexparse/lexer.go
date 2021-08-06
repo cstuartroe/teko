@@ -168,7 +168,6 @@ var keywords map[string]tokenType = map[string]tokenType{
 	"false": BoolT,
 
 	"var": VarT,
-	"let": LetT,
 
 	"in":    InT,
 	"for":   ForT,

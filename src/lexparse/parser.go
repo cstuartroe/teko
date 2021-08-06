@@ -97,9 +97,6 @@ func (parser *Parser) grabExpression(prec int) Expression {
 	case LCurlyBrT:
 		expr = parser.grabObject()
 
-	case LetT:
-		expr = parser.grabLetDeclaration()
-
 	default:
 		expr = parser.grabSimpleExpression()
 	}
@@ -126,12 +123,29 @@ func (parser *Parser) continueExpression(expr Expression, prec int) Expression {
 	var out Expression
 
 	switch ttype {
-	case SymbolT:
-		if prec <= min_prec {
-			out = DeclarationExpression{
-				Tekotype:  expr,
-				Declareds: parser.grabDeclaredChain(),
-			}
+	case ColonT:
+		if !isValidDeclared(expr) {
+			TokenPanic(*parser.currentToken(), "Illegal left-hand side to declaration")
+		}
+
+		parser.Advance()
+
+		var tekotype *Expression = nil
+		switch (parser.currentToken().TType) {
+		case DefinerT:
+		default:
+			t := parser.grabExpression(prec)
+			tekotype = &t
+		}
+
+		setter := *parser.currentToken()
+		parser.Expect(DefinerT); parser.Advance()
+
+		out = DeclarationExpression{
+			Symbol: expr.Token(),
+			Tekotype: tekotype,
+			Setter: setter,
+			Right: parser.grabExpression(prec),
 		}
 
 	case LParT:
@@ -218,54 +232,17 @@ func (parser *Parser) continueExpression(expr Expression, prec int) Expression {
 	}
 }
 
-func (parser *Parser) grabLetDeclaration() DeclarationExpression {
-	parser.Expect(LetT)
-	letExpr := SimpleExpression{
-		*parser.currentToken(),
-	}
-	parser.Advance()
-
-	return DeclarationExpression{
-		Tekotype:  letExpr,
-		Declareds: parser.grabDeclaredChain(),
-	}
-}
-
-func (parser *Parser) grabDeclaredChain() []Declared {
-	chain := []Declared{
-		parser.grabDeclared(),
-	}
-
-	cont := true
-	for cont && parser.HasMore() && parser.currentToken().TType == CommaT {
-		parser.Advance()
-		if parser.HasMore() && parser.currentToken().TType == SymbolT {
-			chain = append(chain, parser.grabDeclared())
-		} else {
-			cont = false
+func isValidDeclared(declared Expression) bool {
+	switch (declared).(type) {
+	case SimpleExpression:
+		switch declared.Token().TType {
+		case SymbolT:
+			return true
+		default:
+			return false
 		}
-	}
-
-	return chain
-}
-
-func (parser *Parser) grabDeclared() Declared {
-	parser.Expect(SymbolT)
-	symbol := parser.currentToken()
-	parser.Advance()
-
-	// TODO: function argdef
-
-	parser.Expect(DefinerT)
-	definer := parser.currentToken()
-	parser.Advance()
-
-	right := parser.grabExpression(min_prec)
-
-	return Declared{
-		Symbol: *symbol,
-		Setter: *definer,
-		Right:  right,
+	default:
+		return false
 	}
 }
 

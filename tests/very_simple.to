@@ -1,24 +1,24 @@
-int n = 3;
-let n2 = n;
+n : int = 3;
+n2 : int = n;
 n <- 4;
 print(n2$);
 print("\n");
 
-bool b = true;
+b : bool = true;
 
-str s = "hello\n";
+s : str = "hello\n";
 
-str s2 = s;
+s2 : str = s;
 
 print(s2);
 
-int num = 1 + 2 * 3 / 4 - 5 ^ 6 * 7;
+num : int = 1 + 2 * 3 / 4 - 5 ^ 6 * 7;
 
 print(num$);
 
-int m = if (b) then 0 else 1;
+m : int = if (b) then 0 else 1;
 
-let o = {
+o := {
   foo: "bar",
   n: 3,
 };
@@ -26,7 +26,7 @@ let o = {
 print(o.foo);
 print("\n");
 
-let arr = [1,2,3,4,5] + [6,7,8,9,10];
+arr := [1,2,3,4,5] + [6,7,8,9,10];
 print(arr.at(0)$);
 print("\n");
 print(arr.size$);

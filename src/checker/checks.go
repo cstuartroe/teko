@@ -87,13 +87,7 @@ func (c *Checker) checkSimpleExpression(expr lexparse.SimpleExpression) TekoType
 func (c *Checker) checkDeclaration(decl lexparse.DeclarationExpression) TekoType {
 	var tekotype TekoType = c.evaluateType(decl.Tekotype)
 
-	var evaluated_ttype TekoType = nil
-
-	for _, declared := range decl.Declareds {
-		evaluated_ttype = c.declare(declared, tekotype)
-	}
-
-	return evaluated_ttype // TODO: decide what type declarations return and return it
+	return c.declare(decl.Symbol, decl.Right, tekotype)
 }
 
 func validUpdated(updated lexparse.Expression) bool {
@@ -117,8 +111,12 @@ func (c *Checker) checkUpdate(update lexparse.UpdateExpression) TekoType {
 	return ttype
 }
 
-func (c *Checker) evaluateType(expr lexparse.Expression) TekoType {
-	switch p := expr.(type) {
+func (c *Checker) evaluateType(expr *lexparse.Expression) TekoType {
+	if expr == nil {
+		return nil
+	}
+
+	switch p := (*expr).(type) {
 	case lexparse.SimpleExpression:
 		return c.evaluateSimpleType(p)
 	default:
@@ -128,8 +126,6 @@ func (c *Checker) evaluateType(expr lexparse.Expression) TekoType {
 
 func (c *Checker) evaluateSimpleType(expr lexparse.SimpleExpression) TekoType {
 	switch expr.Token().TType {
-	case lexparse.LetT:
-		return nil
 	case lexparse.SymbolT:
 		return c.getTypeByName(string(expr.Token().Value))
 	default:
@@ -138,16 +134,17 @@ func (c *Checker) evaluateSimpleType(expr lexparse.SimpleExpression) TekoType {
 	}
 }
 
-func (c *Checker) declare(declared lexparse.Declared, tekotype TekoType) TekoType {
+func (c *Checker) declare(symbol lexparse.Token, right lexparse.Expression, tekotype TekoType) TekoType {
 	// TODO: function types
 
-	evaluated_ttype := c.checkExpression(declared.Right, tekotype)
+	evaluated_ttype := c.checkExpression(right, tekotype)
 
-	name := string(declared.Symbol.Value)
+	name := string(symbol.Value)
+
 	if c.getFieldType(name) == nil {
 		c.declareFieldType(name, evaluated_ttype)
 	} else {
-		lexparse.TokenPanic(declared.Symbol, "Name has already been declared")
+		lexparse.TokenPanic(symbol, "Name has already been declared")
 	}
 
 	return evaluated_ttype

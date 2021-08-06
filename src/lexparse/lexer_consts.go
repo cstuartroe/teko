@@ -12,7 +12,6 @@ const (
 	BoolT   = "bool"
 
 	VarT = "var"
-	LetT = "let"
 
 	InT    = "in"
 	ForT   = "for"
