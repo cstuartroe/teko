@@ -9,12 +9,6 @@ func tp(t TekoObject) *TekoObject {
 	return &t
 }
 
-// shallow copy
-func sc(t *TekoObject) *TekoObject {
-	var copy TekoObject = *t
-	return &copy
-}
-
 type SymbolTable struct {
 	parent *SymbolTable
 	table  map[string]*TekoObject

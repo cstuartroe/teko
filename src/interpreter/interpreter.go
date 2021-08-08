@@ -138,9 +138,9 @@ func (m InterpreterModule) evaluateFunctionCall(call lexparse.CallExpression) *T
 
 func (m InterpreterModule) evaluateDeclaration(decl lexparse.DeclarationExpression) *TekoObject {
 	name := string(decl.Symbol.Value)
-	m.scope.symbolTable.set(name, sc(m.evaluateExpression(decl.Right)))
-
-	return nil // TODO: tuple?
+	val := m.evaluateExpression(decl.Right)
+	m.scope.symbolTable.set(name, val)
+	return val
 }
 
 func (m InterpreterModule) evaluateUpdate(update lexparse.UpdateExpression) *TekoObject {
