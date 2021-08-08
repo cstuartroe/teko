@@ -38,7 +38,8 @@ type Statement interface {
 //---
 
 type Codeblock struct {
-	statements []Statement
+	Statements []Statement
+	FinalExpression Expression
 }
 
 func (c *Codeblock) Ntype() string {
@@ -47,8 +48,11 @@ func (c *Codeblock) Ntype() string {
 
 func (c *Codeblock) children() []Node {
 	out := []Node{}
-	for _, stmt := range c.statements {
+	for _, stmt := range c.Statements {
 		out = append(out, stmt)
+	}
+	if c.FinalExpression != nil {
+		out = append(out, c.FinalExpression)
 	}
 	return out
 }
@@ -59,14 +63,13 @@ func (c *Codeblock) Token() Token {
 
 func (c *Codeblock) child_strings(indent int) []string {
 	out := []string{}
-	for _, stmt := range c.statements {
+	for _, stmt := range c.Statements {
 		out = append(out, node_to_str(stmt, indent))
 	}
+	if c.FinalExpression != nil {
+		out = append(out, node_to_str(c.FinalExpression, indent))
+	}
 	return out
-}
-
-func (c *Codeblock) GetStatements() []Statement {
-	return c.statements
 }
 
 //---
@@ -125,7 +128,7 @@ func (e SimpleExpression) expressionNode() {}
 
 type DeclarationExpression struct {
 	Symbol Token
-	Tekotype  *Expression
+	Tekotype  Expression
 	Setter Token
 	Right  Expression
 }
@@ -135,7 +138,7 @@ func (e DeclarationExpression) Ntype() string {
 }
 
 func (e DeclarationExpression) children() []Node {
-	return []Node{*e.Tekotype, e.Right}
+	return []Node{e.Tekotype, e.Right}
 }
 
 func (e DeclarationExpression) Token() Token {
@@ -145,7 +148,7 @@ func (e DeclarationExpression) Token() Token {
 func (e DeclarationExpression) child_strings(indent int) []string {
 	return []string{
 		e.Symbol.to_indented_str(indent),
-		node_to_str(*e.Tekotype, indent),
+		node_to_str(e.Tekotype, indent),
 		e.Setter.to_indented_str(indent),
 		node_to_str(e.Right, indent),
 	}
@@ -493,3 +496,65 @@ func (e ObjectExpression) Token() Token {
 }
 
 func (e ObjectExpression) expressionNode() {}
+
+//---
+
+type ArgdefNode struct {
+	Symbol   Token
+	Tekotype Expression
+}
+
+func (a ArgdefNode) Ntype() string {
+	return "ArgdefNode"
+}
+
+func (a ArgdefNode) children() []Node {
+  return []Node{a.Tekotype}
+}
+
+func (a ArgdefNode) child_strings(indent int) []string {
+	return []string{
+		a.Symbol.to_indented_str(indent),
+		node_to_str(a.Tekotype, indent),
+	}
+}
+
+func (a ArgdefNode) Token() Token {
+	return a.Symbol
+}
+
+type FunctionExpression struct {
+	FnToken Token
+	Name     *Token
+	Argdefs []ArgdefNode
+	Rtype   Expression
+	Right   Expression
+}
+
+func (e FunctionExpression) Ntype() string {
+	return "FunctionExpression"
+}
+
+func (e FunctionExpression) children() []Node {
+	out := []Node{}
+	for _, ad := range e.Argdefs {
+		out = append(out, ad)
+	}
+	out = append(out, e.Rtype)
+	out = append(out, e.Right)
+	return out
+}
+
+func (e FunctionExpression) child_strings(indent int) []string {
+	out := []string{}
+	for _, ad := range e.children() {
+		out = append(out, node_to_str(ad, indent))
+	}
+	return out
+}
+
+func (e FunctionExpression) Token() Token {
+	return e.FnToken
+}
+
+func (e FunctionExpression) expressionNode() {}

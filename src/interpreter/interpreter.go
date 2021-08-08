@@ -23,10 +23,15 @@ type InterpreterModule struct {
 }
 
 func (m InterpreterModule) execute() *TekoObject {
-	for _, stmt := range m.codeblock.GetStatements() {
+	for _, stmt := range m.codeblock.Statements {
 		m.executeStatement(stmt)
 	}
-	return nil
+
+	if m.codeblock.FinalExpression == nil {
+		return nil
+	} else {
+		return m.evaluateExpression(m.codeblock.FinalExpression)
+	}
 }
 
 func (m InterpreterModule) executeStatement(stmt lexparse.Statement) {
@@ -64,6 +69,9 @@ func (m InterpreterModule) evaluateExpression(expr lexparse.Expression) *TekoObj
 
 	case lexparse.ObjectExpression:
 		return m.evaluateObjectExpression(p)
+
+	case lexparse.FunctionExpression:
+		return m.evaluateFunctionDefinition(p)
 
 	default:
 		lexparse.TokenPanic(expr.Token(), "Intepretation of expression type not implemented: "+expr.Ntype())
@@ -202,4 +210,24 @@ func (m InterpreterModule) evaluateObjectExpression(expr lexparse.ObjectExpressi
 		symbolTable.set(string(of.Symbol.Value), o)
 	}
 	return tp(BasicObject{symbolTable})
+}
+
+func (m *InterpreterModule) evaluateFunctionDefinition(expr lexparse.FunctionExpression) *TekoObject {
+	argnames := []string{}
+	for _, ad := range expr.Argdefs {
+		argnames = append(argnames, string(ad.Symbol.Value))
+	}
+
+	f := tp(TekoFunction{
+		context: m,
+		body: expr.Right,
+		argnames: argnames,
+		executor: defaultFunctionExecutor,
+	})
+
+	if expr.Name != nil {
+		m.scope.symbolTable.set(string(expr.Name.Value), f)
+	}
+
+	return f
 }

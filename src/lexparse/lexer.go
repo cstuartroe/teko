@@ -168,6 +168,7 @@ var keywords map[string]tokenType = map[string]tokenType{
 	"false": BoolT,
 
 	"var": VarT,
+	"fn":  FnT,
 
 	"in":    InT,
 	"for":   ForT,
@@ -229,6 +230,7 @@ var uniquePuncts map[string]tokenType = map[string]tokenType{
 	";":  SemicolonT,
 	":":  ColonT,
 	"<:": SubtypeT,
+	"->": ArrowT,
 }
 
 func (lexer *Lexer) grabPunctuation() {

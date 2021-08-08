@@ -85,6 +85,7 @@ func ArrayToStrExecutor(receiverElements []*TekoObject) executorType {
 	}
 }
 
+// TODO get argames from checker
 func (a Array) getFieldValue(name string) *TekoObject {
 	return cached_get(a.symbolTable, name, func() *TekoObject {
 		switch name {

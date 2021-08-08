@@ -8,7 +8,6 @@ import (
 type FunctionArgDef struct {
 	name    string
 	mutable bool
-	byref   bool
 	ttype   TekoType
 }
 

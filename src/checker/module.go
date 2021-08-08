@@ -12,7 +12,7 @@ type TypeModule struct {
 func CheckTree(codeblock lexparse.Codeblock) TypeModule {
 	main_checker := NewChecker(BaseChecker)
 
-	for _, stmt := range codeblock.GetStatements() {
+	for _, stmt := range codeblock.Statements {
 		main_checker.checkStatement(stmt)
 	}
 

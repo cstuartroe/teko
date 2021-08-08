@@ -19,8 +19,8 @@ func ParseFile(filename string, transform bool) Codeblock {
 
 	c := Codeblock{}
 	for p.HasMore() {
-		c.statements = append(
-			c.statements,
+		c.Statements = append(
+			c.Statements,
 			p.GrabStatement(),
 		)
 	}
@@ -97,6 +97,9 @@ func (parser *Parser) grabExpression(prec int) Expression {
 	case LCurlyBrT:
 		expr = parser.grabObject()
 
+	case FnT:
+		expr = parser.grabFunctionDefinition(prec)
+
 	default:
 		expr = parser.grabSimpleExpression()
 	}
@@ -130,12 +133,11 @@ func (parser *Parser) continueExpression(expr Expression, prec int) Expression {
 
 		parser.Advance()
 
-		var tekotype *Expression = nil
+		var tekotype Expression = nil
 		switch (parser.currentToken().TType) {
 		case DefinerT:
 		default:
-			t := parser.grabExpression(prec)
-			tekotype = &t
+			tekotype = parser.grabExpression(prec)
 		}
 
 		setter := *parser.currentToken()
@@ -448,5 +450,76 @@ func (parser *Parser) grabObjectField() ObjectField {
 	return ObjectField{
 		Symbol: symbol,
 		Value:  parser.grabExpression(min_prec),
+	}
+}
+
+func (parser *Parser) grabOptionalType(prec int) Expression {
+	if parser.currentToken().TType == ColonT {
+		parser.Advance()
+		return parser.grabExpression(prec)
+	} else {
+		return nil
+	}
+}
+
+func (parser *Parser) grabArgdefs() []ArgdefNode {
+	argdefs := []ArgdefNode{}
+
+	for parser.currentToken().TType != RParT {
+		parser.Expect(SymbolT)
+		symbol := *parser.currentToken()
+		parser.Advance()
+
+		tekotype := parser.grabOptionalType(min_prec)
+
+		argdefs = append(argdefs, ArgdefNode{Symbol: symbol, Tekotype: tekotype})
+
+		if parser.currentToken().TType == CommaT {
+			parser.Advance()
+		} else {
+			break
+		}
+	}
+
+	return argdefs
+}
+
+func (parser *Parser) grabFunctionRight(prec int) Expression {
+	// TODO: do-block syntactic sugar (also for if statements)
+
+	parser.Expect(ArrowT)
+	parser.Advance()
+
+	return parser.grabExpression(prec)
+}
+
+func (parser *Parser) grabFunctionDefinition(prec int) FunctionExpression {
+	parser.Expect(FnT)
+	fn := *parser.currentToken()
+	parser.Advance()
+
+	var name *Token = nil
+	if parser.currentToken().TType == SymbolT {
+		name = parser.currentToken()
+		parser.Advance()
+	}
+
+	parser.Expect(LParT)
+	parser.Advance()
+
+	argdefs := parser.grabArgdefs()
+
+	parser.Expect(RParT)
+	parser.Advance()
+
+	rtype := parser.grabOptionalType(prec)
+	right := parser.grabFunctionRight(prec)
+
+	return FunctionExpression{
+		FnToken: fn,
+		Name: name,
+		Argdefs: argdefs,
+		Rtype:   rtype,
+		Right:   right,
 	}
 }

@@ -21,7 +21,7 @@ func main() {
 	main_codeblock := lexparse.ParseFile(os.Args[1], true)
 
 	if len(os.Args) >= 3 && os.Args[2] == "-p" {
-		for _, stmt := range main_codeblock.GetStatements() {
+		for _, stmt := range main_codeblock.Statements {
 			lexparse.PrintNode(stmt)
 		}
 	}

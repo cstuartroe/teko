@@ -12,6 +12,7 @@ const (
 	BoolT   = "bool"
 
 	VarT = "var"
+	FnT  = "fn"
 
 	InT    = "in"
 	ForT   = "for"
@@ -28,7 +29,7 @@ const (
 
 	BinopT      = "binary operation" // + - * / ^ % & |
 	ComparisonT = "comparison"       // == != < > <= >=
-	DefinerT    = "definer"          // = ->
+	DefinerT    = "definer"          // =
 	UpdaterT    = "updater"          // <- += -= *= /= ^= %= &= |=
 	PrefixT     = "prefix"           // ! ~ ?
 	SuffixT     = "suffix"           // $ # .
@@ -47,6 +48,7 @@ const (
 	SemicolonT = ";"
 	ColonT     = ":"
 	SubtypeT   = "<:"
+	ArrowT     = "->"
 )
 
 // Go doesn't have sets, which is dumb.
@@ -95,7 +97,6 @@ var comparisons map[string]string = map[string]string{
 
 var definers map[string]string = map[string]string{
 	"=":  "=",
-	"->": "->",
 }
 
 var updaters map[string]string = map[string]string{

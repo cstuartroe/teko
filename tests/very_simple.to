@@ -35,3 +35,9 @@ print(if arr.includes(1) then "yeppers" else "nopers");
 print("\n");
 
 print(arr$);
+print("\n");
+
+fn add2(numberoony: int): int -> numberoony + 2;
+
+print(add2(5)$);
+print("\n");

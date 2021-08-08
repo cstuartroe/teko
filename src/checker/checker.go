@@ -1,5 +1,9 @@
 package checker
 
+import (
+	"github.com/cstuartroe/teko/src/lexparse"
+)
+
 type TypeTable struct {
 	parent *TypeTable
 	table  map[string]TekoType
@@ -112,7 +116,13 @@ func (c *Checker) getFieldType(name string) TekoType {
 	return getField(c.ctype, name)
 }
 
-func (c *Checker) declareFieldType(name string, tekotype TekoType) {
+func (c *Checker) declareFieldType(token lexparse.Token, tekotype TekoType) {
+	name := string(token.Value)
+
+	if c.getFieldType(name) != nil {
+		lexparse.TokenPanic(token, "Field has already been declared: " + name)
+	}
+
 	c.ctype.setField(name, tekotype)
 }
 

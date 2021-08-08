@@ -46,6 +46,9 @@ func (c *Checker) checkExpression(expr lexparse.Expression, expectedType TekoTyp
 	case lexparse.ObjectExpression:
 		ttype = c.checkObjectExpression(p)
 
+	case lexparse.FunctionExpression:
+		ttype = c.checkFunctionDefinition(p)
+
 	default:
 		lexparse.TokenPanic(expr.Token(), "Cannot typecheck expression type: "+expr.Ntype())
 	}
@@ -111,12 +114,12 @@ func (c *Checker) checkUpdate(update lexparse.UpdateExpression) TekoType {
 	return ttype
 }
 
-func (c *Checker) evaluateType(expr *lexparse.Expression) TekoType {
+func (c *Checker) evaluateType(expr lexparse.Expression) TekoType {
 	if expr == nil {
 		return nil
 	}
 
-	switch p := (*expr).(type) {
+	switch p := (expr).(type) {
 	case lexparse.SimpleExpression:
 		return c.evaluateSimpleType(p)
 	default:
@@ -139,13 +142,7 @@ func (c *Checker) declare(symbol lexparse.Token, right lexparse.Expression, teko
 
 	evaluated_ttype := c.checkExpression(right, tekotype)
 
-	name := string(symbol.Value)
-
-	if c.getFieldType(name) == nil {
-		c.declareFieldType(name, evaluated_ttype)
-	} else {
-		lexparse.TokenPanic(symbol, "Name has already been declared")
-	}
+	c.declareFieldType(symbol, evaluated_ttype)
 
 	return evaluated_ttype
 }
@@ -259,4 +256,41 @@ func (c *Checker) checkObjectExpression(expr lexparse.ObjectExpression) TekoType
 	}
 
 	return BasicType{fields}
+}
+
+func (c *Checker) checkFunctionDefinition(expr lexparse.FunctionExpression) TekoType {
+	blockChecker := NewChecker(c)
+
+	argdefs := []FunctionArgDef{}
+
+	for _, ad := range expr.Argdefs {
+		if ad.Tekotype == nil {
+			lexparse.TokenPanic(ad.Symbol, "Type inference for function arguments not yet implemented")
+		}
+
+		ttype := c.evaluateType(ad.Tekotype)
+		blockChecker.declareFieldType(ad.Symbol, ttype)
+
+		// TODO: get argdefs from blockChecker
+		argdefs = append(argdefs, FunctionArgDef{
+			name: string(ad.Symbol.Value),
+			ttype: ttype,
+		})
+	}
+
+	var rtype TekoType = nil
+	if expr.Rtype != nil {
+		rtype = c.evaluateType(expr.Rtype)
+	}
+
+	ftype := &FunctionType{
+		rtype: blockChecker.checkExpression(expr.Right, rtype),
+		argdefs: argdefs,
+	}
+
+	if expr.Name != nil {
+		c.declareFieldType(*expr.Name, ftype)
+	}
+
+	return ftype
 }

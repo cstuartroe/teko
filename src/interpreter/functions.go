@@ -9,7 +9,7 @@ type executorType func(function TekoFunction, evaluatedArgs map[string]*TekoObje
 
 type TekoFunction struct {
 	context  *InterpreterModule
-	body     *lexparse.Codeblock
+	body     lexparse.Expression
 	argnames []string
 	executor executorType
 }
@@ -26,15 +26,16 @@ func (t TekoFunction) execute(callingContext InterpreterModule, call lexparse.Ca
 func (t TekoFunction) evaluateArgs(callingContext InterpreterModule, resolvedArgs map[string]lexparse.Expression) map[string]*TekoObject {
 	out := map[string]*TekoObject{}
 	for name, expr := range resolvedArgs {
-		// everything should be pass by value, so we need to generate a shallow copy
-		out[name] = sc(callingContext.evaluateExpression(expr))
+		out[name] = callingContext.evaluateExpression(expr)
 	}
 	return out
 }
 
 func defaultFunctionExecutor(function TekoFunction, evaluatedArgs map[string]*TekoObject) *TekoObject {
 	interpreter := InterpreterModule{
-		codeblock: function.body,
+		codeblock: &lexparse.Codeblock{
+			FinalExpression: function.body,
+		},
 		scope: &BasicObject{
 			symbolTable: &SymbolTable{
 				parent: function.context.scope.symbolTable,
