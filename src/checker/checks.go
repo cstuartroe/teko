@@ -9,7 +9,7 @@ func (c *Checker) checkStatement(stmt lexparse.Statement) {
 	case lexparse.ExpressionStatement:
 		c.checkExpressionStatement(p)
 	default:
-		lexparse.TokenPanic(stmt.Token(), "Unknown statement type")
+		stmt.Token().Raise(lexparse.NotImplementedError, "Unknown statement type")
 	}
 }
 
@@ -50,14 +50,14 @@ func (c *Checker) checkExpression(expr lexparse.Expression, expectedType TekoTyp
 		ttype = c.checkFunctionDefinition(p)
 
 	default:
-		lexparse.TokenPanic(expr.Token(), "Cannot typecheck expression type: "+expr.Ntype())
+		expr.Token().Raise(lexparse.NotImplementedError, "Cannot typecheck expression type: "+expr.Ntype())
 	}
 
 	if ttype == nil {
-		lexparse.TokenPanic(expr.Token(), "Evaluated to nil type")
+	  expr.Token().Raise(lexparse.TypeError, "Evaluated to nil type")
 	}
 	if (expectedType != nil) && !isTekoEqType(ttype, expectedType) {
-		lexparse.TokenPanic(expr.Token(), "Incorrect type")
+		expr.Token().Raise(lexparse.TypeError, "Incorrect type")
 	}
 	return ttype
 }
@@ -68,7 +68,7 @@ func (c *Checker) checkSimpleExpression(expr lexparse.SimpleExpression) TekoType
 	case lexparse.SymbolT:
 		ttype := c.getFieldType(string(t.Value))
 		if ttype == nil {
-			lexparse.TokenPanic(t, "Undefined variable")
+			t.Raise(lexparse.NameError, "Undefined variable")
 			return nil
 		} else {
 			return ttype
@@ -106,7 +106,7 @@ func validUpdated(updated lexparse.Expression) bool {
 
 func (c *Checker) checkUpdate(update lexparse.UpdateExpression) TekoType {
 	if !validUpdated(update.Updated) {
-		lexparse.TokenPanic(update.Updated.Token(), "Invalid left hand side")
+		update.Updated.Token().Raise(lexparse.SyntaxError, "Invalid left hand side")
 	}
 
 	ttype := c.checkExpression(update.Updated, nil)
@@ -132,7 +132,7 @@ func (c *Checker) evaluateSimpleType(expr lexparse.SimpleExpression) TekoType {
 	case lexparse.SymbolT:
 		return c.getTypeByName(string(expr.Token().Value))
 	default:
-		lexparse.TokenPanic(expr.Token(), "Invalid type expression")
+		expr.Token().Raise(lexparse.TypeError, "Invalid type expression")
 		return nil
 	}
 }
@@ -157,10 +157,7 @@ func (c *Checker) checkCallExpression(expr lexparse.CallExpression) TekoType {
 		for _, argdef := range ftype.argdefs {
 			arg, ok := args_by_name[argdef.name]
 			if !ok {
-				lexparse.TokenPanic(
-					arg.Token(),
-					"Argument was not passed: "+argdef.name,
-				)
+				arg.Token().Raise(lexparse.ArgumentError, "Argument was not passed: "+argdef.name)
 			}
 
 			c.checkExpression(arg, argdef.ttype)
@@ -172,7 +169,7 @@ func (c *Checker) checkCallExpression(expr lexparse.CallExpression) TekoType {
 		panic("Use *FunctionType instead of FunctionType")
 
 	default:
-		lexparse.TokenPanic(expr.Token(), "Expression does not have a function type")
+		expr.Token().Raise(lexparse.TypeError, "Expression does not have a function type")
 		return nil
 	}
 }
@@ -184,7 +181,7 @@ func (c *Checker) checkAttributeExpression(expr lexparse.AttributeExpression) Te
 	if tekotype != nil {
 		return tekotype
 	} else {
-		lexparse.TokenPanic(expr.Symbol, "No such field: "+string(expr.Symbol.Value))
+	  expr.Symbol.Raise(lexparse.NameError, "No such field: "+string(expr.Symbol.Value))
 		return nil
 	}
 }
@@ -196,7 +193,7 @@ func (c *Checker) checkIfExpression(expr lexparse.IfExpression) TekoType {
 	else_tekotype := c.checkExpression(expr.Else, nil)
 
 	if then_tekotype != else_tekotype {
-		lexparse.TokenPanic(expr.Else.Token(), "Then and else blocks have mismatching types")
+		expr.Else.Token().Raise(lexparse.TypeError, "Then and else blocks have mismatching types")
 	}
 
 	return then_tekotype
@@ -221,7 +218,7 @@ func (c *Checker) checkSequenceExpression(expr lexparse.SequenceExpression, expe
 		}
 	case nil:
 		if len(expr.Elements) == 0 {
-			lexparse.TokenPanic(expr.Token(), "With no expected type, sequence cannot be empty")
+			expr.Token().Raise(lexparse.TypeError, "With no expected type, sequence cannot be empty")
 		} else {
 			etype = c.checkExpression(expr.Elements[0], nil)
 
@@ -249,7 +246,7 @@ func (c *Checker) checkObjectExpression(expr lexparse.ObjectExpression) TekoType
 
 	for _, of := range expr.Fields {
 		if _, ok := fields[string(of.Symbol.Value)]; ok {
-			lexparse.TokenPanic(of.Symbol, "Duplicate member")
+			of.Symbol.Raise(lexparse.NameError, "Duplicate member")
 		}
 
 		fields[string(of.Symbol.Value)] = c.checkExpression(of.Value, nil)
@@ -265,7 +262,7 @@ func (c *Checker) checkFunctionDefinition(expr lexparse.FunctionExpression) Teko
 
 	for _, ad := range expr.Argdefs {
 		if ad.Tekotype == nil {
-			lexparse.TokenPanic(ad.Symbol, "Type inference for function arguments not yet implemented")
+			ad.Symbol.Raise(lexparse.NotImplementedError, "Type inference for function arguments not yet implemented")
 		}
 
 		ttype := c.evaluateType(ad.Tekotype)

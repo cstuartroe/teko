@@ -43,7 +43,7 @@ func (parser *Parser) currentToken() *Token {
 		return &(parser.tokens[parser.position])
 	} else {
 		t := parser.tokens[parser.position-1]
-		lexparsePanic(t.Line, t.Col+len(t.Value), 1, "Unexpected EOF")
+		lexparsePanic(t.Line, t.Col+len(t.Value), 1, SyntaxError, "Unexpected EOF")
 		return nil
 	}
 }
@@ -60,7 +60,7 @@ func (parser *Parser) expect(ttype tokenType) *Token {
 	token := parser.currentToken()
 
 	if token.TType != ttype {
-		TokenPanic(*token, fmt.Sprintf("Expected %s", ttype))
+		token.Raise(SyntaxError, fmt.Sprintf("Expected %s", ttype))
 	}
 
 	parser.advance()
@@ -119,7 +119,7 @@ func (parser *Parser) grabSimpleExpression() SimpleExpression {
 		parser.advance()
 		return n
 	} else {
-		TokenPanic(*parser.currentToken(), "Illegal start to simple expression")
+		parser.currentToken().Raise(SyntaxError, "Illegal start to simple expression")
 		return SimpleExpression{} // unreachable code that the compiler requires
 	}
 }
@@ -133,7 +133,7 @@ func (parser *Parser) continueExpression(expr Expression, prec int) Expression {
 	switch ttype {
 	case ColonT:
 		if !isValidDeclared(expr) {
-			TokenPanic(*parser.currentToken(), "Illegal left-hand side to declaration")
+			parser.currentToken().Raise(SyntaxError, "Illegal left-hand side to declaration")
 		}
 
 		parser.advance()
@@ -266,15 +266,15 @@ func (parser *Parser) makeCallExpression(receiver Expression) CallExpression {
 
 		if parser.currentToken().TType == DefinerT {
 			if string(parser.currentToken().Value) != "=" {
-				TokenPanic(*parser.currentToken(), "Keyword argument must use =")
+				parser.currentToken().Raise(SyntaxError, "Keyword argument must use =")
 			}
 			switch p := arg.(type) {
 			case SimpleExpression:
 				if p.token.TType != SymbolT {
-					TokenPanic(p.token, "Left-hand side of keyword argument cannot be a value")
+					p.token.Raise(SyntaxError, "Left-hand side of keyword argument cannot be a value")
 				}
 			default:
-				TokenPanic(p.Token(), "Left-hand side of keyword argument cannot be a value")
+				p.Token().Raise(SyntaxError, "Left-hand side of keyword argument cannot be a value")
 			}
 
 			parser.advance()
@@ -286,7 +286,7 @@ func (parser *Parser) makeCallExpression(receiver Expression) CallExpression {
 			})
 		} else {
 			if on_kwargs {
-				TokenPanic(*parser.currentToken(), "All positional arguments must be before all keyword arguments")
+				parser.currentToken().Raise(SyntaxError, "All positional arguments must be before all keyword arguments")
 			}
 
 			args = append(args, arg)
@@ -344,7 +344,7 @@ func (parser *Parser) grabTuple() Expression {
 	seq := parser.grabSequence(RParT)
 	switch len(seq) {
 	case 0:
-		TokenPanic(lpar, "Cannot have empty tuple")
+		lpar.Raise(SyntaxError, "Cannot have empty tuple")
 		return nil
 	case 1:
 		return seq[0]

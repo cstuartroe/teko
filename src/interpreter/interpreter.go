@@ -39,7 +39,7 @@ func (m InterpreterModule) executeStatement(stmt lexparse.Statement) {
 	case lexparse.ExpressionStatement:
 		m.evaluateExpression(p.Expression)
 	default:
-		lexparse.TokenPanic(stmt.Token(), "Statement type not implemented")
+		stmt.Token().Raise(lexparse.NotImplementedError, "Statement type not implemented: " + stmt.Ntype())
 	}
 }
 
@@ -74,7 +74,7 @@ func (m InterpreterModule) evaluateExpression(expr lexparse.Expression) *TekoObj
 		return m.evaluateFunctionDefinition(p)
 
 	default:
-		lexparse.TokenPanic(expr.Token(), "Intepretation of expression type not implemented: "+expr.Ntype())
+		expr.Token().Raise(lexparse.NotImplementedError, "Intepretation of expression type not implemented: " + expr.Ntype())
 		return nil
 	}
 }
@@ -89,7 +89,7 @@ func (m InterpreterModule) evaluateSimpleExpression(expr lexparse.SimpleExpressi
 		if val != nil {
 			return val
 		} else {
-			lexparse.TokenPanic(expr.Token(), "Label not found")
+			expr.Token().Raise(lexparse.UnexpectedIssue, "Label not found")
 			return nil
 		}
 
@@ -104,7 +104,7 @@ func (m InterpreterModule) evaluateSimpleExpression(expr lexparse.SimpleExpressi
 		if ok == nil {
 			return tp(getInteger(n))
 		} else {
-			lexparse.TokenPanic(expr.Token(), "Invalid integer - how did this make it past the lexer?")
+			expr.Token().Raise(lexparse.UnexpectedIssue, "Invalid integer - how did this make it past the lexer?")
 			return nil
 		}
 
@@ -119,7 +119,7 @@ func (m InterpreterModule) evaluateSimpleExpression(expr lexparse.SimpleExpressi
 		}
 
 	default:
-		lexparse.TokenPanic(expr.Token(), fmt.Sprintf("Invalid or unimplemented simple expression type: %s", ttype))
+		expr.Token().Raise(lexparse.NotImplementedError, fmt.Sprintf("Invalid or unimplemented simple expression type: %s", ttype))
 		return nil
 	}
 }
@@ -131,7 +131,7 @@ func (m InterpreterModule) evaluateFunctionCall(call lexparse.CallExpression) *T
 		return p.execute(m, call)
 
 	default:
-		lexparse.TokenPanic(call.Token(), "Non-function was the receiver of a call. Where was the type checker??")
+		call.Token().Raise(lexparse.UnexpectedIssue, "Non-function was the receiver of a call. Where was the type checker??")
 		return nil
 	}
 }

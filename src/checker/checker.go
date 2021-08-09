@@ -120,7 +120,7 @@ func (c *Checker) declareFieldType(token lexparse.Token, tekotype TekoType) {
 	name := string(token.Value)
 
 	if c.getFieldType(name) != nil {
-		lexparse.TokenPanic(token, "Field has already been declared: " + name)
+		token.Raise(lexparse.NameError, "Field has already been declared: " + name)
 	}
 
 	c.ctype.setField(name, tekotype)

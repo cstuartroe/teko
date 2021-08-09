@@ -37,9 +37,23 @@ func (t Token) to_indented_str(indent int) string {
 	return strings.Repeat(" ", indent*INDENT_AMOUNT) + t.to_str() + "\n"
 }
 
-func lexparsePanic(line *Line, col int, width int, message string) {
+type TekoErrorClass string
+
+const (
+	LexerError = "Lexer Error"
+	SyntaxError = "Syntax Error"
+	NameError = "Name Error"
+	NotImplementedError = "Unimplimented (this is planned functionality for Teko)"
+	TypeError = "Type Error"
+	ArgumentError = "Argument Error"
+	UnexpectedIssue = "Unexpected issue (this is a mistake in the Teko implementation)"
+	RuntimeError = "Runtime Error"
+)
+
+func lexparsePanic(line *Line, col int, width int, errorClass TekoErrorClass, message string) {
 	fmt.Printf(
-		"Teko Parser Error (%s:%d:%d)\n%s\n%s%s\n%s\n",
+		"%s (%s:%d:%d)\n%s\n%s%s\n%s\n",
+		errorClass,
 		line.Filename,
 		line.Num,
 		col,
@@ -51,8 +65,8 @@ func lexparsePanic(line *Line, col int, width int, message string) {
 	os.Exit(0)
 }
 
-func TokenPanic(token Token, message string) {
-	lexparsePanic(token.Line, token.Col, len(token.Value), message)
+func (token Token) Raise(errorClass TekoErrorClass, message string) {
+	lexparsePanic(token.Line, token.Col, len(token.Value), errorClass, message)
 }
 
 type Lexer struct {
@@ -258,7 +272,7 @@ func (lexer *Lexer) grabPunctuation() {
 	} else if _, ok := suffixes[blob]; ok {
 		lexer.CurrentTType = SuffixT
 	} else {
-		lexparsePanic(lexer.Line, lexer.Col-1, 1, "Invalid start to token")
+		lexparsePanic(lexer.Line, lexer.Col-1, 1, LexerError, "Invalid start to token")
 	}
 }
 

@@ -43,8 +43,8 @@ func ResolveArgs(argnames []string, expr lexparse.CallExpression) map[string]lex
 	args_by_name := map[string]lexparse.Expression{}
 
 	if len(expr.Args) > len(argnames) {
-		lexparse.TokenPanic(
-			expr.Args[len(argnames)].Token(),
+		expr.Args[len(argnames)].Token().Raise(
+			lexparse.ArgumentError,
 			fmt.Sprintf("Too many arguments (%d expected, %d given)", len(argnames), len(expr.Args)),
 		)
 	}
@@ -57,8 +57,8 @@ func ResolveArgs(argnames []string, expr lexparse.CallExpression) map[string]lex
 		name := string(kwarg.Symbol.Value)
 
 		if _, ok := args_by_name[name]; ok {
-			lexparse.TokenPanic(
-				kwarg.Token(),
+			kwarg.Token().Raise(
+				lexparse.ArgumentError,
 				fmt.Sprintf("Argument already passed: %s", name),
 			)
 		}
@@ -66,8 +66,8 @@ func ResolveArgs(argnames []string, expr lexparse.CallExpression) map[string]lex
 		if contains(argnames, name) {
 			args_by_name[name] = kwarg.Value
 		} else {
-			lexparse.TokenPanic(
-				kwarg.Symbol,
+			kwarg.Symbol.Raise(
+				lexparse.ArgumentError,
 				fmt.Sprintf("Function doesn't take argument %s", name),
 			)
 		}
