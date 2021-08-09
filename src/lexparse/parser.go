@@ -21,7 +21,7 @@ func ParseFile(filename string, transform bool) Codeblock {
 	for p.HasMore() {
 		c.Statements = append(
 			c.Statements,
-			p.GrabStatement(),
+			p.grabStatement(),
 		)
 	}
 
@@ -48,7 +48,7 @@ func (parser *Parser) currentToken() *Token {
 	}
 }
 
-func (parser *Parser) Advance() {
+func (parser *Parser) advance() {
 	parser.position++
 }
 
@@ -56,19 +56,24 @@ func (parser *Parser) HasMore() bool {
 	return parser.position < len(parser.tokens)
 }
 
-func (parser *Parser) Expect(ttype tokenType) {
-	if parser.currentToken().TType != ttype {
-		TokenPanic(*parser.currentToken(), fmt.Sprintf("Expected %s", ttype))
+func (parser *Parser) expect(ttype tokenType) *Token {
+	token := parser.currentToken()
+
+	if token.TType != ttype {
+		TokenPanic(*token, fmt.Sprintf("Expected %s", ttype))
 	}
+
+	parser.advance()
+
+	return token
 }
 
 // I'm attempting to make the teko parser without needing lookahead
 // We'll see how sustainable that is
 
-func (parser *Parser) GrabStatement() Statement {
+func (parser *Parser) grabStatement() Statement {
 	stmt := parser.grabExpressionStmt()
-	parser.Expect(SemicolonT)
-	parser.Advance()
+	parser.expect(SemicolonT)
 	return stmt
 }
 
@@ -111,7 +116,7 @@ func (parser *Parser) grabSimpleExpression() SimpleExpression {
 	t := parser.currentToken()
 	if _, ok := simpleExprTokenTypes[t.TType]; ok {
 		n := SimpleExpression{token: *t}
-		parser.Advance()
+		parser.advance()
 		return n
 	} else {
 		TokenPanic(*parser.currentToken(), "Illegal start to simple expression")
@@ -131,7 +136,7 @@ func (parser *Parser) continueExpression(expr Expression, prec int) Expression {
 			TokenPanic(*parser.currentToken(), "Illegal left-hand side to declaration")
 		}
 
-		parser.Advance()
+		parser.advance()
 
 		var tekotype Expression = nil
 		switch (parser.currentToken().TType) {
@@ -141,7 +146,7 @@ func (parser *Parser) continueExpression(expr Expression, prec int) Expression {
 		}
 
 		setter := *parser.currentToken()
-		parser.Expect(DefinerT); parser.Advance()
+		parser.expect(DefinerT)
 
 		out = DeclarationExpression{
 			Symbol: expr.Token(),
@@ -160,7 +165,7 @@ func (parser *Parser) continueExpression(expr Expression, prec int) Expression {
 		op_prec := binop_precs[binops[value]]
 		if prec <= op_prec {
 			op := *parser.currentToken()
-			parser.Advance()
+			parser.advance()
 			right := parser.grabExpression(op_prec + 1)
 
 			if parser.transform {
@@ -188,7 +193,7 @@ func (parser *Parser) continueExpression(expr Expression, prec int) Expression {
 
 	case SuffixT:
 		suffix := *parser.currentToken()
-		parser.Advance()
+		parser.advance()
 
 		if parser.transform {
 			out = CallExpression{
@@ -212,7 +217,7 @@ func (parser *Parser) continueExpression(expr Expression, prec int) Expression {
 	case UpdaterT:
 		if prec <= setter_prec {
 			updater := *parser.currentToken()
-			parser.Advance()
+			parser.advance()
 
 			if value == "<-" {
 				out = UpdateExpression{
@@ -249,8 +254,7 @@ func isValidDeclared(declared Expression) bool {
 }
 
 func (parser *Parser) makeCallExpression(receiver Expression) CallExpression {
-	parser.Expect(LParT)
-	parser.Advance()
+	parser.expect(LParT)
 
 	args := []Expression{}
 	kwargs := []FunctionKwarg{}
@@ -273,7 +277,7 @@ func (parser *Parser) makeCallExpression(receiver Expression) CallExpression {
 				TokenPanic(p.Token(), "Left-hand side of keyword argument cannot be a value")
 			}
 
-			parser.Advance()
+			parser.advance()
 			on_kwargs = true
 
 			kwargs = append(kwargs, FunctionKwarg{
@@ -289,15 +293,14 @@ func (parser *Parser) makeCallExpression(receiver Expression) CallExpression {
 		}
 
 		if parser.currentToken().TType == CommaT {
-			parser.Advance()
+			parser.advance()
 			cont = (parser.currentToken().TType != RParT)
 		} else {
 			cont = false
 		}
 	}
 
-	parser.Expect(RParT)
-	parser.Advance()
+	parser.expect(RParT)
 
 	return CallExpression{
 		Receiver: receiver,
@@ -307,12 +310,9 @@ func (parser *Parser) makeCallExpression(receiver Expression) CallExpression {
 }
 
 func (parser *Parser) makeAttributeExpression(left Expression) AttributeExpression {
-	parser.Expect(DotT)
-	parser.Advance()
+	parser.expect(DotT)
 
-	parser.Expect(SymbolT)
-	symbol := *parser.currentToken()
-	parser.Advance()
+	symbol := *parser.expect(SymbolT)
 
 	return AttributeExpression{
 		Left:   left,
@@ -327,22 +327,19 @@ func (parser *Parser) grabSequence(closingType tokenType) []Expression {
 		seq = append(seq, parser.grabExpression(min_prec))
 
 		if parser.currentToken().TType == CommaT {
-			parser.Advance()
+			parser.advance()
 		} else {
 			break
 		}
 	}
 
-	parser.Expect(closingType)
-	parser.Advance()
+	parser.expect(closingType)
 
 	return seq
 }
 
 func (parser *Parser) grabTuple() Expression {
-	parser.Expect(LParT)
-	lpar := *parser.currentToken()
-	parser.Advance()
+	lpar := *parser.expect(LParT)
 
 	seq := parser.grabSequence(RParT)
 	switch len(seq) {
@@ -360,9 +357,7 @@ func (parser *Parser) grabTuple() Expression {
 }
 
 func (parser *Parser) grabArray() SequenceExpression {
-	parser.Expect(LSquareBrT)
-	open := *parser.currentToken()
-	parser.Advance()
+	open := *parser.expect(LSquareBrT)
 
 	return SequenceExpression{
 		OpenBrace: open,
@@ -372,12 +367,9 @@ func (parser *Parser) grabArray() SequenceExpression {
 }
 
 func (parser *Parser) grabSet() SequenceExpression {
-	parser.Expect(SetT)
-	open := *parser.currentToken()
-	parser.Advance()
+	open := *parser.expect(SetT)
 
-	parser.Expect(LCurlyBrT)
-	parser.Advance()
+	parser.expect(LCurlyBrT)
 
 	return SequenceExpression{
 		OpenBrace: open,
@@ -387,21 +379,19 @@ func (parser *Parser) grabSet() SequenceExpression {
 }
 
 func (parser *Parser) grabIf(prec int) IfExpression {
-	parser.Expect(IfT)
-	if_token := *parser.currentToken()
-	parser.Advance()
+	if_token := *parser.expect(IfT)
 
 	cond := parser.grabExpression(prec)
 
 	if parser.currentToken().TType == ThenT {
-		parser.Advance()
+		parser.advance()
 	}
 
 	then := parser.grabExpression(prec)
 	var else_expr Expression = nil
 
 	if parser.currentToken().TType == ElseT {
-		parser.Advance()
+		parser.advance()
 		else_expr = parser.grabExpression(prec)
 	}
 
@@ -414,9 +404,7 @@ func (parser *Parser) grabIf(prec int) IfExpression {
 }
 
 func (parser *Parser) grabObject() ObjectExpression {
-	parser.Expect(LCurlyBrT)
-	open := *parser.currentToken()
-	parser.Advance()
+	open := *parser.expect(LCurlyBrT)
 
 	fields := []ObjectField{}
 
@@ -424,14 +412,13 @@ func (parser *Parser) grabObject() ObjectExpression {
 		fields = append(fields, parser.grabObjectField())
 
 		if parser.currentToken().TType == CommaT {
-			parser.Advance()
+			parser.advance()
 		} else {
 			break
 		}
 	}
 
-	parser.Expect(RCurlyBrT)
-	parser.Advance()
+	parser.expect(RCurlyBrT)
 
 	return ObjectExpression{
 		OpenBrace: open,
@@ -440,12 +427,9 @@ func (parser *Parser) grabObject() ObjectExpression {
 }
 
 func (parser *Parser) grabObjectField() ObjectField {
-	parser.Expect(SymbolT)
-	symbol := *parser.currentToken()
-	parser.Advance()
+	symbol := *parser.expect(SymbolT)
 
-	parser.Expect(ColonT)
-	parser.Advance()
+	parser.expect(ColonT)
 
 	return ObjectField{
 		Symbol: symbol,
@@ -455,7 +439,7 @@ func (parser *Parser) grabObjectField() ObjectField {
 
 func (parser *Parser) grabOptionalType(prec int) Expression {
 	if parser.currentToken().TType == ColonT {
-		parser.Advance()
+		parser.advance()
 		return parser.grabExpression(prec)
 	} else {
 		return nil
@@ -466,16 +450,14 @@ func (parser *Parser) grabArgdefs() []ArgdefNode {
 	argdefs := []ArgdefNode{}
 
 	for parser.currentToken().TType != RParT {
-		parser.Expect(SymbolT)
-		symbol := *parser.currentToken()
-		parser.Advance()
+		symbol := *parser.expect(SymbolT)
 
 		tekotype := parser.grabOptionalType(min_prec)
 
 		argdefs = append(argdefs, ArgdefNode{Symbol: symbol, Tekotype: tekotype})
 
 		if parser.currentToken().TType == CommaT {
-			parser.Advance()
+			parser.advance()
 		} else {
 			break
 		}
@@ -487,30 +469,25 @@ func (parser *Parser) grabArgdefs() []ArgdefNode {
 func (parser *Parser) grabFunctionRight(prec int) Expression {
 	// TODO: do-block syntactic sugar (also for if statements)
 
-	parser.Expect(ArrowT)
-	parser.Advance()
+	parser.expect(ArrowT)
 
 	return parser.grabExpression(prec)
 }
 
 func (parser *Parser) grabFunctionDefinition(prec int) FunctionExpression {
-	parser.Expect(FnT)
-	fn := *parser.currentToken()
-	parser.Advance()
+	fn := *parser.expect(FnT)
 
 	var name *Token = nil
 	if parser.currentToken().TType == SymbolT {
 		name = parser.currentToken()
-		parser.Advance()
+		parser.advance()
 	}
 
-	parser.Expect(LParT)
-	parser.Advance()
+	parser.expect(LParT)
 
 	argdefs := parser.grabArgdefs()
 
-	parser.Expect(RParT)
-	parser.Advance()
+	parser.expect(RParT)
 
 	rtype := parser.grabOptionalType(prec)
 	right := parser.grabFunctionRight(prec)
