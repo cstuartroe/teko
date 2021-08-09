@@ -54,7 +54,7 @@ func (c *Checker) checkExpression(expr lexparse.Expression, expectedType TekoTyp
 	}
 
 	if ttype == nil {
-	  expr.Token().Raise(lexparse.TypeError, "Evaluated to nil type")
+		expr.Token().Raise(lexparse.TypeError, "Evaluated to nil type")
 	}
 	if (expectedType != nil) && !isTekoEqType(ttype, expectedType) {
 		expr.Token().Raise(lexparse.TypeError, "Incorrect type")
@@ -181,7 +181,7 @@ func (c *Checker) checkAttributeExpression(expr lexparse.AttributeExpression) Te
 	if tekotype != nil {
 		return tekotype
 	} else {
-	  expr.Symbol.Raise(lexparse.NameError, "No such field: "+string(expr.Symbol.Value))
+		expr.Symbol.Raise(lexparse.NameError, "No such field: "+string(expr.Symbol.Value))
 		return nil
 	}
 }
@@ -270,7 +270,7 @@ func (c *Checker) checkFunctionDefinition(expr lexparse.FunctionExpression) Teko
 
 		// TODO: get argdefs from blockChecker
 		argdefs = append(argdefs, FunctionArgDef{
-			name: string(ad.Symbol.Value),
+			name:  string(ad.Symbol.Value),
 			ttype: ttype,
 		})
 	}
@@ -281,7 +281,7 @@ func (c *Checker) checkFunctionDefinition(expr lexparse.FunctionExpression) Teko
 	}
 
 	ftype := &FunctionType{
-		rtype: blockChecker.checkExpression(expr.Right, rtype),
+		rtype:   blockChecker.checkExpression(expr.Right, rtype),
 		argdefs: argdefs,
 	}
 

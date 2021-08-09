@@ -40,14 +40,14 @@ func (t Token) to_indented_str(indent int) string {
 type TekoErrorClass string
 
 const (
-	LexerError = "Lexer Error"
-	SyntaxError = "Syntax Error"
-	NameError = "Name Error"
+	LexerError          = "Lexer Error"
+	SyntaxError         = "Syntax Error"
+	NameError           = "Name Error"
 	NotImplementedError = "Unimplimented (this is planned functionality for Teko)"
-	TypeError = "Type Error"
-	ArgumentError = "Argument Error"
-	UnexpectedIssue = "Unexpected issue (this is a mistake in the Teko implementation)"
-	RuntimeError = "Runtime Error"
+	TypeError           = "Type Error"
+	ArgumentError       = "Argument Error"
+	UnexpectedIssue     = "Unexpected issue (this is a mistake in the Teko implementation)"
+	RuntimeError        = "Runtime Error"
 )
 
 func lexparsePanic(line *Line, col int, width int, errorClass TekoErrorClass, message string) {

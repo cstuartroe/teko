@@ -38,7 +38,7 @@ type Statement interface {
 //---
 
 type Codeblock struct {
-	Statements []Statement
+	Statements      []Statement
 	FinalExpression Expression
 }
 
@@ -127,10 +127,10 @@ func (e SimpleExpression) expressionNode() {}
 //---
 
 type DeclarationExpression struct {
-	Symbol Token
-	Tekotype  Expression
-	Setter Token
-	Right  Expression
+	Symbol   Token
+	Tekotype Expression
+	Setter   Token
+	Right    Expression
 }
 
 func (e DeclarationExpression) Ntype() string {
@@ -509,7 +509,7 @@ func (a ArgdefNode) Ntype() string {
 }
 
 func (a ArgdefNode) children() []Node {
-  return []Node{a.Tekotype}
+	return []Node{a.Tekotype}
 }
 
 func (a ArgdefNode) child_strings(indent int) []string {
@@ -525,7 +525,7 @@ func (a ArgdefNode) Token() Token {
 
 type FunctionExpression struct {
 	FnToken Token
-	Name     *Token
+	Name    *Token
 	Argdefs []ArgdefNode
 	Rtype   Expression
 	Right   Expression

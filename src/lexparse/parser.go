@@ -139,7 +139,7 @@ func (parser *Parser) continueExpression(expr Expression, prec int) Expression {
 		parser.advance()
 
 		var tekotype Expression = nil
-		switch (parser.currentToken().TType) {
+		switch parser.currentToken().TType {
 		case DefinerT:
 		default:
 			tekotype = parser.grabExpression(prec)
@@ -149,10 +149,10 @@ func (parser *Parser) continueExpression(expr Expression, prec int) Expression {
 		parser.expect(DefinerT)
 
 		out = DeclarationExpression{
-			Symbol: expr.Token(),
+			Symbol:   expr.Token(),
 			Tekotype: tekotype,
-			Setter: setter,
-			Right: parser.grabExpression(prec),
+			Setter:   setter,
+			Right:    parser.grabExpression(prec),
 		}
 
 	case LParT:
@@ -494,7 +494,7 @@ func (parser *Parser) grabFunctionDefinition(prec int) FunctionExpression {
 
 	return FunctionExpression{
 		FnToken: fn,
-		Name: name,
+		Name:    name,
 		Argdefs: argdefs,
 		Rtype:   rtype,
 		Right:   right,

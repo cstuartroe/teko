@@ -96,7 +96,7 @@ var comparisons map[string]string = map[string]string{
 }
 
 var definers map[string]string = map[string]string{
-	"=":  "=",
+	"=": "=",
 }
 
 var updaters map[string]string = map[string]string{

@@ -39,7 +39,7 @@ func (m InterpreterModule) executeStatement(stmt lexparse.Statement) {
 	case lexparse.ExpressionStatement:
 		m.evaluateExpression(p.Expression)
 	default:
-		stmt.Token().Raise(lexparse.NotImplementedError, "Statement type not implemented: " + stmt.Ntype())
+		stmt.Token().Raise(lexparse.NotImplementedError, "Statement type not implemented: "+stmt.Ntype())
 	}
 }
 
@@ -74,7 +74,7 @@ func (m InterpreterModule) evaluateExpression(expr lexparse.Expression) *TekoObj
 		return m.evaluateFunctionDefinition(p)
 
 	default:
-		expr.Token().Raise(lexparse.NotImplementedError, "Intepretation of expression type not implemented: " + expr.Ntype())
+		expr.Token().Raise(lexparse.NotImplementedError, "Intepretation of expression type not implemented: "+expr.Ntype())
 		return nil
 	}
 }
@@ -219,8 +219,8 @@ func (m *InterpreterModule) evaluateFunctionDefinition(expr lexparse.FunctionExp
 	}
 
 	f := tp(TekoFunction{
-		context: m,
-		body: expr.Right,
+		context:  m,
+		body:     expr.Right,
 		argnames: argnames,
 		executor: defaultFunctionExecutor,
 	})
