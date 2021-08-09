@@ -1,43 +1,46 @@
-n : int = 3;
-n2 : int = n;
-n <- 4;
-print(n2$);
-print("\n");
+n : int = 3
+n2 : int = n
+n <- 4
+print(n2$)
+print("\n")
 
-b : bool = true;
+b : bool = true
 
-s : str = "hello\n";
+s : str = "hello\n"
 
-s2 : str = s;
+s2 : str = s
 
-print(s2);
+print(s2)
 
-num : int = 1 + 2 * 3 / 4 - 5 ^ 6 * 7;
+num : int = 1 + 2 * 3 / 4 - 5 ^ 6 * 7
 
-print(num$);
+print(num$)
 
-m : int = if (b) then 0 else 1;
+m : int = if (b) then 0 else 1
 
 o := {
   foo: "bar",
   n: 3,
-};
+}
 
-print(o.foo);
-print("\n");
+print(o.foo)
+print("\n")
 
-arr := [1,2,3,4,5] + [6,7,8,9,10];
-print(arr.at(0)$);
-print("\n");
-print(arr.size$);
-print("\n");
-print(if arr.includes(1) then "yeppers" else "nopers");
-print("\n");
+arr := [1,2,3,4,5] + [6,7,8,9,10]
+print(arr.at(0)$)
+print("\n")
+print(arr.size$)
+print("\n")
+print(if arr.includes(1) then "yeppers" else "nopers")
+print("\n")
 
-print(arr$);
-print("\n");
+print(arr$)
+print("\n")
 
-fn add2(numberoony: int): int -> numberoony + 2;
+fn foo(numberoony: int): int -> do {
+  x := numberoony + 3
+  x * n
+}
 
-print(add2(5)$);
-print("\n");
+print(foo(5)$)
+print("\n")

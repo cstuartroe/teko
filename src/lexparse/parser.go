@@ -71,15 +71,22 @@ func (parser *Parser) expect(ttype tokenType) *Token {
 // I'm attempting to make the teko parser without needing lookahead
 // We'll see how sustainable that is
 
+func (parser *Parser) optionalSemicolon() *Token {
+	if parser.HasMore() && parser.currentToken().TType == SemicolonT {
+		return parser.expect(SemicolonT)
+	} else {
+		return nil
+	}
+}
+
 func (parser *Parser) grabStatement() Statement {
-	stmt := parser.grabExpressionStmt()
-	parser.expect(SemicolonT)
-	return stmt
+	return parser.grabExpressionStmt()
 }
 
 func (parser *Parser) grabExpressionStmt() ExpressionStatement {
 	return ExpressionStatement{
 		Expression: parser.grabExpression(min_prec),
+		semicolon:  parser.optionalSemicolon(),
 	}
 }
 
@@ -105,6 +112,9 @@ func (parser *Parser) grabExpression(prec int) Expression {
 	case FnT:
 		expr = parser.grabFunctionDefinition(prec)
 
+	case DoT:
+		expr = parser.grabDoExpression()
+
 	default:
 		expr = parser.grabSimpleExpression()
 	}
@@ -125,6 +135,10 @@ func (parser *Parser) grabSimpleExpression() SimpleExpression {
 }
 
 func (parser *Parser) continueExpression(expr Expression, prec int) Expression {
+	if !parser.HasMore() {
+		return expr
+	}
+
 	ttype := parser.currentToken().TType
 	value := string(parser.currentToken().Value)
 
@@ -498,5 +512,31 @@ func (parser *Parser) grabFunctionDefinition(prec int) FunctionExpression {
 		Argdefs: argdefs,
 		Rtype:   rtype,
 		Right:   right,
+	}
+}
+
+func (parser *Parser) grabCodeblock() Codeblock {
+	openBr := *parser.expect(LCurlyBrT)
+
+	statements := []Statement{}
+
+	for parser.currentToken().TType != RCurlyBrT {
+		statements = append(statements, parser.grabStatement())
+	}
+
+	parser.expect(RCurlyBrT)
+
+	return Codeblock{
+		OpenBr:     openBr,
+		Statements: statements,
+	}
+}
+
+func (parser *Parser) grabDoExpression() DoExpression {
+	doToken := parser.expect(DoT)
+
+	return DoExpression{
+		DoToken:   doToken,
+		Codeblock: parser.grabCodeblock(),
 	}
 }

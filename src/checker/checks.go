@@ -4,17 +4,18 @@ import (
 	"github.com/cstuartroe/teko/src/lexparse"
 )
 
-func (c *Checker) checkStatement(stmt lexparse.Statement) {
+func (c *Checker) checkStatement(stmt lexparse.Statement) TekoType {
 	switch p := stmt.(type) {
 	case lexparse.ExpressionStatement:
-		c.checkExpressionStatement(p)
+		return c.checkExpressionStatement(p)
 	default:
 		stmt.Token().Raise(lexparse.NotImplementedError, "Unknown statement type")
+		return nil
 	}
 }
 
-func (c *Checker) checkExpressionStatement(stmt lexparse.ExpressionStatement) {
-	c.checkExpression(stmt.Expression, nil)
+func (c *Checker) checkExpressionStatement(stmt lexparse.ExpressionStatement) TekoType {
+	return c.checkExpression(stmt.Expression, nil)
 }
 
 func (c *Checker) checkExpression(expr lexparse.Expression, expectedType TekoType) TekoType {
@@ -48,6 +49,9 @@ func (c *Checker) checkExpression(expr lexparse.Expression, expectedType TekoTyp
 
 	case lexparse.FunctionExpression:
 		ttype = c.checkFunctionDefinition(p)
+
+	case lexparse.DoExpression:
+		ttype = c.checkDoExpression(p)
 
 	default:
 		expr.Token().Raise(lexparse.NotImplementedError, "Cannot typecheck expression type: "+expr.Ntype())
@@ -290,4 +294,18 @@ func (c *Checker) checkFunctionDefinition(expr lexparse.FunctionExpression) Teko
 	}
 
 	return ftype
+}
+
+func (c *Checker) checkDoExpression(expr lexparse.DoExpression) TekoType {
+	var out TekoType = nil
+	blockChecker := NewChecker(c)
+
+	for _, stmt := range expr.Codeblock.Statements {
+		out = blockChecker.checkStatement(stmt)
+		if stmt.Semicolon() != nil {
+			out = nil
+		}
+	}
+
+	return out
 }

@@ -43,7 +43,7 @@ const (
 	LexerError          = "Lexer Error"
 	SyntaxError         = "Syntax Error"
 	NameError           = "Name Error"
-	NotImplementedError = "Unimplimented (this is planned functionality for Teko)"
+	NotImplementedError = "Unimplemented (this is planned functionality for Teko)"
 	TypeError           = "Type Error"
 	ArgumentError       = "Argument Error"
 	UnexpectedIssue     = "Unexpected issue (this is a mistake in the Teko implementation)"

@@ -32,42 +32,36 @@ type Expression interface {
 
 type Statement interface {
 	Node
-	statementNode()
+	Semicolon() *Token
 }
 
 //---
 
 type Codeblock struct {
-	Statements      []Statement
-	FinalExpression Expression
+	OpenBr     Token
+	Statements []Statement
 }
 
-func (c *Codeblock) Ntype() string {
+func (c Codeblock) Ntype() string {
 	return "Codeblock"
 }
 
-func (c *Codeblock) children() []Node {
+func (c Codeblock) children() []Node {
 	out := []Node{}
 	for _, stmt := range c.Statements {
 		out = append(out, stmt)
 	}
-	if c.FinalExpression != nil {
-		out = append(out, c.FinalExpression)
-	}
 	return out
 }
 
-func (c *Codeblock) Token() Token {
-	return Token{}
+func (c Codeblock) Token() Token {
+	return c.OpenBr
 }
 
-func (c *Codeblock) child_strings(indent int) []string {
+func (c Codeblock) child_strings(indent int) []string {
 	out := []string{}
 	for _, stmt := range c.Statements {
 		out = append(out, node_to_str(stmt, indent))
-	}
-	if c.FinalExpression != nil {
-		out = append(out, node_to_str(c.FinalExpression, indent))
 	}
 	return out
 }
@@ -76,6 +70,7 @@ func (c *Codeblock) child_strings(indent int) []string {
 
 type ExpressionStatement struct {
 	Expression Expression
+	semicolon  *Token
 }
 
 func (s ExpressionStatement) Ntype() string {
@@ -96,7 +91,9 @@ func (s ExpressionStatement) child_strings(indent int) []string {
 	}
 }
 
-func (s ExpressionStatement) statementNode() {}
+func (s ExpressionStatement) Semicolon() *Token {
+	return s.semicolon
+}
 
 //---
 
@@ -558,3 +555,28 @@ func (e FunctionExpression) Token() Token {
 }
 
 func (e FunctionExpression) expressionNode() {}
+
+//---
+
+type DoExpression struct {
+	DoToken   *Token // commonly omitted
+	Codeblock Codeblock
+}
+
+func (e DoExpression) Ntype() string {
+	return "DoExpression"
+}
+
+func (e DoExpression) children() []Node {
+	return []Node{e.Codeblock}
+}
+
+func (e DoExpression) child_strings(indent int) []string {
+	return []string{node_to_str(e.Codeblock, indent)}
+}
+
+func (e DoExpression) Token() Token {
+	return *e.DoToken
+}
+
+func (e DoExpression) expressionNode() {}

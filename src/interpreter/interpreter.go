@@ -23,23 +23,20 @@ type InterpreterModule struct {
 }
 
 func (m InterpreterModule) execute() *TekoObject {
+	var out *TekoObject = nil
 	for _, stmt := range m.codeblock.Statements {
-		m.executeStatement(stmt)
+		out = m.executeStatement(stmt)
 	}
-
-	if m.codeblock.FinalExpression == nil {
-		return nil
-	} else {
-		return m.evaluateExpression(m.codeblock.FinalExpression)
-	}
+	return out
 }
 
-func (m InterpreterModule) executeStatement(stmt lexparse.Statement) {
+func (m InterpreterModule) executeStatement(stmt lexparse.Statement) *TekoObject {
 	switch p := stmt.(type) {
 	case lexparse.ExpressionStatement:
-		m.evaluateExpression(p.Expression)
+		return m.evaluateExpression(p.Expression)
 	default:
 		stmt.Token().Raise(lexparse.NotImplementedError, "Statement type not implemented: "+stmt.Ntype())
+		return nil
 	}
 }
 
@@ -72,6 +69,9 @@ func (m InterpreterModule) evaluateExpression(expr lexparse.Expression) *TekoObj
 
 	case lexparse.FunctionExpression:
 		return m.evaluateFunctionDefinition(p)
+
+	case lexparse.DoExpression:
+		return m.evaluateDoExpression(p)
 
 	default:
 		expr.Token().Raise(lexparse.NotImplementedError, "Intepretation of expression type not implemented: "+expr.Ntype())
@@ -230,4 +230,15 @@ func (m *InterpreterModule) evaluateFunctionDefinition(expr lexparse.FunctionExp
 	}
 
 	return f
+}
+
+func (m *InterpreterModule) evaluateDoExpression(expr lexparse.DoExpression) *TekoObject {
+	interpreter := InterpreterModule{
+		codeblock: &expr.Codeblock,
+		scope: &BasicObject{
+			newSymbolTable(m.scope.symbolTable),
+		},
+	}
+
+	return interpreter.execute()
 }

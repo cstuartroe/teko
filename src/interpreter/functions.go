@@ -34,7 +34,11 @@ func (t TekoFunction) evaluateArgs(callingContext InterpreterModule, resolvedArg
 func defaultFunctionExecutor(function TekoFunction, evaluatedArgs map[string]*TekoObject) *TekoObject {
 	interpreter := InterpreterModule{
 		codeblock: &lexparse.Codeblock{
-			FinalExpression: function.body,
+			Statements: []lexparse.Statement{
+				lexparse.ExpressionStatement{
+					Expression: function.body,
+				},
+			},
 		},
 		scope: &BasicObject{
 			symbolTable: &SymbolTable{
