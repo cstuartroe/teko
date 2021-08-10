@@ -32,6 +32,16 @@ o : OType = {
     bar: true,
   },
   n: 3,
+  m: 0,
+}
+
+o <- {
+  foo: {
+    foo: "foo",
+    bar: true,
+  },
+  n: 3,
+  other_field: 0,
 }
 
 print(o.foo.foo)

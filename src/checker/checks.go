@@ -72,10 +72,14 @@ func (c *Checker) checkExpression(expr lexparse.Expression, expectedType TekoTyp
 	if ttype == nil {
 		expr.Token().Raise(lexparse.TypeError, "Evaluated to nil type")
 	}
-	if (expectedType != nil) && !isTekoEqType(ttype, expectedType) {
-		expr.Token().Raise(lexparse.TypeError, "Incorrect type")
+	if (expectedType != nil) && !isTekoSubtype(ttype, expectedType) {
+		expr.Token().Raise(lexparse.TypeError, "Actual type does not fulfill expected type")
 	}
-	return ttype
+	if expectedType == nil {
+		return ttype
+	} else {
+		return expectedType
+	}
 }
 
 func (c *Checker) checkSimpleExpression(expr lexparse.SimpleExpression) TekoType {
@@ -282,7 +286,7 @@ func (c *Checker) checkObjectExpression(expr lexparse.ObjectExpression) TekoType
 		fields[string(of.Symbol.Value)] = c.checkExpression(of.Value, nil)
 	}
 
-	return BasicType{fields}
+	return &BasicType{fields}
 }
 
 func (c *Checker) checkFunctionDefinition(expr lexparse.FunctionExpression) TekoType {
