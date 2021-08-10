@@ -1,0 +1,16 @@
+class Complex(real : float, imaginary : float) {
+  fn add(other : Complex) -> Complex(
+    real: real + other.real,
+    imaginary: imaginary + other.imaginary,
+  )
+
+  fn sub(other : Complex) -> Complex(
+    real: real - other.real,
+    imaginary: imaginary - other.imaginary,
+  )
+
+  fn mult(other : Complex) -> Complex(
+    real: (real * other.real) - (imaginary - other.imaginary),
+    imaginary:
+  )
+}

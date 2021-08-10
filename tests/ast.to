@@ -1,0 +1,17 @@
+type SimpleExpression = {
+  etype: "simple",
+  t: Token,
+}
+
+type BinOp = "+" | "-" | "*" | "/" | "^" | "%" | "&&" | "||"
+
+type BinOpExpression = {
+  etype: "binop",
+  left: Expression,
+  binop: BinOp,
+  right: Expression,
+}
+
+type Expression =
+  SimpleExpression
+  | BinOpExpression

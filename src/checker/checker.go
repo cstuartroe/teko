@@ -129,3 +129,13 @@ func (c *Checker) declareFieldType(token lexparse.Token, tekotype TekoType) {
 func (c *Checker) getTypeByName(name string) TekoType {
 	return c.typeTable.get(name)
 }
+
+func (c *Checker) declareNamedType(token lexparse.Token, tekotype TekoType) {
+	name := string(token.Value)
+
+	if c.typeTable.get(name) != nil {
+		token.Raise(lexparse.NameError, "Type has already been declared: "+name)
+	}
+
+	c.typeTable.set(name, tekotype)
+}

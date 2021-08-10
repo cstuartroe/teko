@@ -42,6 +42,23 @@ func (s ExpressionStatement) Semicolon() *Token {
 
 //---
 
+type TypeStatement struct {
+	TypeToken      Token
+	Name           Token
+	TypeExpression Expression
+	semicolon      *Token
+}
+
+func (s TypeStatement) Token() Token {
+	return s.TypeToken
+}
+
+func (s TypeStatement) Semicolon() *Token {
+	return s.semicolon
+}
+
+//---
+
 type SimpleExpression struct {
 	token Token
 }

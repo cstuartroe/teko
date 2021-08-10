@@ -8,6 +8,11 @@ func (c *Checker) checkStatement(stmt lexparse.Statement) TekoType {
 	switch p := stmt.(type) {
 	case lexparse.ExpressionStatement:
 		return c.checkExpressionStatement(p)
+
+	case lexparse.TypeStatement:
+		c.checkTypeStatement(p)
+		return nil
+
 	default:
 		stmt.Token().Raise(lexparse.NotImplementedError, "Unknown statement type")
 		return nil
@@ -16,6 +21,13 @@ func (c *Checker) checkStatement(stmt lexparse.Statement) TekoType {
 
 func (c *Checker) checkExpressionStatement(stmt lexparse.ExpressionStatement) TekoType {
 	return c.checkExpression(stmt.Expression, nil)
+}
+
+func (c *Checker) checkTypeStatement(stmt lexparse.TypeStatement) {
+	c.declareNamedType(
+		stmt.Name,
+		c.evaluateType(stmt.TypeExpression),
+	)
 }
 
 func (c *Checker) checkExpression(expr lexparse.Expression, expectedType TekoType) TekoType {
@@ -126,6 +138,10 @@ func (c *Checker) evaluateType(expr lexparse.Expression) TekoType {
 	switch p := (expr).(type) {
 	case lexparse.SimpleExpression:
 		return c.evaluateSimpleType(p)
+
+	case lexparse.ObjectExpression:
+		return c.evaluateObjectType(p)
+
 	default:
 		panic("Unknown type format!")
 	}
@@ -139,6 +155,16 @@ func (c *Checker) evaluateSimpleType(expr lexparse.SimpleExpression) TekoType {
 		expr.Token().Raise(lexparse.TypeError, "Invalid type expression")
 		return nil
 	}
+}
+
+func (c *Checker) evaluateObjectType(expr lexparse.ObjectExpression) TekoType {
+	out := newBasicType()
+
+	for _, field := range expr.Fields {
+		out.setField(string(field.Symbol.Value), c.evaluateType(field.Value))
+	}
+
+	return out
 }
 
 func (c *Checker) declare(symbol lexparse.Token, right lexparse.Expression, tekotype TekoType) TekoType {

@@ -80,7 +80,29 @@ func (parser *Parser) optionalSemicolon() *Token {
 }
 
 func (parser *Parser) grabStatement() Statement {
-	return parser.grabExpressionStmt()
+	if parser.currentToken().TType == TypeT {
+		return parser.grabTypeStatement()
+	} else {
+		return parser.grabExpressionStmt()
+	}
+}
+
+func (parser *Parser) grabTypeStatement() TypeStatement {
+	tt := *parser.expect(TypeT)
+	name := *parser.expect(SymbolT)
+	parser.expect(DefinerT)
+
+	// A dirty hack to make checking union types easier
+	parser.transform = false
+	te := parser.grabExpression(min_prec)
+	parser.transform = true
+
+	return TypeStatement{
+		TypeToken:      tt,
+		Name:           name,
+		TypeExpression: te,
+		semicolon:      parser.optionalSemicolon(),
+	}
 }
 
 func (parser *Parser) grabExpressionStmt() ExpressionStatement {

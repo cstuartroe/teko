@@ -34,6 +34,10 @@ func (m InterpreterModule) executeStatement(stmt lexparse.Statement) *TekoObject
 	switch p := stmt.(type) {
 	case lexparse.ExpressionStatement:
 		return m.evaluateExpression(p.Expression)
+
+	case lexparse.TypeStatement:
+		return nil // it's only for the type checker
+
 	default:
 		stmt.Token().Raise(lexparse.NotImplementedError, "Statement type not implemented")
 		return nil
