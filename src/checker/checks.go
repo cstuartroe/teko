@@ -54,7 +54,7 @@ func (c *Checker) checkExpression(expr lexparse.Expression, expectedType TekoTyp
 		ttype = c.checkDoExpression(p)
 
 	default:
-		expr.Token().Raise(lexparse.NotImplementedError, "Cannot typecheck expression type: "+expr.Ntype())
+		expr.Token().Raise(lexparse.NotImplementedError, "Cannot typecheck expression type")
 	}
 
 	if ttype == nil {

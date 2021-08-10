@@ -35,7 +35,7 @@ func (m InterpreterModule) executeStatement(stmt lexparse.Statement) *TekoObject
 	case lexparse.ExpressionStatement:
 		return m.evaluateExpression(p.Expression)
 	default:
-		stmt.Token().Raise(lexparse.NotImplementedError, "Statement type not implemented: "+stmt.Ntype())
+		stmt.Token().Raise(lexparse.NotImplementedError, "Statement type not implemented")
 		return nil
 	}
 }
@@ -74,7 +74,7 @@ func (m InterpreterModule) evaluateExpression(expr lexparse.Expression) *TekoObj
 		return m.evaluateDoExpression(p)
 
 	default:
-		expr.Token().Raise(lexparse.NotImplementedError, "Intepretation of expression type not implemented: "+expr.Ntype())
+		expr.Token().Raise(lexparse.NotImplementedError, "Intepretation of expression type not implemented")
 		return nil
 	}
 }
