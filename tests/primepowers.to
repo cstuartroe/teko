@@ -1,0 +1,36 @@
+primes := [2, 3, 5, 7, 11, 13, 17, 19]
+
+type PrimePower {
+  base: int,
+  exp: int,
+  total: int,
+}
+
+fn object_str<T>(t: T) {
+  "{" +
+  "".join(
+    // TODO - type mapping
+  ) + "}"
+}
+
+prime_powers : PrimePower[] = primes.map(fn(base) ->
+  ~(1..30).map(fn(exp) ->
+    {
+      base,
+      exp,
+      total: base**exp,
+    }
+  )
+)
+
+prime_powers.sort(fn(pp) -> pp.total)
+
+threshold := .95
+
+(1..(prime_powers.length - 1)).map(fn(i) ->
+  pp1, pp2 := prime_powers[i..i+2]
+  ratio := pp1.total./pp2.total.
+
+  if ratio > threshold
+    println("${pp1 >> object_str} vs. ${pp2 >> object_str}")
+)
