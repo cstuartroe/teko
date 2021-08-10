@@ -9,7 +9,14 @@ type PrimePower {
 fn object_str<T>(t: T) {
   "{" +
   "".join(
-    // TODO - type mapping
+    members(t).map(fn(name: str, val: {}) ->
+      val_str := switch val {
+        {to_str: fn(): str}: val$,
+        default: object_str(val)
+      }
+
+      "${name}: ${val_str}, "
+    )
   ) + "}"
 }
 

@@ -14,6 +14,38 @@ print(s2)
 
 num : int = 1 + 2 * 3 / 4 - 5 ^ 6 * 7
 
+type Binop "+" | "-" | "*" | "/" | "^" | "%" | "&&" | "||"
+
+type Expression (
+  SimpleExpression {
+    etype: "simple",
+    t: Token,
+  } |
+  BinOpExpression {
+    etype: "binop",
+    left: Expression,
+    binop: Binop,
+    right: Expression,
+  }
+)
+
+class Complex(real : float, imaginary : float) {
+  fn add(other : Complex) -> Complex(
+    real: real + other.real,
+    imaginary: imaginary + other.imaginary,
+  )
+
+  fn sub(other : Complex) -> Complex(
+    real: real - other.real,
+    imaginary: imaginary - other.imaginary,
+  )
+
+  fn mult(other : Complex) -> Complex(
+    real: (real * other.real) - (imaginary - other.imaginary),
+    imaginary:
+  )
+}
+
 print(num$)
 
 m : int = if (b) then 0 else 1
