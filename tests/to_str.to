@@ -1,0 +1,19 @@
+type Stringable = {
+  to_str: fn(): str,
+}
+
+fn to_str(o: {}): str {
+  switch o {
+    case Stringable: o.to_str()
+
+    default: do {
+      mut out := "{"
+
+      members(o).map(fn(name, val) {
+        out += "${name}: ${val >> to_str}, "
+      })
+
+      return (out >> until(i=-2)) + "}"
+    }
+  }
+}

@@ -1,6 +1,6 @@
 primes := [2, 3, 5, 7, 11, 13, 17, 19]
 
-type PrimePower {
+type PrimePower = {
   base: int,
   exp: int,
   total: int,
