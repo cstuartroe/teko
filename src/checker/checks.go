@@ -271,6 +271,22 @@ func (c *Checker) checkIfExpression(expr lexparse.IfExpression, expectedType Tek
 	return then_tekotype
 }
 
+func deconstantize(ttype TekoType) TekoType {
+	switch p := ttype.(type) {
+	case *ConstantType:
+		switch p.ctype {
+		case IntConstant:
+			return IntType
+		case StringConstant:
+			return StringType
+		default:
+			panic("Unknown constant type")
+		}
+	default:
+		return ttype
+	}
+}
+
 func (c *Checker) checkSequenceExpression(expr lexparse.SequenceExpression, expectedType TekoType) TekoType {
 	var etype TekoType
 	var seqtype TekoType = expectedType
@@ -292,7 +308,7 @@ func (c *Checker) checkSequenceExpression(expr lexparse.SequenceExpression, expe
 		if len(expr.Elements) == 0 {
 			expr.Token().Raise(lexparse.TypeError, "With no expected type, sequence cannot be empty")
 		} else {
-			etype = c.checkExpression(expr.Elements[0], nil)
+			etype = deconstantize(c.checkExpression(expr.Elements[0], nil))
 
 			if expr.Stype == lexparse.ArraySeqType {
 				seqtype = newArrayType(etype)
