@@ -1,54 +1,25 @@
 package checker
 
-var ToStrType *FunctionType = &FunctionType{}
+import (
+	"strconv"
+)
 
-var IntType *BasicType = &BasicType{
-	fields: map[string]TekoType{
-		"add":    IntBinopType,
-		"sub":    IntBinopType,
-		"mult":   IntBinopType,
-		"div":    IntBinopType,
-		"exp":    IntBinopType,
-		"mod":    IntBinopType,
-		"to_str": ToStrType,
-	},
-}
+func newConstantType(baseType TekoType, newFieldName string) TekoType {
+	out := newBasicType()
 
-var IntBinopType *FunctionType = &FunctionType{}
-
-var BoolType *BasicType = &BasicType{
-	fields: map[string]TekoType{
-		"and": BoolBinopType,
-		"or":  BoolBinopType,
-	},
-}
-
-var BoolBinopType *FunctionType = &FunctionType{}
-
-var CharType *BasicType = &BasicType{
-	fields: map[string]TekoType{},
-}
-
-var VoidType *BasicType = &BasicType{}
-
-// avoids circular initialization
-func SetupFunctionTypes() {
-	IntBinopType.rtype = IntType
-	IntBinopType.argdefs = []FunctionArgDef{
-		{
-			name:  "other",
-			ttype: IntType,
-		},
+	for name, ttype := range baseType.allFields() {
+		out.fields[name] = ttype
 	}
 
-	BoolBinopType.rtype = BoolType
-	BoolBinopType.argdefs = []FunctionArgDef{
-		{
-			name:  "other",
-			ttype: BoolType,
-		},
-	}
+	out.setField(newFieldName, VoidType)
 
-	ToStrType.rtype = StringType
-	ToStrType.argdefs = []FunctionArgDef{}
+	return out
+}
+
+func newConstantIntType(n int) TekoType {
+	return newConstantType(IntType, strconv.Itoa(n))
+}
+
+func newConstantStringType(s []rune) TekoType {
+	return newConstantType(StringType, "$"+string(s))
 }

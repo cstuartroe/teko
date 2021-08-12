@@ -2,25 +2,24 @@ package checker
 
 import (
 	"github.com/cstuartroe/teko/src/lexparse"
+	"strconv"
 )
 
-func (c *Checker) checkStatement(stmt lexparse.Statement) TekoType {
+func (c *Checker) checkStatement(stmt lexparse.Statement) {
 	switch p := stmt.(type) {
 	case lexparse.ExpressionStatement:
-		return c.checkExpressionStatement(p)
+		c.checkExpressionStatement(p)
 
 	case lexparse.TypeStatement:
 		c.checkTypeStatement(p)
-		return nil
 
 	default:
 		stmt.Token().Raise(lexparse.NotImplementedError, "Unknown statement type")
-		return nil
 	}
 }
 
-func (c *Checker) checkExpressionStatement(stmt lexparse.ExpressionStatement) TekoType {
-	return c.checkExpression(stmt.Expression, nil)
+func (c *Checker) checkExpressionStatement(stmt lexparse.ExpressionStatement) {
+	c.checkExpression(stmt.Expression, nil)
 }
 
 func (c *Checker) checkTypeStatement(stmt lexparse.TypeStatement) {
@@ -36,10 +35,10 @@ func (c *Checker) checkExpression(expr lexparse.Expression, expectedType TekoTyp
 	switch p := expr.(type) {
 
 	case lexparse.SimpleExpression:
-		ttype = c.checkSimpleExpression(p)
+		ttype = c.checkSimpleExpression(p, expectedType)
 
 	case lexparse.DeclarationExpression:
-		ttype = c.checkDeclaration(p)
+		ttype = c.checkDeclaration(p, expectedType)
 
 	case lexparse.UpdateExpression:
 		ttype = c.checkUpdate(p)
@@ -51,19 +50,20 @@ func (c *Checker) checkExpression(expr lexparse.Expression, expectedType TekoTyp
 		ttype = c.checkAttributeExpression(p)
 
 	case lexparse.IfExpression:
-		ttype = c.checkIfExpression(p)
+		ttype = c.checkIfExpression(p, expectedType)
 
 	case lexparse.SequenceExpression:
 		ttype = c.checkSequenceExpression(p, expectedType)
 
 	case lexparse.ObjectExpression:
-		ttype = c.checkObjectExpression(p)
+		ttype = c.checkObjectExpression(p, expectedType)
 
 	case lexparse.FunctionExpression:
+		// TODO use expected type in function definitions
 		ttype = c.checkFunctionDefinition(p)
 
 	case lexparse.DoExpression:
-		ttype = c.checkDoExpression(p)
+		ttype = c.checkDoExpression(p, expectedType)
 
 	default:
 		expr.Token().Raise(lexparse.NotImplementedError, "Cannot typecheck expression type")
@@ -82,7 +82,17 @@ func (c *Checker) checkExpression(expr lexparse.Expression, expectedType TekoTyp
 	}
 }
 
-func (c *Checker) checkSimpleExpression(expr lexparse.SimpleExpression) TekoType {
+func (c *Checker) evaluateConstantIntType(token lexparse.Token) TekoType {
+	n, err := strconv.Atoi(string(token.Value))
+	if err == nil {
+		return newConstantIntType(n)
+	} else {
+		panic("Invalid int")
+		return nil
+	}
+}
+
+func (c *Checker) checkSimpleExpression(expr lexparse.SimpleExpression, expectedType TekoType) TekoType {
 	t := expr.Token()
 	switch t.TType {
 	case lexparse.SymbolT:
@@ -94,21 +104,39 @@ func (c *Checker) checkSimpleExpression(expr lexparse.SimpleExpression) TekoType
 			return ttype
 		}
 
+	// TODO bool, char, and float constant types
+
 	case lexparse.IntT:
-		return IntType
+		if expectedType != nil && isTekoEqType(expectedType, IntType) {
+			return IntType
+		} else {
+			return c.evaluateConstantIntType(t)
+		}
+
 	case lexparse.BoolT:
 		return BoolType
+
 	case lexparse.StringT:
-		return StringType
+		if expectedType != nil && isTekoEqType(expectedType, StringType) {
+			return StringType
+		} else {
+			return newConstantStringType(t.Value)
+		}
+
 	case lexparse.CharT:
 		return CharType
+
 	default:
 		panic("Unknown simple expression type")
 	}
 }
 
-func (c *Checker) checkDeclaration(decl lexparse.DeclarationExpression) TekoType {
+func (c *Checker) checkDeclaration(decl lexparse.DeclarationExpression, expectedType TekoType) TekoType {
 	var tekotype TekoType = c.evaluateType(decl.Tekotype)
+
+	if tekotype == nil {
+		tekotype = expectedType
+	}
 
 	return c.declare(decl.Symbol, decl.Right, tekotype)
 }
@@ -153,8 +181,18 @@ func (c *Checker) evaluateType(expr lexparse.Expression) TekoType {
 
 func (c *Checker) evaluateSimpleType(expr lexparse.SimpleExpression) TekoType {
 	switch expr.Token().TType {
+
 	case lexparse.SymbolT:
 		return c.getTypeByName(string(expr.Token().Value))
+
+	case lexparse.IntT:
+		return c.evaluateConstantIntType(expr.Token())
+
+	case lexparse.StringT:
+		return newConstantStringType(expr.Token().Value)
+
+	// TODO: bool, chars and floats
+
 	default:
 		expr.Token().Raise(lexparse.TypeError, "Invalid type expression")
 		return nil
@@ -220,11 +258,11 @@ func (c *Checker) checkAttributeExpression(expr lexparse.AttributeExpression) Te
 	}
 }
 
-func (c *Checker) checkIfExpression(expr lexparse.IfExpression) TekoType {
+func (c *Checker) checkIfExpression(expr lexparse.IfExpression, expectedType TekoType) TekoType {
 	c.checkExpression(expr.Condition, BoolType)
 
-	then_tekotype := c.checkExpression(expr.Then, nil)
-	else_tekotype := c.checkExpression(expr.Else, nil)
+	then_tekotype := c.checkExpression(expr.Then, expectedType)
+	else_tekotype := c.checkExpression(expr.Else, expectedType)
 
 	if then_tekotype != else_tekotype {
 		expr.Else.Token().Raise(lexparse.TypeError, "Then and else blocks have mismatching types")
@@ -275,15 +313,26 @@ func (c *Checker) checkSequenceExpression(expr lexparse.SequenceExpression, expe
 	return seqtype
 }
 
-func (c *Checker) checkObjectExpression(expr lexparse.ObjectExpression) TekoType {
+func (c *Checker) checkObjectExpression(expr lexparse.ObjectExpression, expectedType TekoType) TekoType {
+	switch expectedType.(type) {
+	case *BasicType:
+		break
+	case nil:
+		expectedType = VoidType
+	default:
+		return nil // TODO better handling
+	}
+
 	fields := map[string]TekoType{}
 
 	for _, of := range expr.Fields {
-		if _, ok := fields[string(of.Symbol.Value)]; ok {
+		field_name := string(of.Symbol.Value)
+
+		if _, ok := fields[field_name]; ok {
 			of.Symbol.Raise(lexparse.NameError, "Duplicate member")
 		}
 
-		fields[string(of.Symbol.Value)] = c.checkExpression(of.Value, nil)
+		fields[field_name] = c.checkExpression(of.Value, getField(expectedType, field_name))
 	}
 
 	return &BasicType{fields}
@@ -326,14 +375,20 @@ func (c *Checker) checkFunctionDefinition(expr lexparse.FunctionExpression) Teko
 	return ftype
 }
 
-func (c *Checker) checkDoExpression(expr lexparse.DoExpression) TekoType {
-	var out TekoType = nil
+func (c *Checker) checkDoExpression(expr lexparse.DoExpression, expectedType TekoType) TekoType {
+	var out TekoType = VoidType
 	blockChecker := NewChecker(c)
 
-	for _, stmt := range expr.Codeblock.Statements {
-		out = blockChecker.checkStatement(stmt)
-		if stmt.Semicolon() != nil {
-			out = nil
+	for i, stmt := range expr.Codeblock.Statements {
+		if (i == len(expr.Codeblock.Statements)-1) && stmt.Semicolon() == nil {
+			switch p := stmt.(type) {
+			case lexparse.ExpressionStatement:
+				out = blockChecker.checkExpression(p.Expression, expectedType)
+			default:
+				blockChecker.checkStatement(stmt)
+			}
+		} else {
+			blockChecker.checkStatement(stmt)
 		}
 	}
 
