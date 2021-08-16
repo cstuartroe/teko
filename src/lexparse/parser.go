@@ -93,6 +93,7 @@ func (parser *Parser) grabTypeStatement() TypeStatement {
 	parser.expect(DefinerT)
 
 	// A dirty hack to make checking union types easier
+	// TODO find a better way to do transformations
 	parser.transform = false
 	te := parser.grabExpression(min_prec)
 	parser.transform = true

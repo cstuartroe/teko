@@ -2,7 +2,6 @@ package checker
 
 import (
 	"github.com/cstuartroe/teko/src/lexparse"
-	"strconv"
 )
 
 func (c *Checker) checkStatement(stmt lexparse.Statement) {
@@ -82,16 +81,6 @@ func (c *Checker) checkExpression(expr lexparse.Expression, expectedType TekoTyp
 	}
 }
 
-func (c *Checker) evaluateConstantIntType(token lexparse.Token) TekoType {
-	n, err := strconv.Atoi(string(token.Value))
-	if err == nil {
-		return newConstantIntType(n)
-	} else {
-		panic("Invalid int")
-		return nil
-	}
-}
-
 func (c *Checker) checkSimpleExpression(expr lexparse.SimpleExpression, expectedType TekoType) TekoType {
 	t := expr.Token()
 	switch t.TType {
@@ -141,6 +130,16 @@ func (c *Checker) checkDeclaration(decl lexparse.DeclarationExpression, expected
 	return c.declare(decl.Symbol, decl.Right, tekotype)
 }
 
+func (c *Checker) declare(symbol lexparse.Token, right lexparse.Expression, tekotype TekoType) TekoType {
+	// TODO: function types
+
+	evaluated_ttype := c.checkExpression(right, tekotype)
+
+	c.declareFieldType(symbol, evaluated_ttype)
+
+	return evaluated_ttype
+}
+
 func validUpdated(updated lexparse.Expression) bool {
 	switch p := updated.(type) {
 	case lexparse.SimpleExpression:
@@ -160,63 +159,6 @@ func (c *Checker) checkUpdate(update lexparse.UpdateExpression) TekoType {
 	ttype := c.checkExpression(update.Updated, nil)
 	c.checkExpression(update.Right, ttype)
 	return ttype
-}
-
-func (c *Checker) evaluateType(expr lexparse.Expression) TekoType {
-	if expr == nil {
-		return nil
-	}
-
-	switch p := (expr).(type) {
-	case lexparse.SimpleExpression:
-		return c.evaluateSimpleType(p)
-
-	case lexparse.ObjectExpression:
-		return c.evaluateObjectType(p)
-
-	default:
-		panic("Unknown type format!")
-	}
-}
-
-func (c *Checker) evaluateSimpleType(expr lexparse.SimpleExpression) TekoType {
-	switch expr.Token().TType {
-
-	case lexparse.SymbolT:
-		return c.getTypeByName(string(expr.Token().Value))
-
-	case lexparse.IntT:
-		return c.evaluateConstantIntType(expr.Token())
-
-	case lexparse.StringT:
-		return newConstantStringType(expr.Token().Value)
-
-	// TODO: bool, chars and floats
-
-	default:
-		expr.Token().Raise(lexparse.TypeError, "Invalid type expression")
-		return nil
-	}
-}
-
-func (c *Checker) evaluateObjectType(expr lexparse.ObjectExpression) TekoType {
-	out := newBasicType()
-
-	for _, field := range expr.Fields {
-		out.setField(string(field.Symbol.Value), c.evaluateType(field.Value))
-	}
-
-	return out
-}
-
-func (c *Checker) declare(symbol lexparse.Token, right lexparse.Expression, tekotype TekoType) TekoType {
-	// TODO: function types
-
-	evaluated_ttype := c.checkExpression(right, tekotype)
-
-	c.declareFieldType(symbol, evaluated_ttype)
-
-	return evaluated_ttype
 }
 
 func (c *Checker) checkCallExpression(expr lexparse.CallExpression) TekoType {
@@ -249,7 +191,7 @@ func (c *Checker) checkCallExpression(expr lexparse.CallExpression) TekoType {
 func (c *Checker) checkAttributeExpression(expr lexparse.AttributeExpression) TekoType {
 	left_tekotype := c.checkExpression(expr.Left, nil)
 
-	tekotype := getField(left_tekotype, string(expr.Symbol.Value))
+	tekotype := getFieldSafe(left_tekotype, string(expr.Symbol.Value))
 	if tekotype != nil {
 		return tekotype
 	} else {
@@ -330,13 +272,15 @@ func (c *Checker) checkSequenceExpression(expr lexparse.SequenceExpression, expe
 }
 
 func (c *Checker) checkObjectExpression(expr lexparse.ObjectExpression, expectedType TekoType) TekoType {
-	switch expectedType.(type) {
-	case *BasicType:
-		break
+	var expectedObjType ObjectType = nil
+
+	switch p := expectedType.(type) {
+	case ObjectType:
+		expectedObjType = p
 	case nil:
 		expectedType = VoidType
 	default:
-		return nil // TODO better handling
+		expr.Token().Raise(lexparse.TypeError, "Did not expect object type")
 	}
 
 	fields := map[string]TekoType{}
@@ -348,7 +292,7 @@ func (c *Checker) checkObjectExpression(expr lexparse.ObjectExpression, expected
 			of.Symbol.Raise(lexparse.NameError, "Duplicate member")
 		}
 
-		fields[field_name] = c.checkExpression(of.Value, getField(expectedType, field_name))
+		fields[field_name] = c.checkExpression(of.Value, getField(expectedObjType, field_name))
 	}
 
 	return &BasicType{fields}

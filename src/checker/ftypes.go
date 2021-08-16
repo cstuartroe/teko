@@ -16,9 +16,7 @@ type FunctionType struct {
 	argdefs []FunctionArgDef
 }
 
-func (ftype FunctionType) allFields() map[string]TekoType {
-	return map[string]TekoType{}
-}
+func (ftype FunctionType) tekotype() {}
 
 func (ftype FunctionType) argnames() []string {
 	var out []string = []string{}

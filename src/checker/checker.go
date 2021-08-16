@@ -42,6 +42,8 @@ type CheckerType struct {
 	parent *CheckerType
 }
 
+func (ctype CheckerType) tekotype() {}
+
 func (ctype *CheckerType) allFields() map[string]TekoType {
 	var out map[string]TekoType
 
@@ -104,12 +106,8 @@ func NewChecker(parent *Checker) Checker {
 	return c
 }
 
-func (c *Checker) getType() TekoType {
-	return c.ctype
-}
-
 func (c *Checker) GetType() TekoType {
-	return c.getType()
+	return c.ctype
 }
 
 func (c *Checker) getFieldType(name string) TekoType {

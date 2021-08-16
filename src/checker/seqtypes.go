@@ -45,6 +45,8 @@ type SetType struct {
 	fields map[string]TekoType
 }
 
+func (t SetType) tekotype() {}
+
 func (t SetType) allFields() map[string]TekoType {
 	return t.fields
 }
@@ -91,6 +93,8 @@ type MapType struct {
 	fields map[string]TekoType
 }
 
+func (t MapType) tekotype() {}
+
 func (t MapType) allFields() map[string]TekoType {
 	return t.fields
 }
@@ -124,6 +128,8 @@ type ArrayType struct {
 	etype  TekoType
 	fields map[string]TekoType
 }
+
+func (t ArrayType) tekotype() {}
 
 func (t ArrayType) allFields() map[string]TekoType {
 	return t.fields
