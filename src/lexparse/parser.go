@@ -92,16 +92,10 @@ func (parser *Parser) grabTypeStatement() TypeStatement {
 	name := *parser.expect(SymbolT)
 	parser.expect(DefinerT)
 
-	// A dirty hack to make checking union types easier
-	// TODO find a better way to do transformations
-	parser.transform = false
-	te := parser.grabExpression(min_prec)
-	parser.transform = true
-
 	return TypeStatement{
 		TypeToken:      tt,
 		Name:           name,
-		TypeExpression: te,
+		TypeExpression: parser.grabTypeExpression(min_prec),
 		semicolon:      parser.optionalSemicolon(),
 	}
 }
@@ -145,6 +139,14 @@ func (parser *Parser) grabExpression(prec int) Expression {
 	return parser.continueExpression(expr, prec)
 }
 
+func (parser *Parser) grabTypeExpression(prec int) Expression {
+	transform := parser.transform
+	parser.transform = false
+	out := parser.grabExpression(prec)
+	parser.transform = transform
+	return out
+}
+
 func (parser *Parser) grabSimpleExpression() SimpleExpression {
 	t := parser.currentToken()
 	if _, ok := simpleExprTokenTypes[t.TType]; ok {
@@ -179,7 +181,7 @@ func (parser *Parser) continueExpression(expr Expression, prec int) Expression {
 		switch parser.currentToken().TType {
 		case DefinerT:
 		default:
-			tekotype = parser.grabExpression(prec)
+			tekotype = parser.grabTypeExpression(prec)
 		}
 
 		setter := *parser.currentToken()
@@ -477,7 +479,7 @@ func (parser *Parser) grabObjectField() ObjectField {
 func (parser *Parser) grabOptionalType(prec int) Expression {
 	if parser.currentToken().TType == ColonT {
 		parser.advance()
-		return parser.grabExpression(prec)
+		return parser.grabTypeExpression(prec)
 	} else {
 		return nil
 	}

@@ -66,8 +66,6 @@ fn foo(numberoony: int): int -> do {
 print(foo(5)$)
 print("\n")
 
-type FooOrBool = "foo" | bool
-
-fubu : FooOrBool = "foo"
+fubu : "foo" | bool = "foo"
 
 fubu <- true
