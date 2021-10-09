@@ -4,9 +4,20 @@ type UnionType struct {
 	types []TekoType
 }
 
-func (ut UnionType) tekotype() {}
+func (ut UnionType) tekotypeToString() string {
+	out := ""
 
-func unionTypes(t1 TekoType, t2 TekoType) UnionType {
+	for i, tt := range ut.types {
+		if i > 0 {
+			out += " | "
+		}
+		out += tt.tekotypeToString()
+	}
+
+	return out
+}
+
+func unionTypes(t1 TekoType, t2 TekoType) *UnionType {
 	types := []TekoType{}
 
 	switch p1 := t1.(type) {
@@ -23,5 +34,5 @@ func unionTypes(t1 TekoType, t2 TekoType) UnionType {
 		types = append(types, t2)
 	}
 
-	return UnionType{types}
+	return &UnionType{types}
 }

@@ -55,7 +55,7 @@ func (c *Checker) evaluateSimpleType(expr lexparse.SimpleExpression) TekoType {
 }
 
 func (c *Checker) evaluateObjectType(expr lexparse.ObjectExpression) ObjectType {
-	out := newBasicType()
+	out := newBasicType("")
 
 	for _, field := range expr.Fields {
 		out.setField(string(field.Symbol.Value), c.evaluateType(field.Value))
@@ -64,7 +64,7 @@ func (c *Checker) evaluateObjectType(expr lexparse.ObjectExpression) ObjectType 
 	return out
 }
 
-func (c *Checker) evaluateUnionType(expr lexparse.BinopExpression) UnionType {
+func (c *Checker) evaluateUnionType(expr lexparse.BinopExpression) *UnionType {
 	if string(expr.Operation.Value) != "|" {
 		expr.Operation.Raise(lexparse.SyntaxError, "Invalid type expression")
 	}

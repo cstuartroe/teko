@@ -20,7 +20,7 @@ m : int = if (b) then 0 else 1
 
 type OType = {
   foo: {
-    foo: str,
+    foo: "foo",
     bar: bool,
   },
   n: 3,

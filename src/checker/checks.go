@@ -96,21 +96,13 @@ func (c *Checker) checkSimpleExpression(expr lexparse.SimpleExpression, expected
 	// TODO bool, char, and float constant types
 
 	case lexparse.IntT:
-		if expectedType != nil && isTekoEqType(expectedType, IntType) {
-			return IntType
-		} else {
-			return c.evaluateConstantIntType(t)
-		}
+		return c.evaluateConstantIntType(t)
 
 	case lexparse.BoolT:
 		return BoolType
 
 	case lexparse.StringT:
-		if expectedType != nil && isTekoEqType(expectedType, StringType) {
-			return StringType
-		} else {
-			return newConstantStringType(t.Value)
-		}
+		return newConstantStringType(t.Value)
 
 	case lexparse.CharT:
 		return CharType
@@ -222,7 +214,7 @@ func deconstantize(ttype TekoType) TekoType {
 		case StringConstant:
 			return StringType
 		default:
-			panic("Unknown constant type")
+			panic("Unknown constant type: " + ttype.tekotypeToString())
 		}
 	default:
 		return ttype
@@ -295,7 +287,10 @@ func (c *Checker) checkObjectExpression(expr lexparse.ObjectExpression, expected
 		fields[field_name] = c.checkExpression(of.Value, getField(expectedObjType, field_name))
 	}
 
-	return &BasicType{fields}
+	return &BasicType{
+		name: "",
+		fields: fields,
+	}
 }
 
 func (c *Checker) checkFunctionDefinition(expr lexparse.FunctionExpression) TekoType {

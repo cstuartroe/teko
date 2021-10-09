@@ -42,9 +42,11 @@ type CheckerType struct {
 	parent *CheckerType
 }
 
-func (ctype CheckerType) tekotype() {}
+func (ctype CheckerType) tekotypeToString() string {
+	return tekoObjectTypeShowFields(ctype)
+}
 
-func (ctype *CheckerType) allFields() map[string]TekoType {
+func (ctype CheckerType) allFields() map[string]TekoType {
 	var out map[string]TekoType
 
 	if ctype.parent == nil {

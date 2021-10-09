@@ -3,6 +3,7 @@ package checker
 var ToStrType *FunctionType = &FunctionType{}
 
 var IntType *BasicType = &BasicType{
+	name: "int",
 	fields: map[string]TekoType{
 		"add":    IntBinopType,
 		"sub":    IntBinopType,
@@ -17,6 +18,7 @@ var IntType *BasicType = &BasicType{
 var IntBinopType *FunctionType = &FunctionType{}
 
 var BoolType *BasicType = &BasicType{
+	name: "bool",
 	fields: map[string]TekoType{
 		"and": BoolBinopType,
 		"or":  BoolBinopType,
@@ -26,10 +28,11 @@ var BoolType *BasicType = &BasicType{
 var BoolBinopType *FunctionType = &FunctionType{}
 
 var CharType *BasicType = &BasicType{
+	name: "char",
 	fields: map[string]TekoType{},
 }
 
-var VoidType *BasicType = newBasicType()
+var VoidType *BasicType = newBasicType("")
 
 // avoids circular initialization
 func SetupFunctionTypes() {

@@ -12,11 +12,14 @@ const (
 )
 
 type ConstantType struct {
+	name string
 	fields map[string]TekoType
 	ctype  ConstantTypeType
 }
 
-func (t ConstantType) tekotype() {}
+func (t ConstantType) tekotypeToString() string {
+	return "constant " + t.name + " " + tekoObjectTypeShowFields(t)
+}
 
 func (t ConstantType) allFields() map[string]TekoType {
 	return t.fields
@@ -40,24 +43,42 @@ func copyFields(baseType ObjectType) map[string]TekoType {
 	return fields
 }
 
+var constantIntTypeCache map[int]*ConstantType = map[int]*ConstantType{}
+
 func newConstantIntType(n int) TekoType {
-	out := ConstantType{
+	if ct, ok := constantIntTypeCache[n]; ok {
+		return ct
+	}
+
+	out := &ConstantType{
+		name: strconv.Itoa(n),
 		fields: copyFields(IntType),
 		ctype:  IntConstant,
 	}
 
 	out.setField(strconv.Itoa(n), VoidType)
 
-	return &out
+	constantIntTypeCache[n] = out
+
+	return out
 }
 
+var constantStringTypeCache map[string]*ConstantType = map[string]*ConstantType{}
+
 func newConstantStringType(s []rune) TekoType {
-	out := ConstantType{
-		fields: copyFields(IntType),
+	if ct, ok := constantStringTypeCache[string(s)]; ok {
+		return ct
+	}
+
+	out := &ConstantType{
+		name: string(s),
+		fields: copyFields(StringType),
 		ctype:  StringConstant,
 	}
 
 	out.setField("$"+string(s), VoidType)
 
-	return &out
+	constantStringTypeCache[string(s)] = out
+
+	return out
 }

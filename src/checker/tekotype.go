@@ -1,7 +1,7 @@
 package checker
 
 type TekoType interface {
-	tekotype()
+	tekotypeToString() string
 }
 
 type ObjectType interface {
@@ -28,14 +28,33 @@ func getFieldSafe(ttype TekoType, name string) TekoType {
 }
 
 type BasicType struct {
+	name string
 	fields map[string]TekoType
 }
 
-func newBasicType() *BasicType {
-	return &BasicType{map[string]TekoType{}}
+func newBasicType(name string) *BasicType {
+	return &BasicType{
+		name: name,
+		fields: map[string]TekoType{},
+	}
 }
 
-func (ttype BasicType) tekotype() {}
+func tekoObjectTypeShowFields(otype ObjectType) string {
+		out := "{"
+		for k, v := range(otype.allFields()) {
+			out += k + ": " + v.tekotypeToString() + ", "
+		}
+
+		return out + "}"
+}
+
+func (ttype BasicType) tekotypeToString() string {
+	if ttype.name != "" {
+		return ttype.name
+	}
+
+	return tekoObjectTypeShowFields(ttype)
+}
 
 func (ttype BasicType) allFields() map[string]TekoType {
 	return ttype.fields
@@ -59,7 +78,7 @@ func isTekoSubtype(sub TekoType, sup TekoType) bool {
 			return false // TODO
 		}
 
-	case UnionType:
+	case *UnionType:
 		switch psub := sub.(type) {
 		case UnionType:
 			return false // TODO
@@ -67,15 +86,30 @@ func isTekoSubtype(sub TekoType, sup TekoType) bool {
 			return isTypeInUnion(psub, psup)
 		}
 
+	case *FunctionType:
+		switch psub := sub.(type) {
+		case *FunctionType:
+			return isFunctionSubtype(psub, psup)
+		default:
+			return false // TODO
+		}
+
 	case FunctionType:
-		return false // TODO
+	case UnionType:
+		panic("type is not a pointer: " + sup.tekotypeToString())
 
 	default:
-		panic("Unknown kind of type")
+		panic("Unknown kind of type: " + sup.tekotypeToString())
 	}
+
+	return false // Uhhh we panicked, Go, remember? smdh
 }
 
 func isObjectSubtype(sub ObjectType, sup ObjectType) bool {
+	if sub == sup {
+		return true
+	}
+
 	for name, ttype := range sup.allFields() {
 		sub_ttype := getField(sub, name)
 		if (sub_ttype == nil) || !isTekoEqType(ttype, sub_ttype) {
@@ -86,7 +120,36 @@ func isObjectSubtype(sub ObjectType, sup ObjectType) bool {
 	return true
 }
 
-func isTypeInUnion(sub TekoType, sup UnionType) bool {
+func isFunctionSubtype(fsub *FunctionType, fsup *FunctionType) bool {
+	if !isTekoSubtype(fsub.rtype, fsup.rtype) {
+		return false
+	}
+
+	if len(fsub.argdefs) != len(fsup.argdefs) {
+		return false
+	}
+
+	for i, sub_argdef := range(fsub.argdefs) {
+		sup_argdef := fsup.argdefs[i]
+
+		if sub_argdef.name != sup_argdef.name {
+			return false
+		}
+
+		// Yes, this is the right order.
+		if !isTekoSubtype(sup_argdef.ttype, sub_argdef.ttype) {
+			return false
+		}
+
+		// TODO does mutability matter? depends on value semantics
+	}
+
+	// TODO default arguments and/or all arguments are a single object?
+
+	return true
+}
+
+func isTypeInUnion(sub TekoType, sup *UnionType) bool {
 	for _, ttype := range sup.types {
 		if isTekoSubtype(sub, ttype) {
 			return true
@@ -97,9 +160,5 @@ func isTypeInUnion(sub TekoType, sup UnionType) bool {
 }
 
 func isTekoEqType(t1 TekoType, t2 TekoType) bool {
-	if t1 == t2 {
-		return true
-	}
-
 	return isTekoSubtype(t1, t2) && isTekoSubtype(t2, t1)
 }
