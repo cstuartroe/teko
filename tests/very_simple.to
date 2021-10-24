@@ -66,8 +66,12 @@ fn foo(numberoony: int): int -> do {
 print(foo(5)$)
 print("\n")
 
-fubu : "foo" | bool = "foo"
+type Fubu = "foo" | bool
+
+fubu : Fubu = "foo"
 
 fubu <- true
 
 nHolder := { n }
+
+fubutwo : Fubu = fubu
