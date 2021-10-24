@@ -1,20 +1,24 @@
+fn println(s: str) -> do {
+  print(s)
+  print("\n")
+}
+
 n : int = 3
 n2 : int = n
 n <- 4
-print(n2$)
-print("\n")
+println(n2$)
 
 b : bool = true
 
-s : str = "hello\n"
+s : str = "hello"
 
 s2 : str = s
 
-print(s2)
+println(s2)
 
 num : int = 1 + 2 * 3 / 4 - 5 ^ 6 * 7
 
-print(num$)
+println(num$)
 
 m : int = if (b) then 0 else 1
 
@@ -44,27 +48,21 @@ o <- {
   other_field: 0,
 }
 
-print(o.foo.foo)
-print("\n")
+println(o.foo.foo)
 
 arr := [1,2,3,4,5] + [6,7,8,9,10]
-print(arr.at(0)$)
-print("\n")
-print(arr.size$)
-print("\n")
-print(if arr.includes(1) then "yeppers" else "nopers")
-print("\n")
 
-print(arr$)
-print("\n")
+println(arr.at(0)$)
+println(arr.size$)
+println(if arr.includes(1) then "yeppers" else "nopers")
+println(arr$)
 
 fn foo(numberoony: int): int -> do {
   x := numberoony + 3
   x * n
 }
 
-print(foo(5)$)
-print("\n")
+println(foo(5)$)
 
 type Fubu = "foo" | bool
 
