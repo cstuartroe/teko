@@ -38,7 +38,12 @@ func (c *Checker) evaluateSimpleType(expr lexparse.SimpleExpression) TekoType {
 	switch expr.Token().TType {
 
 	case lexparse.SymbolT:
-		return c.getTypeByName(string(expr.Token().Value))
+		ttype := c.getTypeByName(string(expr.Token().Value))
+		if ttype == nil {
+			expr.Token().Raise(lexparse.NameError, "No type called "+string(expr.Token().Value))
+		} else {
+			return ttype
+		}
 
 	case lexparse.IntT:
 		return c.evaluateConstantIntType(expr.Token())
@@ -50,8 +55,9 @@ func (c *Checker) evaluateSimpleType(expr lexparse.SimpleExpression) TekoType {
 
 	default:
 		expr.Token().Raise(lexparse.TypeError, "Invalid type expression")
-		return nil
 	}
+
+	return nil
 }
 
 func (c *Checker) evaluateObjectType(expr lexparse.ObjectExpression) ObjectType {

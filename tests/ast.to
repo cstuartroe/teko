@@ -1,3 +1,12 @@
+type TokenType = "symbol" | "number" | "binop"
+
+type Token = {
+  line: int,
+  col: int,
+  value: str,
+  toktype: TokenType,
+}
+
 type SimpleExpression = {
   etype: "simple",
   t: Token,
