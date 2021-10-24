@@ -467,12 +467,21 @@ func (parser *Parser) grabObject() ObjectExpression {
 
 func (parser *Parser) grabObjectField() ObjectField {
 	symbol := *parser.expect(SymbolT)
+	var value Expression
 
-	parser.expect(ColonT)
+	if parser.currentToken().TType == ColonT {
+		parser.advance()
+
+		value = parser.grabExpression(min_prec)
+	} else if parser.transform {
+		value = SimpleExpression{symbol}
+	} else {
+		symbol.Raise(SyntaxError, "object property shorthand cannot be used in no-transform context")
+	}
 
 	return ObjectField{
 		Symbol: symbol,
-		Value:  parser.grabExpression(min_prec),
+		Value:  value,
 	}
 }
 

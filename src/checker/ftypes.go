@@ -18,7 +18,7 @@ type FunctionType struct {
 
 func (ftype FunctionType) tekotypeToString() string {
 	out := "fn("
-	for _, argdef := range(ftype.argdefs) {
+	for _, argdef := range ftype.argdefs {
 		out += argdef.name + ": " + argdef.ttype.tekotypeToString() + ", "
 	}
 

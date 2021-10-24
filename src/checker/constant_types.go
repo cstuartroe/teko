@@ -12,7 +12,7 @@ const (
 )
 
 type ConstantType struct {
-	name string
+	name   string
 	fields map[string]TekoType
 	ctype  ConstantTypeType
 }
@@ -51,7 +51,7 @@ func newConstantIntType(n int) TekoType {
 	}
 
 	out := &ConstantType{
-		name: strconv.Itoa(n),
+		name:   strconv.Itoa(n),
 		fields: copyFields(IntType),
 		ctype:  IntConstant,
 	}
@@ -71,7 +71,7 @@ func newConstantStringType(s []rune) TekoType {
 	}
 
 	out := &ConstantType{
-		name: string(s),
+		name:   string(s),
 		fields: copyFields(StringType),
 		ctype:  StringConstant,
 	}

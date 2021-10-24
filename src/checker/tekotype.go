@@ -28,24 +28,24 @@ func getFieldSafe(ttype TekoType, name string) TekoType {
 }
 
 type BasicType struct {
-	name string
+	name   string
 	fields map[string]TekoType
 }
 
 func newBasicType(name string) *BasicType {
 	return &BasicType{
-		name: name,
+		name:   name,
 		fields: map[string]TekoType{},
 	}
 }
 
 func tekoObjectTypeShowFields(otype ObjectType) string {
-		out := "{"
-		for k, v := range(otype.allFields()) {
-			out += k + ": " + v.tekotypeToString() + ", "
-		}
+	out := "{"
+	for k, v := range otype.allFields() {
+		out += k + ": " + v.tekotypeToString() + ", "
+	}
 
-		return out + "}"
+	return out + "}"
 }
 
 func (ttype BasicType) tekotypeToString() string {
@@ -129,7 +129,7 @@ func isFunctionSubtype(fsub *FunctionType, fsup *FunctionType) bool {
 		return false
 	}
 
-	for i, sub_argdef := range(fsub.argdefs) {
+	for i, sub_argdef := range fsub.argdefs {
 		sup_argdef := fsup.argdefs[i]
 
 		if sub_argdef.name != sup_argdef.name {
