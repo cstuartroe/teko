@@ -1,4 +1,4 @@
-fn println(s: str) -> do {
+fn println(s: str) {
   print(s)
   print("\n")
 }
@@ -57,7 +57,7 @@ println(arr.size$)
 println(if arr.includes(1) then "yeppers" else "nopers")
 println(arr$)
 
-fn foo(numberoony: int): int -> do {
+fn foo(numberoony: int): int {
   x := numberoony + 3
   x * n
 }

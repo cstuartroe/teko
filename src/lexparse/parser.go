@@ -515,11 +515,21 @@ func (parser *Parser) grabArgdefs() []ArgdefNode {
 }
 
 func (parser *Parser) grabFunctionRight(prec int) Expression {
-	// TODO: do-block syntactic sugar (also for if statements)
+	if parser.currentToken().TType == LCurlyBrT {
+		return DoExpression{
+			DoToken: &Token{
+				Line:  parser.currentToken().Line,
+				Col:   parser.currentToken().Col,
+				TType: DoT,
+				Value: []rune{'d', 'o'},
+			},
+			Codeblock: parser.grabCodeblock(),
+		}
+	} else {
+		parser.expect(ArrowT)
 
-	parser.expect(ArrowT)
-
-	return parser.grabExpression(prec)
+		return parser.grabExpression(prec)
+	}
 }
 
 func (parser *Parser) grabFunctionDefinition(prec int) FunctionExpression {
