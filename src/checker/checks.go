@@ -270,7 +270,7 @@ func (c *Checker) checkObjectExpression(expr lexparse.ObjectExpression, expected
 	case ObjectType:
 		expectedObjType = p
 	case nil:
-		expectedType = VoidType
+		expectedObjType = VoidType
 	default:
 		expr.Token().Raise(lexparse.TypeError, "Did not expect object type")
 	}

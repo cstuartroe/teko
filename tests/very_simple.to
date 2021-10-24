@@ -70,4 +70,4 @@ fubu : "foo" | bool = "foo"
 
 fubu <- true
 
-nHolder : {n: int} = { n }
+nHolder := { n }
