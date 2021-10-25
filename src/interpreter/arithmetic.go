@@ -40,9 +40,7 @@ var intOps map[string]intOpType = map[string]intOpType{
 
 func IntToStrExecutor(receiverValue int) executorType {
 	return func(function TekoFunction, evaluatedArgs map[string]*TekoObject) *TekoObject {
-		return tp(String{
-			value: []rune(strconv.Itoa(receiverValue)),
-		})
+		return tp(newTekoString([]rune(strconv.Itoa(receiverValue))))
 	}
 }
 

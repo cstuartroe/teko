@@ -80,14 +80,3 @@ func (b Boolean) getFieldValue(name string) *TekoObject {
 		panic("Attributes haven't been implemented for bools yet")
 	}
 }
-
-type String struct {
-	value []rune
-}
-
-func (s String) getFieldValue(name string) *TekoObject {
-	switch name {
-	default:
-		panic("Attributes haven't been implemented for strings yet")
-	}
-}

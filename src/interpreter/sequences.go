@@ -9,10 +9,9 @@ func ArrayAddExecutor(receiverElements []*TekoObject) executorType {
 	return func(function TekoFunction, evaluatedArgs map[string]*TekoObject) *TekoObject {
 		switch p := (*evaluatedArgs["other"]).(type) {
 		case Array:
-			return tp(Array{
+			return tp(newArray(
 				append(append([]*TekoObject{}, receiverElements...), p.elements...),
-				newSymbolTable(nil),
-			})
+			))
 		default:
 			panic("Non-array somehow made it past the type checker as an argument to array add!")
 		}
@@ -41,10 +40,10 @@ func ArrayIncludesExecutor(receiverElements []*TekoObject) executorType {
 	}
 }
 
-func runeJoin(runeSlices [][]rune, joiner []rune) []rune {
-	out := []rune{}
+func join(slices [][]*TekoObject, joiner []*TekoObject) []*TekoObject {
+	out := []*TekoObject{}
 
-	for i, r := range runeSlices {
+	for i, r := range slices {
 		if i > 0 {
 			out = append(out, joiner...)
 		}
@@ -57,7 +56,7 @@ func runeJoin(runeSlices [][]rune, joiner []rune) []rune {
 
 func ArrayToStrExecutor(receiverElements []*TekoObject) executorType {
 	return func(function TekoFunction, evaluatedArgs map[string]*TekoObject) *TekoObject {
-		elementStrings := [][]rune{}
+		elements := [][]*TekoObject{}
 
 		for _, e := range receiverElements {
 			f := (*e).getFieldValue("to_str")
@@ -67,11 +66,11 @@ func ArrayToStrExecutor(receiverElements []*TekoObject) executorType {
 				s := fp.executor(fp, map[string]*TekoObject{})
 
 				switch sp := (*s).(type) {
-				case String:
-					elementStrings = append(elementStrings, sp.value)
+				case Array:
+					elements = append(elements, sp.elements)
 
 				default:
-					panic("to_str did not return a string")
+					panic("to_str did not return an array")
 				}
 
 			default:
@@ -79,9 +78,21 @@ func ArrayToStrExecutor(receiverElements []*TekoObject) executorType {
 			}
 		}
 
-		return tp(String{
-			value: append([]rune{'['}, append(runeJoin(elementStrings, []rune{',', ' '}), ']')...),
-		})
+		return tp(newArray(
+			append(
+				[]*TekoObject{tp(TekoChar{'['})},
+				append(
+					join(
+						elements,
+						[]*TekoObject{
+							tp(TekoChar{','}),
+							tp(TekoChar{' '}),
+						},
+					),
+					tp(TekoChar{']'}),
+				)...,
+			),
+		))
 	}
 }
 
@@ -108,6 +119,20 @@ func (a Array) getFieldValue(name string) *TekoObject {
 			panic("Unknown array function")
 		}
 	})
+}
+
+func newArray(elements []*TekoObject) Array {
+	return Array{elements, newSymbolTable(nil)}
+}
+
+func newTekoString(runes []rune) Array {
+	chars := []*TekoObject{}
+
+	for _, c := range runes {
+		chars = append(chars, tp(TekoChar{value: c}))
+	}
+
+	return newArray(chars)
 }
 
 type Set struct {

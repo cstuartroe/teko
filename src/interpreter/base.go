@@ -11,8 +11,15 @@ func TekoPrintExecutor(function TekoFunction, evaluatedArgs map[string]*TekoObje
 	}
 
 	switch p := (*s).(type) {
-	case String:
-		fmt.Printf(string(p.value))
+	case Array:
+		for _, c := range p.elements {
+			switch cp := (*c).(type) {
+			case TekoChar:
+				fmt.Printf(string(cp.value))
+			default:
+				panic("Not a TekoChar")
+			}
+		}
 	default:
 		panic("Non-string somehow made it past the type checker as an argument to print!")
 	}

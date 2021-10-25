@@ -98,7 +98,7 @@ func (m InterpreterModule) evaluateSimpleExpression(expr lexparse.SimpleExpressi
 		}
 
 	case lexparse.StringT:
-		return tp(String{value})
+		return tp(newTekoString(value))
 
 	case lexparse.CharT:
 		return nil // TODO
@@ -195,7 +195,7 @@ func (m InterpreterModule) evaluateArray(expr lexparse.SequenceExpression) Array
 		o := m.evaluateExpression(e)
 		elements = append(elements, o)
 	}
-	return Array{elements, newSymbolTable(nil)}
+	return newArray(elements)
 }
 
 func (m InterpreterModule) evaluateSet(expr lexparse.SequenceExpression) Set {

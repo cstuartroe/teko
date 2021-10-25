@@ -187,7 +187,7 @@ func (c *Checker) checkAttributeExpression(expr lexparse.AttributeExpression) Te
 	if tekotype != nil {
 		return tekotype
 	} else {
-		expr.Symbol.Raise(lexparse.NameError, "No such field: "+string(expr.Symbol.Value))
+		expr.Symbol.Raise(lexparse.NameError, "No such field: "+string(expr.Symbol.Value)+" on "+left_tekotype.tekotypeToString())
 		return nil
 	}
 }

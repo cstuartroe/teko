@@ -177,16 +177,5 @@ var PrintType *FunctionType = &FunctionType{
 }
 
 func SetupStringTypes() {
-	StringType.etype = CharType
-	StringType.fields = makeMapFields(IntType, CharType)
-
-	StringType.fields["add"] = &FunctionType{
-		rtype: StringType,
-		argdefs: []FunctionArgDef{
-			{
-				name:  "other",
-				ttype: StringType,
-			},
-		},
-	}
+	*StringType = *newArrayType(CharType)
 }

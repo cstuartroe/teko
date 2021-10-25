@@ -1,6 +1,5 @@
 fn println(s: str) {
-  print(s)
-  print("\n")
+  print(s + "\n")
 }
 
 n : int = 3
