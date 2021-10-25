@@ -263,7 +263,11 @@ type DoExpression struct {
 }
 
 func (e DoExpression) Token() Token {
-	return *e.DoToken
+	if e.DoToken != nil {
+		return *e.DoToken
+	} else {
+		return e.Codeblock.Token()
+	}
 }
 
 func (e DoExpression) expressionNode() {}

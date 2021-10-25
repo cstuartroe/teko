@@ -58,7 +58,7 @@ println(arr$)
 
 fn foo(numberoony: int): int {
   x := numberoony + 3
-  x * n
+  x * n;
 }
 
 println(foo(5)$)

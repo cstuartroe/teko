@@ -517,12 +517,7 @@ func (parser *Parser) grabArgdefs() []ArgdefNode {
 func (parser *Parser) grabFunctionRight(prec int) Expression {
 	if parser.currentToken().TType == LCurlyBrT {
 		return DoExpression{
-			DoToken: &Token{
-				Line:  parser.currentToken().Line,
-				Col:   parser.currentToken().Col,
-				TType: DoT,
-				Value: []rune{'d', 'o'},
-			},
+			DoToken: nil,
 			Codeblock: parser.grabCodeblock(),
 		}
 	} else {
