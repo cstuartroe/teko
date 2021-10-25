@@ -29,7 +29,6 @@ const (
 
 	BinopT      = "binary operation" // + - * / ^ % & |
 	ComparisonT = "comparison"       // == != < > <= >=
-	DefinerT    = "definer"          // =
 	UpdaterT    = "updater"          // <- += -= *= /= ^= %= &= |=
 	PrefixT     = "prefix"           // ! ~ ?
 	SuffixT     = "suffix"           // $ # .
@@ -49,6 +48,7 @@ const (
 	ColonT     = ":"
 	SubtypeT   = "<:"
 	ArrowT     = "->"
+	EqualT     = "="
 )
 
 // Go doesn't have sets, which is dumb.
@@ -95,10 +95,6 @@ var comparisons map[string]string = map[string]string{
 	">=": "geq",
 }
 
-var definers map[string]string = map[string]string{
-	"=": "=",
-}
-
 var updaters map[string]string = map[string]string{
 	"+=": "add",
 	"-=": "sub",
@@ -108,7 +104,6 @@ var updaters map[string]string = map[string]string{
 	"%=": "mod",
 	"&=": "and",
 	"|=": "or",
-	"<-": "update",
 }
 
 var prefixes map[string]string = map[string]string{

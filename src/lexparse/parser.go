@@ -90,7 +90,7 @@ func (parser *Parser) grabStatement() Statement {
 func (parser *Parser) grabTypeStatement() TypeStatement {
 	tt := *parser.expect(TypeT)
 	name := *parser.expect(SymbolT)
-	parser.expect(DefinerT)
+	parser.expect(EqualT)
 
 	return TypeStatement{
 		TypeToken:      tt,
@@ -140,6 +140,10 @@ func (parser *Parser) grabExpression(prec int) Expression {
 }
 
 func (parser *Parser) grabTypeExpression(prec int) Expression {
+	if prec < add_sub_prec {
+		prec = add_sub_prec
+	}
+
 	transform := parser.transform
 	parser.transform = false
 	out := parser.grabExpression(prec)
@@ -179,13 +183,12 @@ func (parser *Parser) continueExpression(expr Expression, prec int) Expression {
 
 		var tekotype Expression = nil
 		switch parser.currentToken().TType {
-		case DefinerT:
+		case EqualT:
 		default:
 			tekotype = parser.grabTypeExpression(prec)
 		}
 
-		setter := *parser.currentToken()
-		parser.expect(DefinerT)
+		setter := *parser.expect(EqualT)
 
 		out = DeclarationExpression{
 			Symbol:   expr.Token(),
@@ -255,18 +258,15 @@ func (parser *Parser) continueExpression(expr Expression, prec int) Expression {
 
 	case UpdaterT:
 		if prec <= setter_prec {
-			updater := *parser.currentToken()
-			parser.advance()
+			panic("Other updaters not supported yet")
+		}
 
-			if value == "<-" {
-				out = UpdateExpression{
-					Updated: expr,
-					Setter:  updater,
-					Right:   parser.grabExpression(setter_prec + 1),
-				}
-
-			} else {
-				panic("Other updaters not supported yet")
+	case EqualT:
+		if prec <= setter_prec {
+			out = UpdateExpression{
+				Updated: expr,
+				Setter:  *parser.expect(EqualT),
+				Right:   parser.grabExpression(setter_prec + 1),
 			}
 		}
 	}
@@ -303,7 +303,7 @@ func (parser *Parser) makeCallExpression(receiver Expression) CallExpression {
 	for cont {
 		arg := parser.grabExpression(add_sub_prec) // don't want it continuing past a setter!
 
-		if parser.currentToken().TType == DefinerT {
+		if parser.currentToken().TType == EqualT {
 			if string(parser.currentToken().Value) != "=" {
 				parser.currentToken().Raise(SyntaxError, "Keyword argument must use =")
 			}

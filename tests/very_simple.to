@@ -4,7 +4,7 @@ fn println(s: str) {
 
 n : int = 3
 n2 : int = n
-n <- 4
+n = 4
 println(n2$)
 
 b : bool = true
@@ -38,7 +38,7 @@ o : OType = {
   m: 0,
 }
 
-o <- {
+o = {
   foo: {
     foo: "foo",
     bar: true,
@@ -67,7 +67,7 @@ type Fubu = "foo" | bool
 
 fubu : Fubu = "foo"
 
-fubu <- true
+fubu = true
 
 nHolder := { n }
 

@@ -245,6 +245,7 @@ var uniquePuncts map[string]tokenType = map[string]tokenType{
 	":":  ColonT,
 	"<:": SubtypeT,
 	"->": ArrowT,
+	"=":  EqualT,
 }
 
 func (lexer *Lexer) grabPunctuation() {
@@ -263,8 +264,6 @@ func (lexer *Lexer) grabPunctuation() {
 		lexer.CurrentTType = BinopT
 	} else if _, ok := comparisons[blob]; ok {
 		lexer.CurrentTType = ComparisonT
-	} else if _, ok := definers[blob]; ok {
-		lexer.CurrentTType = DefinerT
 	} else if _, ok := updaters[blob]; ok {
 		lexer.CurrentTType = UpdaterT
 	} else if _, ok := prefixes[blob]; ok {
