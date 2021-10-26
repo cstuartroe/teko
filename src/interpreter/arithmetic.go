@@ -1,3 +1,4 @@
+
 package interpreter
 
 import (
@@ -45,7 +46,7 @@ func IntToStrExecutor(receiverValue int) executorType {
 }
 
 func (n Integer) getFieldValue(name string) *TekoObject {
-	return cached_get(n.symbolTable, name, func() *TekoObject {
+	return n.symbolTable.cached_get(name, func() *TekoObject {
 		if op, ok := intOps[name]; ok {
 			return tp(customExecutedFunction(IntBinopExecutor(n.value, op), []string{"other"}))
 		}

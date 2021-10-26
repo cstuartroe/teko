@@ -7,7 +7,6 @@ import (
 
 type FunctionArgDef struct {
 	name    string
-	mutable bool
 	ttype   TekoType
 }
 
@@ -26,6 +25,11 @@ func (ftype FunctionType) tekotypeToString() string {
 	out += ftype.rtype.tekotypeToString()
 
 	return out
+}
+
+
+func (ftype FunctionType) allFields() map[string]TekoType {
+	return map[string]TekoType{} // TODO should actually be all fields shared by types
 }
 
 func (ftype FunctionType) argnames() []string {

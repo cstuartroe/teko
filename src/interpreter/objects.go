@@ -14,8 +14,8 @@ type SymbolTable struct {
 	table  map[string]*TekoObject
 }
 
-func newSymbolTable(parent *SymbolTable) *SymbolTable {
-	return &SymbolTable{
+func newSymbolTable(parent *SymbolTable) SymbolTable {
+	return SymbolTable{
 		parent: parent,
 		table:  map[string]*TekoObject{},
 	}
@@ -39,18 +39,18 @@ func (stable *SymbolTable) set(name string, val *TekoObject) {
 	}
 }
 
-func cached_get(t *SymbolTable, name string, f func() *TekoObject) *TekoObject {
-	if attr := t.get(name); attr != nil {
+func (stable *SymbolTable) cached_get(name string, f func() *TekoObject) *TekoObject {
+	if attr := stable.get(name); attr != nil {
 		return attr
 	} else {
 		v := f()
-		t.set(name, v)
+		stable.set(name, v)
 		return v
 	}
 }
 
 type BasicObject struct {
-	symbolTable *SymbolTable
+	symbolTable SymbolTable
 }
 
 func (o BasicObject) getFieldValue(name string) *TekoObject {
@@ -59,7 +59,7 @@ func (o BasicObject) getFieldValue(name string) *TekoObject {
 
 type Integer struct {
 	value       int // TODO: arbitrary-precision integer
-	symbolTable *SymbolTable
+	symbolTable SymbolTable
 }
 
 type Boolean struct {

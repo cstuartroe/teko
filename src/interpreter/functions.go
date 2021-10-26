@@ -9,6 +9,7 @@ type executorType func(function TekoFunction, evaluatedArgs map[string]*TekoObje
 
 type TekoFunction struct {
 	context  *InterpreterModule
+	owner    *TekoObject
 	body     lexparse.Expression
 	argnames []string
 	executor executorType
@@ -41,8 +42,8 @@ func defaultFunctionExecutor(function TekoFunction, evaluatedArgs map[string]*Te
 			},
 		},
 		scope: &BasicObject{
-			symbolTable: &SymbolTable{
-				parent: function.context.scope.symbolTable,
+			symbolTable: SymbolTable{
+				parent: &function.context.scope.symbolTable,
 				table:  evaluatedArgs,
 			},
 		},
@@ -54,6 +55,7 @@ func defaultFunctionExecutor(function TekoFunction, evaluatedArgs map[string]*Te
 func customExecutedFunction(executor executorType, argnames []string) TekoFunction {
 	return TekoFunction{
 		context:  nil,
+		owner:    nil,
 		body:     nil,
 		argnames: argnames,
 		executor: executor,

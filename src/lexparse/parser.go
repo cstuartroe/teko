@@ -132,6 +132,9 @@ func (parser *Parser) grabExpression(prec int) Expression {
 	case DoT:
 		expr = parser.grabDoExpression()
 
+	case VarT:
+		expr = parser.grabVarExpression(prec)
+
 	default:
 		expr = parser.grabSimpleExpression()
 	}
@@ -158,7 +161,7 @@ func (parser *Parser) grabSimpleExpression() SimpleExpression {
 		parser.advance()
 		return n
 	} else {
-		parser.currentToken().Raise(SyntaxError, "Illegal start to simple expression")
+		parser.currentToken().Raise(SyntaxError, "Illegal start to expression")
 		return SimpleExpression{} // unreachable code that the compiler requires
 	}
 }
@@ -263,10 +266,21 @@ func (parser *Parser) continueExpression(expr Expression, prec int) Expression {
 
 	case EqualT:
 		if prec <= setter_prec {
-			out = UpdateExpression{
-				Updated: expr,
-				Setter:  *parser.expect(EqualT),
-				Right:   parser.grabExpression(setter_prec + 1),
+			setter := *parser.expect(EqualT)
+
+			out = CallExpression{
+				Receiver: AttributeExpression{
+					Left: expr,
+					Symbol: Token{
+						Line: setter.Line,
+						Col:  setter.Col,
+						TType: SymbolT,
+						Value: []rune("="),
+					},
+				},
+				Args: []Expression{
+					parser.grabExpression(setter_prec + 1),
+				},
 			}
 		}
 	}
@@ -572,10 +586,15 @@ func (parser *Parser) grabCodeblock() Codeblock {
 }
 
 func (parser *Parser) grabDoExpression() DoExpression {
-	doToken := parser.expect(DoT)
-
 	return DoExpression{
-		DoToken:   doToken,
+		DoToken:   parser.expect(DoT),
 		Codeblock: parser.grabCodeblock(),
+	}
+}
+
+func (parser *Parser) grabVarExpression(prec int) VarExpression {
+	return VarExpression{
+		VarToken: *parser.expect(VarT),
+		Right: parser.grabExpression(prec),
 	}
 }

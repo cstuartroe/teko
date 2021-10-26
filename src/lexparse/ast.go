@@ -86,20 +86,6 @@ func (e DeclarationExpression) expressionNode() {}
 
 //---
 
-type UpdateExpression struct {
-	Updated Expression
-	Setter  Token
-	Right   Expression
-}
-
-func (n UpdateExpression) Token() Token {
-	return n.Setter
-}
-
-func (n UpdateExpression) expressionNode() {}
-
-//---
-
 type CallExpression struct {
 	Receiver Expression
 	Args     []Expression
@@ -271,3 +257,16 @@ func (e DoExpression) Token() Token {
 }
 
 func (e DoExpression) expressionNode() {}
+
+//---
+
+type VarExpression struct {
+	VarToken Token
+  Right Expression
+}
+
+func (e VarExpression) Token() Token {
+	return e.VarToken
+}
+
+func (e VarExpression) expressionNode() {}

@@ -2,9 +2,10 @@ fn println(s: str) {
   print(s + "\n")
 }
 
-n : int = 3
+n : var int = 3
 n2 : int = n
 n = 4
+println(n$)
 println(n2$)
 
 b : bool = true
@@ -29,7 +30,7 @@ type OType = {
   n: 3,
 }
 
-o : OType = {
+o : var OType = {
   foo: {
     foo: "foo",
     bar: true,
@@ -58,17 +59,37 @@ println(arr$)
 
 fn foo(numberoony: int): int {
   x := numberoony + 3
-  x * n;
+  x * n
 }
 
 println(foo(5)$)
 
 type Fubu = "foo" | bool
 
-fubu : Fubu = "foo"
+fubu : var Fubu = "foo"
 
 fubu = true
 
 nHolder := { n }
 
-fubutwo : Fubu = fubu
+type oneVar = {
+  a: str,
+  b: var str,
+}
+
+o1: oneVar = {
+  a: "a",
+  b: var "b",
+}
+
+o2: var oneVar = {
+  a: "d",
+  b: var "e",
+}
+
+o2 = o1
+
+o1.b = "c"
+
+println(o1.b)
+println(o2.b)

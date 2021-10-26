@@ -20,6 +20,9 @@ func (c *Checker) evaluateType(expr lexparse.Expression) TekoType {
 	case lexparse.BinopExpression:
 		return c.evaluateUnionType(p)
 
+	case lexparse.VarExpression:
+		return c.evaluateVarType(p)
+
 	default:
 		panic("Unknown type format!")
 	}
@@ -60,7 +63,7 @@ func (c *Checker) evaluateSimpleType(expr lexparse.SimpleExpression) TekoType {
 	return nil
 }
 
-func (c *Checker) evaluateObjectType(expr lexparse.ObjectExpression) ObjectType {
+func (c *Checker) evaluateObjectType(expr lexparse.ObjectExpression) *BasicType {
 	out := newBasicType("")
 
 	for _, field := range expr.Fields {
@@ -70,13 +73,19 @@ func (c *Checker) evaluateObjectType(expr lexparse.ObjectExpression) ObjectType 
 	return out
 }
 
-func (c *Checker) evaluateUnionType(expr lexparse.BinopExpression) *UnionType {
+func (c *Checker) evaluateUnionType(expr lexparse.BinopExpression) TekoType {
 	if string(expr.Operation.Value) != "|" {
 		expr.Operation.Raise(lexparse.SyntaxError, "Invalid type expression")
 	}
+
+	// TODO raise on something like `int | int`
 
 	return unionTypes(
 		c.evaluateType(expr.Left),
 		c.evaluateType(expr.Right),
 	)
+}
+
+func (c *Checker) evaluateVarType(expr lexparse.VarExpression) *VarType {
+	return newVarType(c.evaluateType(expr.Right))
 }

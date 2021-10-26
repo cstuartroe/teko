@@ -2,7 +2,7 @@ package interpreter
 
 type Array struct {
 	elements    []*TekoObject
-	symbolTable *SymbolTable
+	symbolTable SymbolTable
 }
 
 func ArrayAddExecutor(receiverElements []*TekoObject) executorType {
@@ -98,7 +98,7 @@ func ArrayToStrExecutor(receiverElements []*TekoObject) executorType {
 
 // TODO get argames from checker
 func (a Array) getFieldValue(name string) *TekoObject {
-	return cached_get(a.symbolTable, name, func() *TekoObject {
+	return a.symbolTable.cached_get(name, func() *TekoObject {
 		switch name {
 		case "add":
 			return tp(customExecutedFunction(ArrayAddExecutor(a.elements), []string{"other"}))

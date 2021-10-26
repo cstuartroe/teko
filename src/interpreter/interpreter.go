@@ -53,9 +53,6 @@ func (m InterpreterModule) evaluateExpression(expr lexparse.Expression) *TekoObj
 	case lexparse.DeclarationExpression:
 		return m.evaluateDeclaration(p)
 
-	case lexparse.UpdateExpression:
-		return m.evaluateUpdate(p)
-
 	case lexparse.CallExpression:
 		return m.evaluateFunctionCall(p)
 
@@ -76,6 +73,9 @@ func (m InterpreterModule) evaluateExpression(expr lexparse.Expression) *TekoObj
 
 	case lexparse.DoExpression:
 		return m.evaluateDoExpression(p)
+
+	case lexparse.VarExpression:
+		return m.evaluateExpression(p.Right)
 
 	default:
 		expr.Token().Raise(lexparse.NotImplementedError, "Intepretation of expression type not implemented")
@@ -142,21 +142,25 @@ func (m InterpreterModule) evaluateFunctionCall(call lexparse.CallExpression) *T
 
 func (m InterpreterModule) evaluateDeclaration(decl lexparse.DeclarationExpression) *TekoObject {
 	name := string(decl.Symbol.Value)
-	val := m.evaluateExpression(decl.Right)
-	m.scope.symbolTable.set(name, val)
-	return val
-}
-
-func (m InterpreterModule) evaluateUpdate(update lexparse.UpdateExpression) *TekoObject {
-	var lhs *TekoObject = m.evaluateExpression(update.Updated)
-	var value *TekoObject = m.evaluateExpression(update.Right)
-	*lhs = *value
-	return lhs
+	val := *m.evaluateExpression(decl.Right)
+	m.scope.symbolTable.set(name, &val)
+	return &val
 }
 
 func (m InterpreterModule) evaluateAttributeExpression(expr lexparse.AttributeExpression) *TekoObject {
 	left := m.evaluateExpression(expr.Left)
-	return (*left).getFieldValue(string(expr.Symbol.Value))
+
+	if string(expr.Symbol.Value) == "=" {
+		return tp(TekoFunction{
+			context: nil,
+			owner: left,
+			body: nil,
+			argnames: []string{"value"},
+			executor: updateExecutor,
+		})
+	} else {
+		return (*left).getFieldValue(string(expr.Symbol.Value))
+	}
 }
 
 func (m InterpreterModule) evaluateIfExpression(expr lexparse.IfExpression) *TekoObject {
@@ -240,7 +244,7 @@ func (m *InterpreterModule) evaluateDoExpression(expr lexparse.DoExpression) *Te
 	interpreter := InterpreterModule{
 		codeblock: &expr.Codeblock,
 		scope: &BasicObject{
-			newSymbolTable(m.scope.symbolTable),
+			newSymbolTable(&m.scope.symbolTable),
 		},
 	}
 

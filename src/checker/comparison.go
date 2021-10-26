@@ -6,14 +6,6 @@ func isTekoSubtype(sub TekoType, sup TekoType) bool {
 	}
 
 	switch psup := sup.(type) {
-	case ObjectType:
-		switch psub := sub.(type) {
-		case ObjectType:
-			return isObjectSubtype(psub, psup)
-		default:
-			return false // TODO
-		}
-
 	case *UnionType:
 		switch psub := sub.(type) {
 		case *UnionType:
@@ -31,20 +23,19 @@ func isTekoSubtype(sub TekoType, sup TekoType) bool {
 		}
 
 	case FunctionType:
+		panic("type is not a pointer: " + sup.tekotypeToString())
 	case UnionType:
 		panic("type is not a pointer: " + sup.tekotypeToString())
 
 	default:
-		panic("Unknown kind of type: " + sup.tekotypeToString())
+		return isObjectSubtype(sub, psup)
 	}
-
-	return false // Uhhh we panicked, Go, remember? smdh
 }
 
-func isObjectSubtype(sub ObjectType, sup ObjectType) bool {
+func isObjectSubtype(sub TekoType, sup TekoType) bool {
 	for name, ttype := range sup.allFields() {
 		sub_ttype := getField(sub, name)
-		if (sub_ttype == nil) || !isTekoEqType(ttype, sub_ttype) {
+		if (sub_ttype == nil) || !isTekoSubtype(sub_ttype, ttype) {
 			return false
 		}
 	}

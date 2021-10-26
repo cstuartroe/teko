@@ -31,16 +31,18 @@ func (c *Checker) checkTypeStatement(stmt lexparse.TypeStatement) {
 func (c *Checker) checkExpression(expr lexparse.Expression, expectedType TekoType) TekoType {
 	var ttype TekoType
 
+	switch expectedType.(type) {
+	case *VarType:
+		panic("Do not expect a variable type")
+	}
+
 	switch p := expr.(type) {
 
 	case lexparse.SimpleExpression:
-		ttype = c.checkSimpleExpression(p, expectedType)
+		ttype = c.checkSimpleExpression(p)
 
 	case lexparse.DeclarationExpression:
 		ttype = c.checkDeclaration(p, expectedType)
-
-	case lexparse.UpdateExpression:
-		ttype = c.checkUpdate(p)
 
 	case lexparse.CallExpression:
 		ttype = c.checkCallExpression(p)
@@ -64,6 +66,9 @@ func (c *Checker) checkExpression(expr lexparse.Expression, expectedType TekoTyp
 	case lexparse.DoExpression:
 		ttype = c.checkDoExpression(p, expectedType)
 
+	case lexparse.VarExpression:
+		expr.Token().Raise(lexparse.SyntaxError, "Illegal start to expression")
+
 	default:
 		expr.Token().Raise(lexparse.NotImplementedError, "Cannot typecheck expression type")
 	}
@@ -74,6 +79,7 @@ func (c *Checker) checkExpression(expr lexparse.Expression, expectedType TekoTyp
 	if (expectedType != nil) && !isTekoSubtype(ttype, expectedType) {
 		expr.Token().Raise(lexparse.TypeError, "Actual type "+ttype.tekotypeToString()+" does not fulfill expected type "+expectedType.tekotypeToString())
 	}
+
 	if expectedType == nil {
 		return ttype
 	} else {
@@ -81,7 +87,7 @@ func (c *Checker) checkExpression(expr lexparse.Expression, expectedType TekoTyp
 	}
 }
 
-func (c *Checker) checkSimpleExpression(expr lexparse.SimpleExpression, expectedType TekoType) TekoType {
+func (c *Checker) checkSimpleExpression(expr lexparse.SimpleExpression) TekoType {
 	t := expr.Token()
 	switch t.TType {
 	case lexparse.SymbolT:
@@ -123,34 +129,19 @@ func (c *Checker) checkDeclaration(decl lexparse.DeclarationExpression, expected
 }
 
 func (c *Checker) declare(symbol lexparse.Token, right lexparse.Expression, tekotype TekoType) TekoType {
-	// TODO: function types
+	var output_type TekoType
 
-	evaluated_ttype := c.checkExpression(right, tekotype)
-
-	c.declareFieldType(symbol, evaluated_ttype)
-
-	return evaluated_ttype
-}
-
-func validUpdated(updated lexparse.Expression) bool {
-	switch p := updated.(type) {
-	case lexparse.SimpleExpression:
-		return p.Token().TType == lexparse.SymbolT
-	case lexparse.AttributeExpression:
-		return validUpdated(p.Left)
+	switch p := (tekotype).(type) {
+	case *VarType:
+		c.checkExpression(right, p.ttype)
+		output_type = tekotype
 	default:
-		return false
-	}
-}
-
-func (c *Checker) checkUpdate(update lexparse.UpdateExpression) TekoType {
-	if !validUpdated(update.Updated) {
-		update.Updated.Token().Raise(lexparse.SyntaxError, "Invalid left hand side")
+		output_type = c.checkExpression(right, tekotype)
 	}
 
-	ttype := c.checkExpression(update.Updated, nil)
-	c.checkExpression(update.Right, ttype)
-	return ttype
+	c.declareFieldType(symbol, output_type)
+
+	return output_type
 }
 
 func (c *Checker) checkCallExpression(expr lexparse.CallExpression) TekoType {
@@ -183,7 +174,7 @@ func (c *Checker) checkCallExpression(expr lexparse.CallExpression) TekoType {
 func (c *Checker) checkAttributeExpression(expr lexparse.AttributeExpression) TekoType {
 	left_tekotype := c.checkExpression(expr.Left, nil)
 
-	tekotype := getFieldSafe(left_tekotype, string(expr.Symbol.Value))
+	tekotype := getField(left_tekotype, string(expr.Symbol.Value))
 	if tekotype != nil {
 		return tekotype
 	} else {
@@ -264,15 +255,8 @@ func (c *Checker) checkSequenceExpression(expr lexparse.SequenceExpression, expe
 }
 
 func (c *Checker) checkObjectExpression(expr lexparse.ObjectExpression, expectedType TekoType) TekoType {
-	var expectedObjType ObjectType = nil
-
-	switch p := expectedType.(type) {
-	case ObjectType:
-		expectedObjType = p
-	case nil:
-		expectedObjType = VoidType
-	default:
-		expr.Token().Raise(lexparse.TypeError, "Did not expect object type")
+  if expectedType == nil {
+		expectedType = VoidType
 	}
 
 	fields := map[string]TekoType{}
@@ -284,7 +268,12 @@ func (c *Checker) checkObjectExpression(expr lexparse.ObjectExpression, expected
 			of.Symbol.Raise(lexparse.NameError, "Duplicate member")
 		}
 
-		fields[field_name] = c.checkExpression(of.Value, getField(expectedObjType, field_name))
+		switch p := of.Value.(type) {
+		case lexparse.VarExpression:
+			fields[field_name] = newVarType(c.checkExpression(p.Right, devar(getField(expectedType, field_name))))
+		default:
+			fields[field_name] = c.checkExpression(of.Value, getField(expectedType, field_name))
+		}
 	}
 
 	return &BasicType{

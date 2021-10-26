@@ -18,7 +18,7 @@ type ConstantType struct {
 }
 
 func (t ConstantType) tekotypeToString() string {
-	return "constant " + t.name + " " + tekoObjectTypeShowFields(t)
+	return t.name
 }
 
 func (t ConstantType) allFields() map[string]TekoType {
@@ -33,7 +33,7 @@ func (t *ConstantType) setField(name string, tekotype TekoType) {
 	t.fields[name] = tekotype
 }
 
-func copyFields(baseType ObjectType) map[string]TekoType {
+func copyFields(baseType TekoType) map[string]TekoType {
 	fields := map[string]TekoType{}
 
 	for name, ttype := range baseType.allFields() {
@@ -71,7 +71,7 @@ func newConstantStringType(s []rune) TekoType {
 	}
 
 	out := &ConstantType{
-		name:   string(s),
+		name:   "\"" + string(s) + "\"",
 		fields: copyFields(StringType),
 		ctype:  StringConstant,
 	}

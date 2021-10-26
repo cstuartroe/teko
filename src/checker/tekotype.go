@@ -2,27 +2,14 @@ package checker
 
 type TekoType interface {
 	tekotypeToString() string
-}
-
-type ObjectType interface {
-	TekoType
 	allFields() map[string]TekoType
 }
 
-func getField(ttype ObjectType, name string) TekoType {
+func getField(ttype TekoType, name string) TekoType {
 	val, ok := ttype.allFields()[name]
 	if ok {
 		return val
 	} else {
-		return nil
-	}
-}
-
-func getFieldSafe(ttype TekoType, name string) TekoType {
-	switch p := ttype.(type) {
-	case ObjectType:
-		return getField(p, name)
-	default:
 		return nil
 	}
 }
@@ -39,7 +26,7 @@ func newBasicType(name string) *BasicType {
 	}
 }
 
-func tekoObjectTypeShowFields(otype ObjectType) string {
+func tekoObjectTypeShowFields(otype TekoType) string {
 	out := "{"
 	for k, v := range otype.allFields() {
 		out += k + ": " + v.tekotypeToString() + ", "
