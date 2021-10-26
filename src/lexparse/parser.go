@@ -135,6 +135,9 @@ func (parser *Parser) grabExpression(prec int) Expression {
 	case VarT:
 		expr = parser.grabVarExpression(prec)
 
+	case WhileT:
+		expr = parser.grabWhileExpression(prec)
+
 	default:
 		expr = parser.grabSimpleExpression()
 	}
@@ -596,5 +599,13 @@ func (parser *Parser) grabVarExpression(prec int) VarExpression {
 	return VarExpression{
 		VarToken: *parser.expect(VarT),
 		Right: parser.grabExpression(prec),
+	}
+}
+
+func (parser *Parser) grabWhileExpression(prec int) WhileExpression {
+	return WhileExpression{
+		WhileToken: *parser.expect(WhileT),
+		Condition: parser.grabExpression(prec),
+		Body: parser.grabExpression(prec),
 	}
 }

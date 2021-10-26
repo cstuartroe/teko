@@ -69,6 +69,9 @@ func (c *Checker) checkExpression(expr lexparse.Expression, expectedType TekoTyp
 	case lexparse.VarExpression:
 		expr.Token().Raise(lexparse.SyntaxError, "Illegal start to expression")
 
+	case lexparse.WhileExpression:
+		ttype = c.checkWhileExpression(p)
+
 	default:
 		expr.Token().Raise(lexparse.NotImplementedError, "Cannot typecheck expression type")
 	}
@@ -337,4 +340,10 @@ func (c *Checker) checkDoExpression(expr lexparse.DoExpression, expectedType Tek
 	}
 
 	return out
+}
+
+func (c *Checker) checkWhileExpression(expr lexparse.WhileExpression) TekoType {
+	c.checkExpression(expr.Condition, BoolType)
+
+	return newArrayType(c.checkExpression(expr.Body, nil))
 }

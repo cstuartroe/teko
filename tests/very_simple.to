@@ -93,3 +93,19 @@ o1.b = "c"
 
 println(o1.b)
 println(o2.b)
+
+bool1 : var bool = true
+bool2 : var bool = true
+i : var int = 0-1
+
+a := while bool2 do {
+  if bool1 do {
+    bool1 = false
+  } else if bool2 do {
+    bool2 = false
+  } else false
+
+  i = i + 1
+}
+
+println(a$)

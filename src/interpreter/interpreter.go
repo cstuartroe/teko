@@ -77,6 +77,9 @@ func (m InterpreterModule) evaluateExpression(expr lexparse.Expression) *TekoObj
 	case lexparse.VarExpression:
 		return m.evaluateExpression(p.Right)
 
+	case lexparse.WhileExpression:
+		return m.evaluateWhile(p)
+
 	default:
 		expr.Token().Raise(lexparse.NotImplementedError, "Intepretation of expression type not implemented")
 		return nil
@@ -249,4 +252,24 @@ func (m *InterpreterModule) evaluateDoExpression(expr lexparse.DoExpression) *Te
 	}
 
 	return interpreter.execute()
+}
+
+func (m *InterpreterModule) isTrue(expr lexparse.Expression) bool {
+	switch p := (*m.evaluateExpression(expr)).(type) {
+	case Boolean:
+		return p.value
+	default:
+		expr.Token().Raise(lexparse.UnexpectedIssue, "Not a boolean")
+		return false
+	}
+}
+
+func (m *InterpreterModule) evaluateWhile(expr lexparse.WhileExpression) *TekoObject {
+	elements := []*TekoObject{}
+
+	for m.isTrue(expr.Condition) {
+		elements = append(elements, m.evaluateExpression(expr.Body))
+	}
+
+	return tp(newArray(elements))
 }

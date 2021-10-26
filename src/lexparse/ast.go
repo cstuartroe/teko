@@ -270,3 +270,17 @@ func (e VarExpression) Token() Token {
 }
 
 func (e VarExpression) expressionNode() {}
+
+//---
+
+type WhileExpression struct {
+	WhileToken Token
+	Condition Expression
+	Body Expression
+}
+
+func (e WhileExpression) Token() Token {
+	return e.WhileToken
+}
+
+func (e WhileExpression) expressionNode() {}
