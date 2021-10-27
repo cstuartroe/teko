@@ -315,7 +315,7 @@ func (parser *Parser) makeCallExpression(receiver Expression) CallExpression {
 	args := []Expression{}
 	kwargs := []FunctionKwarg{}
 	on_kwargs := false
-	cont := true
+	cont := parser.currentToken().TType != RParT
 
 	for cont {
 		arg := parser.grabExpression(add_sub_prec) // don't want it continuing past a setter!

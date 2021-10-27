@@ -157,7 +157,7 @@ func (c *Checker) checkCallExpression(expr lexparse.CallExpression) TekoType {
 		for _, argdef := range ftype.argdefs {
 			arg, ok := args_by_name[argdef.name]
 			if !ok {
-				arg.Token().Raise(lexparse.ArgumentError, "Argument was not passed: "+argdef.name)
+				expr.Token().Raise(lexparse.ArgumentError, "Argument was not passed: "+argdef.name)
 			}
 
 			c.checkExpression(arg, argdef.ttype)

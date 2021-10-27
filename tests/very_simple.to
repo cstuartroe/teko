@@ -109,3 +109,13 @@ a := while bool2 do {
 }
 
 println(a$)
+
+fn f(x: int) {
+  fn g() {
+    fn h() -> x
+  }
+}
+
+g1 := f(7)
+h1 := g1()
+println(h1()$)
