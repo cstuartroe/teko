@@ -50,7 +50,7 @@ const (
 	RuntimeError        = "Runtime Error"
 )
 
-func lexparsePanic(line *Line, col int, width int, errorClass TekoErrorClass, message string) {
+func lexparsePanic(line *Line, col int, errorClass TekoErrorClass, message string) {
 	fmt.Printf(
 		"%s (%s:%d:%d)\n%s\n%s%s\n%s\n",
 		errorClass,
@@ -59,22 +59,21 @@ func lexparsePanic(line *Line, col int, width int, errorClass TekoErrorClass, me
 		col,
 		string(line.Value),
 		strings.Repeat(" ", col),
-		strings.Repeat("^", width),
+		strings.Repeat("^", 1),
 		message,
 	)
 	os.Exit(0)
 }
 
 func (token Token) Raise(errorClass TekoErrorClass, message string) {
-	lexparsePanic(token.Line, token.Col, len(token.Value), errorClass, message)
+	lexparsePanic(token.Line, token.Col, errorClass, message)
 }
 
 type Lexer struct {
-	Line           *Line
+	Lines          []*Line
+	LineN          int
 	Col            int
-	CurrentBlob    []rune
-	InBlockComment bool
-	CurrentTType   tokenType
+	currentToken   Token
 }
 
 func LexFile(filename string) []Token {
@@ -85,64 +84,71 @@ func LexFile(filename string) []Token {
 	contents := string(dat)
 
 	lines_raw := strings.Split(contents, "\n")
-	lines := make([]Line, len(lines_raw))
+	lines := make([]*Line, len(lines_raw))
 
 	for i, s := range lines_raw {
-		lines[i] = Line{
+		lines[i] = &Line{
 			Num:      i,
 			Value:    []rune(s),
-			Filename: filename}
+			Filename: filename,
+		}
 	}
 
 	tokens := []Token{}
-	lexer := Lexer{InBlockComment: false}
+	lexer := Lexer{Lines: lines}
 
-	for _, line := range lines {
-		lexer.startline(line)
+	for lexer.LineN < len(lines) {
 		tokens = append(tokens, lexer.grabTokens()...)
+		lexer.newLine()
 	}
 
 	return tokens
 }
 
-func (lexer *Lexer) startline(line Line) {
-	lexer.Line = &line
+func (lexer *Lexer) newLine() {
+	lexer.LineN += 1
 	lexer.Col = 0
 }
 
+func (lexer *Lexer) Line() *Line {
+	return lexer.Lines[lexer.LineN]
+}
+
 func (lexer *Lexer) newToken() {
-	lexer.CurrentBlob = []rune{}
-	lexer.CurrentTType = ""
+	lexer.currentToken = Token{
+		Line: lexer.Line(),
+		Col: lexer.Col,
+	}
 }
 
 func (lexer *Lexer) next() rune {
 	if !lexer.hasMore() {
 		return rune(0)
 	}
-	return lexer.Line.Value[lexer.Col]
+	return lexer.Line().Value[lexer.Col]
+}
+
+func (lexer *Lexer) nextFew(n int) string {
+	end := lexer.Col + n
+	if end > len(lexer.Line().Value) {
+		end = len(lexer.Line().Value)
+	}
+
+	return string(lexer.Line().Value[lexer.Col:end])
 }
 
 func (lexer *Lexer) advance() {
-	lexer.CurrentBlob = append(lexer.CurrentBlob, lexer.next())
+	lexer.currentToken.Value = append(lexer.currentToken.Value, lexer.next())
 	lexer.Col++
 }
 
 func (lexer *Lexer) hasMore() bool {
-	return lexer.Col < len(lexer.Line.Value)
+	return lexer.Col < len(lexer.Line().Value)
 }
 
 func (lexer *Lexer) passWhitespace() {
 	for unicode.IsSpace(lexer.next()) {
 		lexer.advance()
-	}
-}
-
-func (lexer *Lexer) currentToken() Token {
-	return Token{
-		Line:  lexer.Line,
-		Col:   lexer.Col - len(lexer.CurrentBlob),
-		TType: lexer.CurrentTType,
-		Value: lexer.CurrentBlob,
 	}
 }
 
@@ -162,7 +168,12 @@ func (lexer *Lexer) grabToken() Token {
 	lexer.newToken()
 
 	c := lexer.next()
-	if unicode.IsLetter(c) || (c == '_') {
+
+	if lexer.nextFew(2) == "//" {
+		lexer.grabLineComment()
+	} else if lexer.nextFew(2) == "/*" {
+		lexer.grabBlockComment()
+	} else if unicode.IsLetter(c) || (c == '_') {
 		lexer.grabSymbol()
 	} else if unicode.IsDigit(c) {
 		lexer.grabDecimalNumber()
@@ -174,7 +185,7 @@ func (lexer *Lexer) grabToken() Token {
 		lexer.grabPunctuation()
 	}
 
-	return lexer.currentToken()
+	return lexer.currentToken
 }
 
 var keywords map[string]tokenType = map[string]tokenType{
@@ -205,10 +216,10 @@ func (lexer *Lexer) grabSymbol() {
 		c = lexer.next()
 	}
 
-	if ttype, ok := keywords[string(lexer.CurrentBlob)]; ok {
-		lexer.CurrentTType = ttype
+	if ttype, ok := keywords[string(lexer.currentToken.Value)]; ok {
+		lexer.currentToken.TType = ttype
 	} else {
-		lexer.CurrentTType = SymbolT
+		lexer.currentToken.TType = SymbolT
 	}
 }
 
@@ -218,9 +229,9 @@ func (lexer *Lexer) grabDecimalNumber() {
 	}
 
 	if lexer.next() != '.' {
-		lexer.CurrentTType = IntT
+		lexer.currentToken.TType = IntT
 	} else {
-		lexer.CurrentTType = FloatT
+		lexer.currentToken.TType = FloatT
 
 		lexer.advance()
 
@@ -249,29 +260,28 @@ var uniquePuncts map[string]tokenType = map[string]tokenType{
 }
 
 func (lexer *Lexer) grabPunctuation() {
-	lexer.advance()
-
-	twochars := string(append(lexer.CurrentBlob, lexer.next()))
-	if _, ok := punct_combos[twochars]; ok {
+	if _, ok := punct_combos[lexer.nextFew(2)]; ok {
 		lexer.advance()
 	}
 
-	blob := string(lexer.CurrentBlob)
+	lexer.advance()
+
+	blob := string(lexer.currentToken.Value)
 
 	if ttype, ok := uniquePuncts[blob]; ok {
-		lexer.CurrentTType = ttype
+		lexer.currentToken.TType = ttype
 	} else if _, ok := binops[blob]; ok {
-		lexer.CurrentTType = BinopT
+		lexer.currentToken.TType = BinopT
 	} else if _, ok := comparisons[blob]; ok {
-		lexer.CurrentTType = ComparisonT
+		lexer.currentToken.TType = ComparisonT
 	} else if _, ok := updaters[blob]; ok {
-		lexer.CurrentTType = UpdaterT
+		lexer.currentToken.TType = UpdaterT
 	} else if _, ok := prefixes[blob]; ok {
-		lexer.CurrentTType = PrefixT
+		lexer.currentToken.TType = PrefixT
 	} else if _, ok := suffixes[blob]; ok {
-		lexer.CurrentTType = SuffixT
+		lexer.currentToken.TType = SuffixT
 	} else {
-		lexparsePanic(lexer.Line, lexer.Col-1, 1, LexerError, "Invalid start to token")
+		lexparsePanic(lexer.Line(), lexer.Col-1, LexerError, "Invalid start to token")
 	}
 }
 
@@ -279,7 +289,7 @@ func (lexer *Lexer) grabString() {
 	if lexer.next() != '"' {
 		panic("String didn't start with double quote")
 	}
-	lexer.CurrentTType = StringT
+	lexer.currentToken.TType = StringT
 	lexer.advance()
 
 	value := []rune{}
@@ -290,14 +300,14 @@ func (lexer *Lexer) grabString() {
 
 	lexer.advance()
 
-	lexer.CurrentBlob = value // a shameless hack
+	lexer.currentToken.Value = value // a shameless hack
 }
 
 func (lexer *Lexer) grabChar() {
 	if lexer.next() != '\'' {
 		panic("Char didn't start with single quote")
 	}
-	lexer.CurrentTType = CharT
+	lexer.currentToken.TType = CharT
 	lexer.advance()
 
 	value := []rune{lexer.grabCharacter()}
@@ -307,7 +317,7 @@ func (lexer *Lexer) grabChar() {
 	}
 	lexer.advance()
 
-	lexer.CurrentBlob = value // the same shameless hack - look any better this time?
+	lexer.currentToken.Value = value // the same shameless hack - look any better this time?
 }
 
 func (lexer *Lexer) grabCharacter() rune {
@@ -340,4 +350,43 @@ func (lexer *Lexer) grabCharacter() rune {
 	}
 
 	return c
+}
+
+func (lexer *Lexer) grabLineComment() {
+	lexer.currentToken.TType = LineCommentT
+	for lexer.hasMore() {
+		lexer.advance()
+	}
+}
+
+func (lexer *Lexer) grabBlockComment() {
+	lexer.currentToken.TType = BlockCommentT
+	lexer.advance()
+	lexer.advance()
+
+	comment_depth := 1
+
+	for comment_depth > 0 {
+		if !lexer.hasMore() {
+			if lexer.LineN == len(lexer.Lines) - 1 {
+				lexparsePanic(lexer.Line(), lexer.Col, LexerError, "EOF while parsing block comment")
+			}
+
+			lexer.newLine()
+			lexer.currentToken.Value = append(lexer.currentToken.Value, '\n')
+
+		} else if lexer.nextFew(2) == "*/" {
+			lexer.advance()
+			lexer.advance()
+			comment_depth -= 1
+
+		} else if lexer.nextFew(2) == "/*" {
+			lexer.advance()
+			lexer.advance()
+			comment_depth += 1
+
+		} else {
+			lexer.advance()
+		}
+	}
 }

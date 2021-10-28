@@ -38,13 +38,23 @@ func (parser *Parser) LexFile(filename string) {
 	parser.tokens = LexFile(filename)
 }
 
-func (parser *Parser) currentToken() *Token {
+func (parser *Parser) currentTokenIncludingComments() *Token {
 	if parser.HasMore() {
 		return &(parser.tokens[parser.position])
 	} else {
 		t := parser.tokens[parser.position-1]
-		lexparsePanic(t.Line, t.Col+len(t.Value), 1, SyntaxError, "Unexpected EOF")
+		lexparsePanic(t.Line, t.Col+len(t.Value), SyntaxError, "Unexpected EOF")
 		return nil
+	}
+}
+
+func (parser *Parser) currentToken() *Token {
+	t := parser.currentTokenIncludingComments()
+	if t.TType == LineCommentT || t.TType == BlockCommentT {
+		parser.advance()
+		return parser.currentToken()
+	} else {
+		return t
 	}
 }
 

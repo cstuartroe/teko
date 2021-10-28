@@ -49,6 +49,9 @@ const (
 	SubtypeT   = "<:"
 	ArrowT     = "->"
 	EqualT     = "="
+
+	LineCommentT = "line comment"
+	BlockCommentT = "block comment"
 )
 
 // Go doesn't have sets, which is dumb.

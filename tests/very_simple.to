@@ -1,3 +1,15 @@
+// this is a line comment
+
+0 // this is a line comment after a statement
+
+/* This is a block comment
+ *
+ * /* Block comments can be nested */
+
+~ still a comment here ~
+
+end of comment...    right...       about....             here -> */
+
 fn println(s: str) {
   print(s + "\n")
 }
