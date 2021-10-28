@@ -181,26 +181,28 @@ func (parser *Parser) continueExpression(expr Expression, prec int) Expression {
 
 	switch ttype {
 	case ColonT:
-		if !isValidDeclared(expr) {
-			parser.currentToken().Raise(SyntaxError, "Illegal left-hand side to declaration")
-		}
+		if prec <= setter_prec {
+			if !isValidDeclared(expr) {
+				parser.currentToken().Raise(SyntaxError, "Illegal left-hand side to declaration")
+			}
 
-		parser.advance()
+			parser.advance()
 
-		var tekotype Expression = nil
-		switch parser.currentToken().TType {
-		case EqualT:
-		default:
-			tekotype = parser.grabTypeExpression(prec)
-		}
+			var tekotype Expression = nil
+			switch parser.currentToken().TType {
+			case EqualT:
+			default:
+				tekotype = parser.grabTypeExpression(prec)
+			}
 
-		setter := *parser.expect(EqualT)
+			setter := *parser.expect(EqualT)
 
-		out = DeclarationExpression{
-			Symbol:   expr.Token(),
-			Tekotype: tekotype,
-			Setter:   setter,
-			Right:    parser.grabExpression(prec),
+			out = DeclarationExpression{
+				Symbol:   expr.Token(),
+				Tekotype: tekotype,
+				Setter:   setter,
+				Right:    parser.grabExpression(prec),
+			}
 		}
 
 	case LParT:
@@ -318,12 +320,9 @@ func (parser *Parser) makeCallExpression(receiver Expression) CallExpression {
 	cont := parser.currentToken().TType != RParT
 
 	for cont {
-		arg := parser.grabExpression(add_sub_prec) // don't want it continuing past a setter!
+		arg := parser.grabExpression(add_sub_prec)
 
-		if parser.currentToken().TType == EqualT {
-			if string(parser.currentToken().Value) != "=" {
-				parser.currentToken().Raise(SyntaxError, "Keyword argument must use =")
-			}
+		if parser.currentToken().TType == ColonT {
 			switch p := arg.(type) {
 			case SimpleExpression:
 				if p.token.TType != SymbolT {
