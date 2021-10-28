@@ -29,12 +29,11 @@ func (c *Checker) checkTypeStatement(stmt lexparse.TypeStatement) {
 }
 
 func (c *Checker) checkExpression(expr lexparse.Expression, expectedType TekoType) TekoType {
-	var ttype TekoType
+	return devar(c.checkExpressionAllowingVar(expr, expectedType))
+}
 
-	switch expectedType.(type) {
-	case *VarType:
-		panic("Do not expect a variable type")
-	}
+func (c *Checker) checkExpressionAllowingVar(expr lexparse.Expression, expectedType TekoType) TekoType {
+	var ttype TekoType
 
 	switch p := expr.(type) {
 
@@ -178,7 +177,13 @@ func (c *Checker) checkCallExpression(expr lexparse.CallExpression) TekoType {
 }
 
 func (c *Checker) checkAttributeExpression(expr lexparse.AttributeExpression) TekoType {
-	left_tekotype := c.checkExpression(expr.Left, nil)
+  var left_tekotype TekoType
+
+	if string(expr.Symbol.Value) == "=" {
+		left_tekotype = c.checkExpressionAllowingVar(expr.Left, nil)
+	} else {
+		left_tekotype = c.checkExpression(expr.Left, nil)
+	}
 
 	tekotype := getField(left_tekotype, string(expr.Symbol.Value))
 	if tekotype != nil {
