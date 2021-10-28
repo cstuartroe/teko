@@ -131,3 +131,25 @@ fn f(x: int) {
 g1 := f(7)
 h1 := g1()
 println(h1()$)
+
+Thing := scope {
+  spider := "spider"
+
+  spiderman := spider + "man"
+}
+
+println(Thing.spiderman)
+
+fn counter(start: int) -> scope {
+  count : var int = start
+
+  fn increment(): int {
+    count = count + 1
+  }
+}
+
+c := counter(5)
+c.increment()
+c.increment()
+println(c.count$)
+println(c.increment()$)

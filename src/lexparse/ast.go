@@ -284,3 +284,16 @@ func (e WhileExpression) Token() Token {
 }
 
 func (e WhileExpression) expressionNode() {}
+
+//---
+
+type ScopeExpression struct {
+	ScopeToken Token
+	Codeblock Codeblock
+}
+
+func (e ScopeExpression) Token() Token {
+	return e.ScopeToken
+}
+
+func (e ScopeExpression) expressionNode() {}

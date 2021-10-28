@@ -20,6 +20,7 @@ const (
 	IfT    = "if"
 	ThenT  = "then"
 	ElseT  = "else"
+	ScopeT = "scope"
 
 	SetT  = "set"
 	MapT  = "map"

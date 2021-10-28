@@ -80,6 +80,9 @@ func (m InterpreterModule) evaluateExpression(expr lexparse.Expression) *TekoObj
 	case lexparse.WhileExpression:
 		return m.evaluateWhile(p)
 
+	case lexparse.ScopeExpression:
+		return m.evaluateScope(p)
+
 	default:
 		expr.Token().Raise(lexparse.NotImplementedError, "Intepretation of expression type not implemented")
 		return nil
@@ -272,4 +275,17 @@ func (m *InterpreterModule) evaluateWhile(expr lexparse.WhileExpression) *TekoOb
 	}
 
 	return tp(newArray(elements))
+}
+
+func (m *InterpreterModule) evaluateScope(expr lexparse.ScopeExpression) *TekoObject {
+	interpreter := InterpreterModule{
+		codeblock: &expr.Codeblock,
+		scope: &BasicObject{
+			newSymbolTable(&m.scope.symbolTable),
+		},
+	}
+
+	interpreter.execute()
+
+	return tp(*interpreter.scope)
 }

@@ -148,6 +148,9 @@ func (parser *Parser) grabExpression(prec int) Expression {
 	case WhileT:
 		expr = parser.grabWhileExpression(prec)
 
+	case ScopeT:
+		expr = parser.grabScopeExpression()
+
 	default:
 		expr = parser.grabSimpleExpression()
 	}
@@ -616,5 +619,12 @@ func (parser *Parser) grabWhileExpression(prec int) WhileExpression {
 		WhileToken: *parser.expect(WhileT),
 		Condition: parser.grabExpression(prec),
 		Body: parser.grabExpression(prec),
+	}
+}
+
+func (parser *Parser) grabScopeExpression() ScopeExpression {
+	return ScopeExpression{
+		ScopeToken: *parser.expect(ScopeT),
+		Codeblock: parser.grabCodeblock(),
 	}
 }

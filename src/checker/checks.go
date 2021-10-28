@@ -72,6 +72,9 @@ func (c *Checker) checkExpression(expr lexparse.Expression, expectedType TekoTyp
 	case lexparse.WhileExpression:
 		ttype = c.checkWhileExpression(p)
 
+	case lexparse.ScopeExpression:
+		ttype = c.checkScopeExpression(p)
+
 	default:
 		expr.Token().Raise(lexparse.NotImplementedError, "Cannot typecheck expression type")
 	}
@@ -346,4 +349,16 @@ func (c *Checker) checkWhileExpression(expr lexparse.WhileExpression) TekoType {
 	c.checkExpression(expr.Condition, BoolType)
 
 	return newArrayType(c.checkExpression(expr.Body, nil))
+}
+
+func (c *Checker) checkScopeExpression(expr lexparse.ScopeExpression) TekoType {
+	blockChecker := NewChecker(c)
+
+	for _, stmt := range expr.Codeblock.Statements {
+		blockChecker.checkStatement(stmt)
+	}
+
+	return &BasicType{
+		fields: blockChecker.ctype.fields,
+	}
 }

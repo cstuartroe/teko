@@ -201,6 +201,7 @@ var keywords map[string]tokenType = map[string]tokenType{
 	"if":    IfT,
 	"then":  ThenT,
 	"else":  ElseT,
+	"scope": ScopeT,
 
 	"set":  SetT,
 	"map":  MapT,
