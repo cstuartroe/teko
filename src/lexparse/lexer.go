@@ -258,6 +258,7 @@ var uniquePuncts map[string]tokenType = map[string]tokenType{
 	"<:": SubtypeT,
 	"->": ArrowT,
 	"=":  EqualT,
+	"|>": PipeT,
 }
 
 func (lexer *Lexer) grabPunctuation() {

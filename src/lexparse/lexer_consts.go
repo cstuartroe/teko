@@ -50,6 +50,7 @@ const (
 	SubtypeT   = "<:"
 	ArrowT     = "->"
 	EqualT     = "="
+	PipeT      = "|>"
 
 	LineCommentT = "line comment"
 	BlockCommentT = "block comment"
@@ -73,6 +74,7 @@ var punct_combos map[string]bool = map[string]bool{
 	"<-": true,
 	"<:": true,
 	"..": true,
+	"|>": true,
 }
 
 var binops map[string]string = map[string]string{

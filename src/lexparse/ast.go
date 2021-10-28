@@ -297,3 +297,17 @@ func (e ScopeExpression) Token() Token {
 }
 
 func (e ScopeExpression) expressionNode() {}
+
+//---
+
+type PipeExpression struct {
+	PipeToken Token
+	Arg Expression
+	Function Expression
+}
+
+func (e PipeExpression) Token() Token {
+	return e.PipeToken
+}
+
+func (e PipeExpression) expressionNode() {}

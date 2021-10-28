@@ -301,6 +301,25 @@ func (parser *Parser) continueExpression(expr Expression, prec int) Expression {
 				},
 			}
 		}
+
+	case PipeT:
+		if prec <= setter_prec {
+			pipe := *parser.expect(PipeT)
+			function := parser.grabExpression(setter_prec + 1)
+
+			if parser.transform {
+				out = CallExpression{
+					Receiver: function,
+					Args: []Expression{expr},
+				}
+			} else {
+				out = PipeExpression{
+					PipeToken: pipe,
+					Arg: expr,
+					Function: function,
+				}
+			}
+		}
 	}
 
 	if out != nil {

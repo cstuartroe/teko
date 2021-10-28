@@ -152,4 +152,4 @@ c := counter(5)
 c.increment()
 c.increment()
 println(c.count$)
-println(c.increment()$)
+c.increment()$ |> println
