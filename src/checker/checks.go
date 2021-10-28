@@ -299,6 +299,9 @@ func (c *Checker) checkFunctionDefinition(expr lexparse.FunctionExpression) Teko
 		}
 
 		ttype := c.evaluateType(ad.Tekotype)
+		if isvar(ttype) {
+			ad.Tekotype.Token().Raise(lexparse.TypeError, "Function arguments cannot be mutable. Complain to Conor if you hate this fact.")
+		}
 		blockChecker.declareFieldType(ad.Symbol, ttype)
 
 		// TODO: get argdefs from blockChecker

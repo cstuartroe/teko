@@ -39,6 +39,15 @@ func newVarType(ttype TekoType) *VarType {
   }
 }
 
+func isvar(ttype TekoType) bool {
+  switch (ttype).(type) {
+  case *VarType:
+    return true
+  default:
+    return false
+  }
+}
+
 func devar(ttype TekoType) TekoType {
   switch p := (ttype).(type) {
   case *VarType:
