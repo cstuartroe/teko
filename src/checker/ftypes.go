@@ -2,12 +2,13 @@ package checker
 
 import (
 	"fmt"
+
 	"github.com/cstuartroe/teko/src/lexparse"
 )
 
 type FunctionArgDef struct {
-	name    string
-	ttype   TekoType
+	name  string
+	ttype TekoType
 }
 
 type FunctionType struct {
@@ -26,7 +27,6 @@ func (ftype FunctionType) tekotypeToString() string {
 
 	return out
 }
-
 
 func (ftype FunctionType) allFields() map[string]TekoType {
 	return map[string]TekoType{} // TODO should actually be all fields shared by types

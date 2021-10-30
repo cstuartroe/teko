@@ -52,7 +52,7 @@ const (
 	EqualT     = "="
 	PipeT      = "|>"
 
-	LineCommentT = "line comment"
+	LineCommentT  = "line comment"
 	BlockCommentT = "block comment"
 )
 

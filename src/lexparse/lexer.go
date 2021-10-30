@@ -70,10 +70,10 @@ func (token Token) Raise(errorClass TekoErrorClass, message string) {
 }
 
 type Lexer struct {
-	Lines          []*Line
-	LineN          int
-	Col            int
-	currentToken   Token
+	Lines        []*Line
+	LineN        int
+	Col          int
+	currentToken Token
 }
 
 func LexFile(filename string) []Token {
@@ -117,7 +117,7 @@ func (lexer *Lexer) Line() *Line {
 func (lexer *Lexer) newToken() {
 	lexer.currentToken = Token{
 		Line: lexer.Line(),
-		Col: lexer.Col,
+		Col:  lexer.Col,
 	}
 }
 
@@ -370,7 +370,7 @@ func (lexer *Lexer) grabBlockComment() {
 
 	for comment_depth > 0 {
 		if !lexer.hasMore() {
-			if lexer.LineN == len(lexer.Lines) - 1 {
+			if lexer.LineN == len(lexer.Lines)-1 {
 				lexparsePanic(lexer.Line(), lexer.Col, LexerError, "EOF while parsing block comment")
 			}
 

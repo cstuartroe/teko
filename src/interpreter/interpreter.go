@@ -2,8 +2,9 @@ package interpreter
 
 import (
 	"fmt"
-	"github.com/cstuartroe/teko/src/lexparse"
 	"strconv"
+
+	"github.com/cstuartroe/teko/src/lexparse"
 )
 
 func ExecuteTree(codeblock *lexparse.Codeblock) {
@@ -158,9 +159,9 @@ func (m InterpreterModule) evaluateAttributeExpression(expr lexparse.AttributeEx
 
 	if string(expr.Symbol.Value) == "=" {
 		return tp(TekoFunction{
-			context: nil,
-			owner: left,
-			body: nil,
+			context:  nil,
+			owner:    left,
+			body:     nil,
 			argnames: []string{"value"},
 			executor: updateExecutor,
 		})

@@ -1,8 +1,9 @@
 package checker
 
 import (
-	"github.com/cstuartroe/teko/src/lexparse"
 	"strconv"
+
+	"github.com/cstuartroe/teko/src/lexparse"
 )
 
 func (c *Checker) evaluateType(expr lexparse.Expression) TekoType {

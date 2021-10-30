@@ -290,8 +290,8 @@ func (parser *Parser) continueExpression(expr Expression, prec int) Expression {
 				Receiver: AttributeExpression{
 					Left: expr,
 					Symbol: Token{
-						Line: setter.Line,
-						Col:  setter.Col,
+						Line:  setter.Line,
+						Col:   setter.Col,
 						TType: SymbolT,
 						Value: []rune("="),
 					},
@@ -310,13 +310,13 @@ func (parser *Parser) continueExpression(expr Expression, prec int) Expression {
 			if parser.transform {
 				out = CallExpression{
 					Receiver: function,
-					Args: []Expression{expr},
+					Args:     []Expression{expr},
 				}
 			} else {
 				out = PipeExpression{
 					PipeToken: pipe,
-					Arg: expr,
-					Function: function,
+					Arg:       expr,
+					Function:  function,
 				}
 			}
 		}
@@ -565,7 +565,7 @@ func (parser *Parser) grabArgdefs() []ArgdefNode {
 func (parser *Parser) grabFunctionRight(prec int) Expression {
 	if parser.currentToken().TType == LCurlyBrT {
 		return DoExpression{
-			DoToken: nil,
+			DoToken:   nil,
 			Codeblock: parser.grabCodeblock(),
 		}
 	} else {
@@ -629,21 +629,21 @@ func (parser *Parser) grabDoExpression() DoExpression {
 func (parser *Parser) grabVarExpression(prec int) VarExpression {
 	return VarExpression{
 		VarToken: *parser.expect(VarT),
-		Right: parser.grabExpression(prec),
+		Right:    parser.grabExpression(prec),
 	}
 }
 
 func (parser *Parser) grabWhileExpression(prec int) WhileExpression {
 	return WhileExpression{
 		WhileToken: *parser.expect(WhileT),
-		Condition: parser.grabExpression(prec),
-		Body: parser.grabExpression(prec),
+		Condition:  parser.grabExpression(prec),
+		Body:       parser.grabExpression(prec),
 	}
 }
 
 func (parser *Parser) grabScopeExpression() ScopeExpression {
 	return ScopeExpression{
 		ScopeToken: *parser.expect(ScopeT),
-		Codeblock: parser.grabCodeblock(),
+		Codeblock:  parser.grabCodeblock(),
 	}
 }

@@ -8,5 +8,5 @@ func updateExecutor(function TekoFunction, evaluatedArgs map[string]*TekoObject)
 
 	*(function.owner) = *s
 
-  return s
+	return s
 }

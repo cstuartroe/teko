@@ -262,7 +262,7 @@ func (e DoExpression) expressionNode() {}
 
 type VarExpression struct {
 	VarToken Token
-  Right Expression
+	Right    Expression
 }
 
 func (e VarExpression) Token() Token {
@@ -275,8 +275,8 @@ func (e VarExpression) expressionNode() {}
 
 type WhileExpression struct {
 	WhileToken Token
-	Condition Expression
-	Body Expression
+	Condition  Expression
+	Body       Expression
 }
 
 func (e WhileExpression) Token() Token {
@@ -289,7 +289,7 @@ func (e WhileExpression) expressionNode() {}
 
 type ScopeExpression struct {
 	ScopeToken Token
-	Codeblock Codeblock
+	Codeblock  Codeblock
 }
 
 func (e ScopeExpression) Token() Token {
@@ -302,8 +302,8 @@ func (e ScopeExpression) expressionNode() {}
 
 type PipeExpression struct {
 	PipeToken Token
-	Arg Expression
-	Function Expression
+	Arg       Expression
+	Function  Expression
 }
 
 func (e PipeExpression) Token() Token {

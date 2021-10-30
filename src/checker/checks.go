@@ -177,7 +177,7 @@ func (c *Checker) checkCallExpression(expr lexparse.CallExpression) TekoType {
 }
 
 func (c *Checker) checkAttributeExpression(expr lexparse.AttributeExpression) TekoType {
-  var left_tekotype TekoType
+	var left_tekotype TekoType
 
 	if string(expr.Symbol.Value) == "=" {
 		left_tekotype = c.checkExpressionAllowingVar(expr.Left, nil)
@@ -266,7 +266,7 @@ func (c *Checker) checkSequenceExpression(expr lexparse.SequenceExpression, expe
 }
 
 func (c *Checker) checkObjectExpression(expr lexparse.ObjectExpression, expectedType TekoType) TekoType {
-  if expectedType == nil {
+	if expectedType == nil {
 		expectedType = VoidType
 	}
 
