@@ -21,45 +21,15 @@ Teko is a programming language of an unusual sort - a statically typed scripting
 
 ## Installation
 
-1. Make sure you have the [Go programming language](https://golang.org/dl/) installed.
+Make sure you have the [Go programming language](https://golang.org/dl/) installed.
 
-3. Clone this repo and `cd` into it.
+Then, simply run 
 
-From here your road diverges in a yellow wood:
-
-### Using `go install`
-
-3. Make sure `go install` works as expected. If you're not sure how to do that, try adding `export PATH=$PATH:$(go env GOPATH)/bin` to your `.bashrc` or something similar.
-
-4. Run `go install`
-
-5. Try running `teko tests/simple.to`. Hopefully you don't get something that looks like
-
-```
-Command 'teko' not found, did you mean:
+```sh
+go get github.com/cstuartroe/teko
 ```
 
-If you do, revisit step 3.
 
-### Manually moving executable to `PATH`
-
-3. Run `go build`
-
-4. Move the newly created `teko` executable into any directory in your `PATH`
-
-5. Try running `teko tests/simple.to`. Hopefully you don't get something that looks like
-
-```
-Command 'teko' not found, did you mean:
-```
-
-If you do, revisit step 4.
-
-### Running executable from working directory
-
-3. Run `go build`
-
-4. Try running `./teko tests/simple.to`. If something doesn't look right, that's on us.
 
 ## Acknowledgements
 
