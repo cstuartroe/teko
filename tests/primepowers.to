@@ -1,3 +1,12 @@
+/* EXPECT ERROR
+
+Syntax Error (tests/primepowers.to:18:14)
+fn object_str[T](t: T) {
+             ^
+Expected (  */
+
+// Eventually I'd like this to pass but first I need to implement generics and string interpolation
+
 primes := [2, 3, 5, 7, 11, 13, 17, 19]
 
 type PrimePower = {
@@ -6,7 +15,7 @@ type PrimePower = {
   total: int,
 }
 
-fn object_str<T>(t: T) {
+fn object_str[T](t: T) {
   "{" +
   "".join(
     members(t).map(fn(name: str, val: {}) ->

@@ -1,3 +1,12 @@
+/* EXPECT ERROR
+
+Syntax Error (tests/to_str.to:11:20)
+  to_str: fn(): str,
+                   ^
+Expected ->     */
+
+// I'm gonna need function type annotations and switch cases for this one
+
 type Stringable = {
   to_str: fn(): str,
 }

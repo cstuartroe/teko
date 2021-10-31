@@ -1,0 +1,26 @@
+fn counter(start: int) -> scope {
+  count : var int = start
+
+  fn increment(): int {
+    count = count + 1
+  }
+}
+
+c := counter(5)
+c.increment()
+c.increment()
+println(c.count$)
+c.increment()$ |> println
+
+Thing := scope {
+  spider := "spider"
+
+  spiderman := spider + "man"
+}
+
+println(Thing.spiderman)
+
+/* EXPECT
+7
+8
+spiderman    */

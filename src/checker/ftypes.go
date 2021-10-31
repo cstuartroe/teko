@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/cstuartroe/teko/src/lexparse"
+	"github.com/cstuartroe/teko/src/shared"
 )
 
 type FunctionArgDef struct {
@@ -56,7 +57,7 @@ func ResolveArgs(argnames []string, expr lexparse.CallExpression) map[string]lex
 
 	if len(expr.Args) > len(argnames) {
 		expr.Args[len(argnames)].Token().Raise(
-			lexparse.ArgumentError,
+			shared.ArgumentError,
 			fmt.Sprintf("Too many arguments (%d expected, %d given)", len(argnames), len(expr.Args)),
 		)
 	}
@@ -70,7 +71,7 @@ func ResolveArgs(argnames []string, expr lexparse.CallExpression) map[string]lex
 
 		if _, ok := args_by_name[name]; ok {
 			kwarg.Token().Raise(
-				lexparse.ArgumentError,
+				shared.ArgumentError,
 				fmt.Sprintf("Argument already passed: %s", name),
 			)
 		}
@@ -79,7 +80,7 @@ func ResolveArgs(argnames []string, expr lexparse.CallExpression) map[string]lex
 			args_by_name[name] = kwarg.Value
 		} else {
 			kwarg.Symbol.Raise(
-				lexparse.ArgumentError,
+				shared.ArgumentError,
 				fmt.Sprintf("Function doesn't take argument %s", name),
 			)
 		}

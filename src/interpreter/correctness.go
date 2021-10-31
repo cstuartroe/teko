@@ -5,8 +5,8 @@ import (
 )
 
 func VerifyStdlibDeclarations() {
-	for name := range checker.BaseCheckerTypeFields {
-		_, ok := BaseInterpreterFieldValues[name]
+	for name := range checker.StdlibSymbolTable {
+		_, ok := StdLibFieldValues[name]
 		if !ok {
 			panic("Standard library object has type declared but no value: " + name)
 		}
@@ -15,8 +15,8 @@ func VerifyStdlibDeclarations() {
 	// I would use generics instead of repeating myself
 	// https://tinyurl.com/ndwqwz4
 
-	for name := range BaseInterpreterFieldValues {
-		_, ok := checker.BaseCheckerTypeFields[name]
+	for name := range StdLibFieldValues {
+		_, ok := checker.StdlibSymbolTable[name]
 		if !ok {
 			panic("Standard library object's type was never declared: " + name)
 		}

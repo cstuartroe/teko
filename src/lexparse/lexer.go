@@ -3,9 +3,10 @@ package lexparse
 import (
 	"fmt"
 	"io/ioutil"
-	"os"
 	"strings"
 	"unicode"
+
+	"github.com/cstuartroe/teko/src/shared"
 )
 
 const INDENT_AMOUNT int = 2
@@ -37,36 +38,24 @@ func (t Token) to_indented_str(indent int) string {
 	return strings.Repeat(" ", indent*INDENT_AMOUNT) + t.to_str() + "\n"
 }
 
-type TekoErrorClass string
-
-const (
-	LexerError          = "Lexer Error"
-	SyntaxError         = "Syntax Error"
-	NameError           = "Name Error"
-	NotImplementedError = "Unimplemented (this is planned functionality for Teko)"
-	TypeError           = "Type Error"
-	ArgumentError       = "Argument Error"
-	UnexpectedIssue     = "Unexpected issue (this is a mistake in the Teko implementation)"
-	RuntimeError        = "Runtime Error"
-)
-
-func lexparsePanic(line *Line, col int, errorClass TekoErrorClass, message string) {
-	fmt.Printf(
+func raiseTekoError(line *Line, col int, errorClass shared.TekoErrorClass, message string) {
+	fmt.Fprintf(
+		shared.ErrorDest,
 		"%s (%s:%d:%d)\n%s\n%s%s\n%s\n",
 		errorClass,
 		line.Filename,
-		line.Num,
-		col,
+		line.Num+1,
+		col+1,
 		string(line.Value),
 		strings.Repeat(" ", col),
 		strings.Repeat("^", 1),
 		message,
 	)
-	os.Exit(0)
+	panic(shared.TekoErrorMessage)
 }
 
-func (token Token) Raise(errorClass TekoErrorClass, message string) {
-	lexparsePanic(token.Line, token.Col, errorClass, message)
+func (token Token) Raise(errorClass shared.TekoErrorClass, message string) {
+	raiseTekoError(token.Line, token.Col, errorClass, message)
 }
 
 type Lexer struct {
@@ -76,13 +65,7 @@ type Lexer struct {
 	currentToken Token
 }
 
-func LexFile(filename string) []Token {
-	dat, err := ioutil.ReadFile(filename)
-	if err != nil {
-		panic(err)
-	}
-	contents := string(dat)
-
+func NewLexer(filename string, contents string) Lexer {
 	lines_raw := strings.Split(contents, "\n")
 	lines := make([]*Line, len(lines_raw))
 
@@ -94,15 +77,33 @@ func LexFile(filename string) []Token {
 		}
 	}
 
-	tokens := []Token{}
 	lexer := Lexer{Lines: lines}
+	lexer.passWhitespace()
+	return lexer
+}
 
-	for lexer.LineN < len(lines) {
-		tokens = append(tokens, lexer.grabTokens()...)
-		lexer.newLine()
+func FromFile(filename string) Lexer {
+	dat, err := ioutil.ReadFile(filename)
+	if err != nil {
+		panic(err)
+	}
+	contents := string(dat)
+
+	return NewLexer(filename, contents)
+}
+
+func (lexer *Lexer) Lex() []Token {
+	tokens := []Token{}
+
+	for lexer.HasMore() {
+		tokens = append(tokens, lexer.GrabToken())
 	}
 
 	return tokens
+}
+
+func (lexer *Lexer) HasMore() bool {
+	return lexer.LineN < len(lexer.Lines)
 }
 
 func (lexer *Lexer) newLine() {
@@ -122,7 +123,7 @@ func (lexer *Lexer) newToken() {
 }
 
 func (lexer *Lexer) next() rune {
-	if !lexer.hasMore() {
+	if !lexer.lineHasMore() {
 		return rune(0)
 	}
 	return lexer.Line().Value[lexer.Col]
@@ -142,7 +143,7 @@ func (lexer *Lexer) advance() {
 	lexer.Col++
 }
 
-func (lexer *Lexer) hasMore() bool {
+func (lexer *Lexer) lineHasMore() bool {
 	return lexer.Col < len(lexer.Line().Value)
 }
 
@@ -150,21 +151,15 @@ func (lexer *Lexer) passWhitespace() {
 	for unicode.IsSpace(lexer.next()) {
 		lexer.advance()
 	}
-}
-
-func (lexer *Lexer) grabTokens() []Token {
-	tokens := []Token{}
-	lexer.passWhitespace()
-
-	for lexer.hasMore() {
-		tokens = append(tokens, lexer.grabToken())
-		lexer.passWhitespace()
+	if !lexer.lineHasMore() {
+		lexer.newLine()
+		if lexer.HasMore() {
+			lexer.passWhitespace()
+		}
 	}
-
-	return tokens
 }
 
-func (lexer *Lexer) grabToken() Token {
+func (lexer *Lexer) GrabToken() Token {
 	lexer.newToken()
 
 	c := lexer.next()
@@ -185,7 +180,9 @@ func (lexer *Lexer) grabToken() Token {
 		lexer.grabPunctuation()
 	}
 
-	return lexer.currentToken
+	t := lexer.currentToken
+	lexer.passWhitespace()
+	return t
 }
 
 var keywords map[string]tokenType = map[string]tokenType{
@@ -283,7 +280,7 @@ func (lexer *Lexer) grabPunctuation() {
 	} else if _, ok := suffixes[blob]; ok {
 		lexer.currentToken.TType = SuffixT
 	} else {
-		lexparsePanic(lexer.Line(), lexer.Col-1, LexerError, "Invalid start to token")
+		raiseTekoError(lexer.Line(), lexer.Col-1, shared.LexerError, "Invalid start to token")
 	}
 }
 
@@ -356,7 +353,7 @@ func (lexer *Lexer) grabCharacter() rune {
 
 func (lexer *Lexer) grabLineComment() {
 	lexer.currentToken.TType = LineCommentT
-	for lexer.hasMore() {
+	for lexer.lineHasMore() {
 		lexer.advance()
 	}
 }
@@ -369,9 +366,9 @@ func (lexer *Lexer) grabBlockComment() {
 	comment_depth := 1
 
 	for comment_depth > 0 {
-		if !lexer.hasMore() {
+		if !lexer.lineHasMore() {
 			if lexer.LineN == len(lexer.Lines)-1 {
-				lexparsePanic(lexer.Line(), lexer.Col, LexerError, "EOF while parsing block comment")
+				raiseTekoError(lexer.Line(), lexer.Col, shared.LexerError, "EOF while parsing block comment")
 			}
 
 			lexer.newLine()

@@ -1,0 +1,20 @@
+fn foo(numberoony: int): int {
+  x := numberoony + 3
+  x * 6
+}
+
+println(foo(5)$)
+
+fn f(x: int) {
+  fn g() {
+    fn h() -> x
+  }
+}
+
+g1 := f(7)
+h1 := g1()
+println(h1()$)
+
+/* EXPECT
+48
+7   */

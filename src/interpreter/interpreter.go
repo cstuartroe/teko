@@ -5,27 +5,24 @@ import (
 	"strconv"
 
 	"github.com/cstuartroe/teko/src/lexparse"
+	"github.com/cstuartroe/teko/src/shared"
 )
 
-func ExecuteTree(codeblock *lexparse.Codeblock) {
-	interpreter := InterpreterModule{
-		codeblock: codeblock,
+type InterpreterModule struct {
+	scope *BasicObject
+}
+
+func New(parent *InterpreterModule) InterpreterModule {
+	return InterpreterModule{
 		scope: &BasicObject{
-			newSymbolTable(BaseSymbolTable),
+			newSymbolTable(&parent.scope.symbolTable),
 		},
 	}
-
-	interpreter.execute()
 }
 
-type InterpreterModule struct {
-	codeblock *lexparse.Codeblock
-	scope     *BasicObject
-}
-
-func (m InterpreterModule) execute() *TekoObject {
+func (m InterpreterModule) Execute(codeblock *lexparse.Codeblock) *TekoObject {
 	var out *TekoObject = nil
-	for _, stmt := range m.codeblock.Statements {
+	for _, stmt := range codeblock.Statements {
 		out = m.executeStatement(stmt)
 	}
 	return out
@@ -40,7 +37,7 @@ func (m InterpreterModule) executeStatement(stmt lexparse.Statement) *TekoObject
 		return nil // it's only for the type checker
 
 	default:
-		stmt.Token().Raise(lexparse.NotImplementedError, "Statement type not implemented")
+		stmt.Token().Raise(shared.NotImplementedError, "Statement type not implemented")
 		return nil
 	}
 }
@@ -85,7 +82,7 @@ func (m InterpreterModule) evaluateExpression(expr lexparse.Expression) *TekoObj
 		return m.evaluateScope(p)
 
 	default:
-		expr.Token().Raise(lexparse.NotImplementedError, "Intepretation of expression type not implemented")
+		expr.Token().Raise(shared.NotImplementedError, "Intepretation of expression type not implemented")
 		return nil
 	}
 }
@@ -100,7 +97,7 @@ func (m InterpreterModule) evaluateSimpleExpression(expr lexparse.SimpleExpressi
 		if val != nil {
 			return val
 		} else {
-			expr.Token().Raise(lexparse.UnexpectedIssue, "Label not found")
+			expr.Token().Raise(shared.UnexpectedIssue, "Label not found")
 			return nil
 		}
 
@@ -115,7 +112,7 @@ func (m InterpreterModule) evaluateSimpleExpression(expr lexparse.SimpleExpressi
 		if ok == nil {
 			return tp(getInteger(n))
 		} else {
-			expr.Token().Raise(lexparse.UnexpectedIssue, "Invalid integer - how did this make it past the lexer?")
+			expr.Token().Raise(shared.UnexpectedIssue, "Invalid integer - how did this make it past the lexer?")
 			return nil
 		}
 
@@ -130,7 +127,7 @@ func (m InterpreterModule) evaluateSimpleExpression(expr lexparse.SimpleExpressi
 		}
 
 	default:
-		expr.Token().Raise(lexparse.NotImplementedError, fmt.Sprintf("Invalid or unimplemented simple expression type: %s", ttype))
+		expr.Token().Raise(shared.NotImplementedError, fmt.Sprintf("Invalid or unimplemented simple expression type: %s", ttype))
 		return nil
 	}
 }
@@ -142,7 +139,7 @@ func (m InterpreterModule) evaluateFunctionCall(call lexparse.CallExpression) *T
 		return p.execute(m, call)
 
 	default:
-		call.Token().Raise(lexparse.UnexpectedIssue, "Non-function was the receiver of a call. Where was the type checker??")
+		call.Token().Raise(shared.UnexpectedIssue, "Non-function was the receiver of a call. Where was the type checker??")
 		return nil
 	}
 }
@@ -248,14 +245,7 @@ func (m *InterpreterModule) evaluateFunctionDefinition(expr lexparse.FunctionExp
 }
 
 func (m *InterpreterModule) evaluateDoExpression(expr lexparse.DoExpression) *TekoObject {
-	interpreter := InterpreterModule{
-		codeblock: &expr.Codeblock,
-		scope: &BasicObject{
-			newSymbolTable(&m.scope.symbolTable),
-		},
-	}
-
-	return interpreter.execute()
+	return New(m).Execute(&expr.Codeblock)
 }
 
 func (m *InterpreterModule) isTrue(expr lexparse.Expression) bool {
@@ -263,12 +253,12 @@ func (m *InterpreterModule) isTrue(expr lexparse.Expression) bool {
 	case Boolean:
 		return p.value
 	default:
-		expr.Token().Raise(lexparse.UnexpectedIssue, "Not a boolean")
+		expr.Token().Raise(shared.UnexpectedIssue, "Not a boolean")
 		return false
 	}
 }
 
-func (m *InterpreterModule) evaluateWhile(expr lexparse.WhileExpression) *TekoObject {
+func (m InterpreterModule) evaluateWhile(expr lexparse.WhileExpression) *TekoObject {
 	elements := []*TekoObject{}
 
 	for m.isTrue(expr.Condition) {
@@ -279,14 +269,7 @@ func (m *InterpreterModule) evaluateWhile(expr lexparse.WhileExpression) *TekoOb
 }
 
 func (m *InterpreterModule) evaluateScope(expr lexparse.ScopeExpression) *TekoObject {
-	interpreter := InterpreterModule{
-		codeblock: &expr.Codeblock,
-		scope: &BasicObject{
-			newSymbolTable(&m.scope.symbolTable),
-		},
-	}
-
-	interpreter.execute()
-
+	interpreter := New(m)
+	interpreter.Execute(&expr.Codeblock)
 	return tp(*interpreter.scope)
 }

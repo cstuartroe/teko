@@ -1,0 +1,7 @@
+b := true
+
+m : int = if (b) then 0 else 1
+
+println(m$)
+
+/* EXPECT 0 */

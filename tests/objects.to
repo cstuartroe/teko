@@ -1,0 +1,35 @@
+type OType = {
+  foo: {
+    foo: "foo",
+    bar: bool,
+  },
+  n: 3,
+}
+
+o : var OType = {
+  foo: {
+    foo: "foo",
+    bar: true,
+  },
+  n: 3,
+  m: 0,
+}
+
+o = {
+  foo: {
+    foo: "foo",
+    bar: true,
+  },
+  n: 3,
+  other_field: 0,
+}
+
+println(o.foo.foo)
+
+n := "sup"
+nHolder := { n }
+println(nHolder.n)
+
+/* EXPECT 
+foo
+sup */

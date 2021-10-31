@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	"github.com/cstuartroe/teko/src/lexparse"
+	"github.com/cstuartroe/teko/src/shared"
 )
 
 func (c *Checker) evaluateType(expr lexparse.Expression) TekoType {
@@ -44,7 +45,7 @@ func (c *Checker) evaluateSimpleType(expr lexparse.SimpleExpression) TekoType {
 	case lexparse.SymbolT:
 		ttype := c.getTypeByName(string(expr.Token().Value))
 		if ttype == nil {
-			expr.Token().Raise(lexparse.NameError, "No type called "+string(expr.Token().Value))
+			expr.Token().Raise(shared.NameError, "No type called "+string(expr.Token().Value))
 		} else {
 			return ttype
 		}
@@ -58,7 +59,7 @@ func (c *Checker) evaluateSimpleType(expr lexparse.SimpleExpression) TekoType {
 	// TODO: bool, chars and floats
 
 	default:
-		expr.Token().Raise(lexparse.TypeError, "Invalid type expression")
+		expr.Token().Raise(shared.TypeError, "Invalid type expression")
 	}
 
 	return nil
@@ -76,7 +77,7 @@ func (c *Checker) evaluateObjectType(expr lexparse.ObjectExpression) *BasicType 
 
 func (c *Checker) evaluateUnionType(expr lexparse.BinopExpression) TekoType {
 	if string(expr.Operation.Value) != "|" {
-		expr.Operation.Raise(lexparse.SyntaxError, "Invalid type expression")
+		expr.Operation.Raise(shared.SyntaxError, "Invalid type expression")
 	}
 
 	// TODO raise on something like `int | int`

@@ -2,6 +2,7 @@ package checker
 
 import (
 	"github.com/cstuartroe/teko/src/lexparse"
+	"github.com/cstuartroe/teko/src/shared"
 )
 
 type TypeTable struct {
@@ -25,16 +26,6 @@ func (ttable *TypeTable) set(name string, val TekoType) {
 	} else {
 		ttable.table[name] = val
 	}
-}
-
-var stdlibTypeTable *TypeTable = &TypeTable{
-	parent: nil,
-	table: map[string]TekoType{
-		"int":  IntType,
-		"bool": BoolType,
-		"str":  StringType,
-		"char": CharType,
-	},
 }
 
 type CheckerType struct {
@@ -74,23 +65,9 @@ func (ctype *CheckerType) setField(name string, tekotype TekoType) {
 	ctype.fields[name] = tekotype
 }
 
-var BaseCheckerTypeFields map[string]TekoType = map[string]TekoType{
-	"print": PrintType,
-}
-
-var baseCheckerType *CheckerType = &CheckerType{
-	fields: BaseCheckerTypeFields,
-	parent: nil,
-}
-
 type Checker struct {
 	typeTable *TypeTable
 	ctype     *CheckerType
-}
-
-var BaseChecker *Checker = &Checker{
-	typeTable: stdlibTypeTable,
-	ctype:     baseCheckerType,
 }
 
 func NewChecker(parent *Checker) Checker {
@@ -120,7 +97,7 @@ func (c *Checker) declareFieldType(token lexparse.Token, tekotype TekoType) {
 	name := string(token.Value)
 
 	if c.getFieldType(name) != nil {
-		token.Raise(lexparse.NameError, "Field has already been declared: "+name)
+		token.Raise(shared.NameError, "Field has already been declared: "+name)
 	}
 
 	c.ctype.setField(name, tekotype)
@@ -134,7 +111,7 @@ func (c *Checker) declareNamedType(token lexparse.Token, tekotype TekoType) {
 	name := string(token.Value)
 
 	if c.typeTable.get(name) != nil {
-		token.Raise(lexparse.NameError, "Type has already been declared: "+name)
+		token.Raise(shared.NameError, "Type has already been declared: "+name)
 	}
 
 	c.typeTable.set(name, tekotype)

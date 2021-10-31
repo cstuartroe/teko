@@ -2,6 +2,9 @@ package interpreter
 
 import (
 	"fmt"
+
+	"github.com/cstuartroe/teko/src/lexparse"
+	"github.com/cstuartroe/teko/src/shared"
 )
 
 func TekoPrintExecutor(function TekoFunction, evaluatedArgs map[string]*TekoObject) *TekoObject {
@@ -15,7 +18,7 @@ func TekoPrintExecutor(function TekoFunction, evaluatedArgs map[string]*TekoObje
 		for _, c := range p.elements {
 			switch cp := (*c).(type) {
 			case TekoChar:
-				fmt.Printf(string(cp.value))
+				fmt.Fprint(shared.PrintDest, string(cp.value))
 			default:
 				panic("Not a TekoChar")
 			}
@@ -28,11 +31,21 @@ func TekoPrintExecutor(function TekoFunction, evaluatedArgs map[string]*TekoObje
 
 var TekoPrint TekoFunction = customExecutedFunction(TekoPrintExecutor, []string{"s"})
 
-var BaseInterpreterFieldValues map[string]*TekoObject = map[string]*TekoObject{
+var StdLibFieldValues map[string]*TekoObject = map[string]*TekoObject{
 	"print": tp(TekoPrint),
 }
 
-var BaseSymbolTable *SymbolTable = &SymbolTable{
+var StdLibSymbolTable SymbolTable = SymbolTable{
 	parent: nil,
-	table:  BaseInterpreterFieldValues,
+	table:  StdLibFieldValues,
+}
+
+var StdLibModule InterpreterModule = InterpreterModule{
+	scope: &BasicObject{
+		StdLibSymbolTable,
+	},
+}
+
+func SetupStdLibModule() {
+	StdLibModule.Execute(&lexparse.StdLibParser.Codeblock)
 }

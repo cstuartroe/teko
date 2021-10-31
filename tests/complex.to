@@ -1,16 +1,25 @@
-class Complex(real : float, imaginary : float) {
+/* EXPECT ERROR
+
+Name Error (tests/complex.to:10:18)
+fn Complex(real: float, imaginary : float) -> scope {
+                 ^
+No type called float   */
+
+// I just need to implement floats
+
+fn Complex(real: float, imaginary : float) -> scope {
   fn add(other : Complex) -> Complex(
     real: real + other.real,
     imaginary: imaginary + other.imaginary,
   )
 
-  fn sub(other : Complex) -> Complex(
+  fn sub(other: Complex) -> Complex(
     real: real - other.real,
     imaginary: imaginary - other.imaginary,
   )
 
-  fn mult(other : Complex) -> Complex(
+  fn mult(other: Complex) -> Complex(
     real: (real * other.real) - (imaginary - other.imaginary),
-    imaginary:
+    imaginary: (real * other.imaginary) + (imaginary * other.real),
   )
 }

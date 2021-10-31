@@ -2,7 +2,14 @@ package checker
 
 import (
 	"github.com/cstuartroe/teko/src/lexparse"
+	"github.com/cstuartroe/teko/src/shared"
 )
+
+func (c Checker) CheckTree(codeblock lexparse.Codeblock) {
+	for _, stmt := range codeblock.Statements {
+		c.checkStatement(stmt)
+	}
+}
 
 func (c *Checker) checkStatement(stmt lexparse.Statement) {
 	switch p := stmt.(type) {
@@ -13,7 +20,7 @@ func (c *Checker) checkStatement(stmt lexparse.Statement) {
 		c.checkTypeStatement(p)
 
 	default:
-		stmt.Token().Raise(lexparse.NotImplementedError, "Unknown statement type")
+		stmt.Token().Raise(shared.NotImplementedError, "Unknown statement type")
 	}
 }
 
@@ -66,7 +73,7 @@ func (c *Checker) checkExpressionAllowingVar(expr lexparse.Expression, expectedT
 		ttype = c.checkDoExpression(p, expectedType)
 
 	case lexparse.VarExpression:
-		expr.Token().Raise(lexparse.SyntaxError, "Illegal start to expression")
+		expr.Token().Raise(shared.SyntaxError, "Illegal start to expression")
 
 	case lexparse.WhileExpression:
 		ttype = c.checkWhileExpression(p)
@@ -75,14 +82,14 @@ func (c *Checker) checkExpressionAllowingVar(expr lexparse.Expression, expectedT
 		ttype = c.checkScopeExpression(p)
 
 	default:
-		expr.Token().Raise(lexparse.NotImplementedError, "Cannot typecheck expression type")
+		expr.Token().Raise(shared.NotImplementedError, "Cannot typecheck expression type")
 	}
 
 	if ttype == nil {
-		expr.Token().Raise(lexparse.TypeError, "Evaluated to nil type")
+		expr.Token().Raise(shared.TypeError, "Evaluated to nil type")
 	}
 	if (expectedType != nil) && !isTekoSubtype(ttype, expectedType) {
-		expr.Token().Raise(lexparse.TypeError, "Actual type "+ttype.tekotypeToString()+" does not fulfill expected type "+expectedType.tekotypeToString())
+		expr.Token().Raise(shared.TypeError, "Actual type "+ttype.tekotypeToString()+" does not fulfill expected type "+expectedType.tekotypeToString())
 	}
 
 	if expectedType == nil {
@@ -98,7 +105,7 @@ func (c *Checker) checkSimpleExpression(expr lexparse.SimpleExpression) TekoType
 	case lexparse.SymbolT:
 		ttype := c.getFieldType(string(t.Value))
 		if ttype == nil {
-			t.Raise(lexparse.NameError, "Undefined variable")
+			t.Raise(shared.NameError, "Undefined variable")
 			return nil
 		} else {
 			return ttype
@@ -159,7 +166,7 @@ func (c *Checker) checkCallExpression(expr lexparse.CallExpression) TekoType {
 		for _, argdef := range ftype.argdefs {
 			arg, ok := args_by_name[argdef.name]
 			if !ok {
-				expr.Token().Raise(lexparse.ArgumentError, "Argument was not passed: "+argdef.name)
+				expr.Token().Raise(shared.ArgumentError, "Argument was not passed: "+argdef.name)
 			}
 
 			c.checkExpression(arg, argdef.ttype)
@@ -171,7 +178,7 @@ func (c *Checker) checkCallExpression(expr lexparse.CallExpression) TekoType {
 		panic("Use *FunctionType instead of FunctionType")
 
 	default:
-		expr.Token().Raise(lexparse.TypeError, "Expression does not have a function type")
+		expr.Token().Raise(shared.TypeError, "Expression does not have a function type")
 		return nil
 	}
 }
@@ -189,7 +196,7 @@ func (c *Checker) checkAttributeExpression(expr lexparse.AttributeExpression) Te
 	if tekotype != nil {
 		return tekotype
 	} else {
-		expr.Symbol.Raise(lexparse.NameError, "No such field: "+string(expr.Symbol.Value)+" on "+left_tekotype.tekotypeToString())
+		expr.Symbol.Raise(shared.NameError, "No such field: "+string(expr.Symbol.Value)+" on "+left_tekotype.tekotypeToString())
 		return nil
 	}
 }
@@ -201,7 +208,7 @@ func (c *Checker) checkIfExpression(expr lexparse.IfExpression, expectedType Tek
 	else_tekotype := c.checkExpression(expr.Else, expectedType)
 
 	if then_tekotype != else_tekotype {
-		expr.Else.Token().Raise(lexparse.TypeError, "Then and else blocks have mismatching types")
+		expr.Else.Token().Raise(shared.TypeError, "Then and else blocks have mismatching types")
 	}
 
 	return then_tekotype
@@ -242,7 +249,7 @@ func (c *Checker) checkSequenceExpression(expr lexparse.SequenceExpression, expe
 		}
 	case nil:
 		if len(expr.Elements) == 0 {
-			expr.Token().Raise(lexparse.TypeError, "With no expected type, sequence cannot be empty")
+			expr.Token().Raise(shared.TypeError, "With no expected type, sequence cannot be empty")
 		} else {
 			etype = deconstantize(c.checkExpression(expr.Elements[0], nil))
 
@@ -276,7 +283,7 @@ func (c *Checker) checkObjectExpression(expr lexparse.ObjectExpression, expected
 		field_name := string(of.Symbol.Value)
 
 		if _, ok := fields[field_name]; ok {
-			of.Symbol.Raise(lexparse.NameError, "Duplicate member")
+			of.Symbol.Raise(shared.NameError, "Duplicate member")
 		}
 
 		switch p := of.Value.(type) {
@@ -300,12 +307,12 @@ func (c *Checker) checkFunctionDefinition(expr lexparse.FunctionExpression) Teko
 
 	for _, ad := range expr.Argdefs {
 		if ad.Tekotype == nil {
-			ad.Symbol.Raise(lexparse.NotImplementedError, "Type inference for function arguments not yet implemented")
+			ad.Symbol.Raise(shared.NotImplementedError, "Type inference for function arguments not yet implemented")
 		}
 
 		ttype := c.evaluateType(ad.Tekotype)
 		if isvar(ttype) {
-			ad.Tekotype.Token().Raise(lexparse.TypeError, "Function arguments cannot be mutable. Complain to Conor if you hate this fact.")
+			ad.Tekotype.Token().Raise(shared.TypeError, "Function arguments cannot be mutable. Complain to Conor if you hate this fact.")
 		}
 		blockChecker.declareFieldType(ad.Symbol, ttype)
 

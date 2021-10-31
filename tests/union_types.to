@@ -1,0 +1,5 @@
+type Fubu = "foo" | bool
+
+fubu : var Fubu = "foo"
+
+fubu = true

@@ -2,6 +2,8 @@ package lexparse
 
 import (
 	"fmt"
+
+	"github.com/cstuartroe/teko/src/shared"
 )
 
 var simpleExprTokenTypes map[tokenType]bool = map[tokenType]bool{
@@ -13,64 +15,67 @@ var simpleExprTokenTypes map[tokenType]bool = map[tokenType]bool{
 	BoolT:   true,
 }
 
-func ParseFile(filename string, transform bool) Codeblock {
-	p := Parser{transform: transform}
-	p.LexFile(filename)
-
-	c := Codeblock{}
-	for p.HasMore() {
-		c.Statements = append(
-			c.Statements,
-			p.grabStatement(),
-		)
-	}
-
-	return c
-}
-
 type Parser struct {
-	tokens    []Token
+	Tokens    []Token
 	position  int
-	transform bool
+	Transform bool
+	Codeblock Codeblock
 }
 
-func (parser *Parser) LexFile(filename string) {
-	parser.tokens = LexFile(filename)
+func (parser *Parser) ParseFile(filename string) {
+	lexer := FromFile(filename)
+	tokens := lexer.Lex()
+	parser.Parse(tokens)
 }
 
-func (parser *Parser) currentTokenIncludingComments() *Token {
-	if parser.HasMore() {
-		return &(parser.tokens[parser.position])
-	} else {
-		t := parser.tokens[parser.position-1]
-		lexparsePanic(t.Line, t.Col+len(t.Value), SyntaxError, "Unexpected EOF")
-		return nil
+func (parser *Parser) Parse(tokens []Token) {
+	parser.Tokens = tokens
+	parser.Codeblock = Codeblock{}
+	parser.skipComments()
+	for parser.HasMore() {
+		parser.Codeblock.Statements = append(
+			parser.Codeblock.Statements,
+			parser.grabStatement(),
+		)
 	}
 }
 
 func (parser *Parser) currentToken() *Token {
-	t := parser.currentTokenIncludingComments()
-	if t.TType == LineCommentT || t.TType == BlockCommentT {
-		parser.advance()
-		return parser.currentToken()
+	if parser.HasMore() {
+		return &(parser.Tokens[parser.position])
 	} else {
-		return t
+		t := parser.Tokens[parser.position-1]
+		raiseTekoError(t.Line, t.Col+len(t.Value), shared.SyntaxError, "Unexpected EOF")
+		return nil
 	}
 }
 
 func (parser *Parser) advance() {
 	parser.position++
+	parser.skipComments()
+}
+
+func (parser *Parser) skipComments() {
+	if !parser.HasMore() {
+		return
+	}
+
+	t := parser.currentToken()
+
+	if t.TType == LineCommentT || t.TType == BlockCommentT {
+		parser.advance()
+	}
 }
 
 func (parser *Parser) HasMore() bool {
-	return parser.position < len(parser.tokens)
+	return parser.position < len(parser.Tokens)
 }
 
 func (parser *Parser) expect(ttype tokenType) *Token {
 	token := parser.currentToken()
 
 	if token.TType != ttype {
-		token.Raise(SyntaxError, fmt.Sprintf("Expected %s", ttype))
+		token.Raise(shared.SyntaxError, fmt.Sprintf("Expected %s", ttype))
 	}
 
 	parser.advance()
@@ -163,10 +168,10 @@ func (parser *Parser) grabTypeExpression(prec int) Expression {
 		prec = add_sub_prec
 	}
 
-	transform := parser.transform
-	parser.transform = false
+	transform := parser.Transform
+	parser.Transform = false
 	out := parser.grabExpression(prec)
-	parser.transform = transform
+	parser.Transform = transform
 	return out
 }
 
@@ -177,7 +182,7 @@ func (parser *Parser) grabSimpleExpression() SimpleExpression {
 		parser.advance()
 		return n
 	} else {
-		parser.currentToken().Raise(SyntaxError, "Illegal start to expression")
+		parser.currentToken().Raise(shared.SyntaxError, "Illegal start to expression")
 		return SimpleExpression{} // unreachable code that the compiler requires
 	}
 }
@@ -196,7 +201,7 @@ func (parser *Parser) continueExpression(expr Expression, prec int) Expression {
 	case ColonT:
 		if prec <= setter_prec {
 			if !isValidDeclared(expr) {
-				parser.currentToken().Raise(SyntaxError, "Illegal left-hand side to declaration")
+				parser.currentToken().Raise(shared.SyntaxError, "Illegal left-hand side to declaration")
 			}
 
 			parser.advance()
@@ -231,7 +236,7 @@ func (parser *Parser) continueExpression(expr Expression, prec int) Expression {
 			parser.advance()
 			right := parser.grabExpression(op_prec + 1)
 
-			if parser.transform {
+			if parser.Transform {
 				out = CallExpression{
 					Receiver: AttributeExpression{
 						Left: expr,
@@ -258,7 +263,7 @@ func (parser *Parser) continueExpression(expr Expression, prec int) Expression {
 		suffix := *parser.currentToken()
 		parser.advance()
 
-		if parser.transform {
+		if parser.Transform {
 			out = CallExpression{
 				Receiver: AttributeExpression{
 					Left: expr,
@@ -307,7 +312,7 @@ func (parser *Parser) continueExpression(expr Expression, prec int) Expression {
 			pipe := *parser.expect(PipeT)
 			function := parser.grabExpression(setter_prec + 1)
 
-			if parser.transform {
+			if parser.Transform {
 				out = CallExpression{
 					Receiver: function,
 					Args:     []Expression{expr},
@@ -358,10 +363,10 @@ func (parser *Parser) makeCallExpression(receiver Expression) CallExpression {
 			switch p := arg.(type) {
 			case SimpleExpression:
 				if p.token.TType != SymbolT {
-					p.token.Raise(SyntaxError, "Left-hand side of keyword argument cannot be a value")
+					p.token.Raise(shared.SyntaxError, "Left-hand side of keyword argument cannot be a value")
 				}
 			default:
-				p.Token().Raise(SyntaxError, "Left-hand side of keyword argument cannot be a value")
+				p.Token().Raise(shared.SyntaxError, "Left-hand side of keyword argument cannot be a value")
 			}
 
 			parser.advance()
@@ -373,7 +378,7 @@ func (parser *Parser) makeCallExpression(receiver Expression) CallExpression {
 			})
 		} else {
 			if on_kwargs {
-				parser.currentToken().Raise(SyntaxError, "All positional arguments must be before all keyword arguments")
+				parser.currentToken().Raise(shared.SyntaxError, "All positional arguments must be before all keyword arguments")
 			}
 
 			args = append(args, arg)
@@ -431,7 +436,7 @@ func (parser *Parser) grabTuple() Expression {
 	seq := parser.grabSequence(RParT)
 	switch len(seq) {
 	case 0:
-		lpar.Raise(SyntaxError, "Cannot have empty tuple")
+		lpar.Raise(shared.SyntaxError, "Cannot have empty tuple")
 		return nil
 	case 1:
 		return seq[0]
@@ -521,10 +526,10 @@ func (parser *Parser) grabObjectField() ObjectField {
 		parser.advance()
 
 		value = parser.grabExpression(min_prec)
-	} else if parser.transform {
+	} else if parser.Transform {
 		value = SimpleExpression{symbol}
 	} else {
-		symbol.Raise(SyntaxError, "object property shorthand cannot be used in no-transform context")
+		symbol.Raise(shared.SyntaxError, "object property shorthand cannot be used in no-transform context")
 	}
 
 	return ObjectField{
