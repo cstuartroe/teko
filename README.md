@@ -1,23 +1,23 @@
 # Teko
 
-Teko is a programming language of an unusual sort - a statically typed scripting language. The plan is for Teko to be both interpreted and compiled, à la Python; its interpretation-oriented organization and built-in types and data structures give it the ease of use of a scripting language like JS, Python, or Ruby, while its static typing and "functional-by-default" semantics will provide better safety and scalability.
+Teko is a statically typed, mixed-paradigm, general-purpose scripting language. Its major design goal is to be a fast, statically analyzable language
+that feels as breezy to write as JavaScript or Python, with a type system that gets out of your way whenever possible.
 
-**Major design features include:**
+To this end, it shares many features with TypeScript, including simple structural typing; a love for generics, union types and other type operations; 
+type inference; and some distinctive syntactic constructions.
 
- * Static typing
- * The freedom of organization of a scripting language - put variable declarations, control blocks, or whatever you want right in the body of a file, no need to wrap it in a class or `main()`!
+Other major design features include:
+
  * Zero type coercion - made up for with a variety of lightweight conversion syntax (`5$` means `5.to_str()`)
  * Everything is a method: e.g., `+` is *always* an alias for `.add()`; `3 + 4` *is* `(3).add(4)`
  * Everything is an expression - assignments and control blocks evaluate to a value
- * Out of the box data structures, including dynamic arrays, sets, maps, and algebraic data types
+ * Out of the box data structures, including dynamic arrays, sets, maps, and no-frills JS-style objects
  * Elements of functional or functional-by-default style programming:
    * First-order functions and closures
-   * Fastidiousness about mutability - mutable variables must be declared with the `var` keyword
-   * Type inference - type may be omitted from declarations
-   * Lightweight currying with ellipsis `..` syntax
- * Purely structural types
-   * Objects can be created without a constructor, by simply listing all members
-   * Class constructors are just syntactic sugar and you often don't need them - they're actually just functions!
+   * Immutability is the default
+   * Partial function application
+
+Check out [the test suite](/tests) for some examples of the current and planned state of the language.
 
 ## Installation
 
@@ -28,8 +28,6 @@ Then, simply run
 ```sh
 go get github.com/cstuartroe/teko
 ```
-
-
 
 ## Acknowledgements
 
