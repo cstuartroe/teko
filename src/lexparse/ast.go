@@ -230,6 +230,7 @@ func (a ArgdefNode) Token() Token {
 type FunctionExpression struct {
 	FnToken Token
 	Name    *Token
+	GDL     GenericDeclarationList
 	Argdefs []ArgdefNode
 	Rtype   Expression
 	Right   Expression
@@ -311,3 +312,23 @@ func (e PipeExpression) Token() Token {
 }
 
 func (e PipeExpression) expressionNode() {}
+
+//---
+
+type GenericDeclaration struct {
+	Name      Token
+	Supertype Expression
+}
+
+func (gd GenericDeclaration) Token() Token {
+	return gd.Name
+}
+
+type GenericDeclarationList struct {
+	OpenBrace    Token
+	Declarations []GenericDeclaration
+}
+
+func (gd GenericDeclarationList) Token() Token {
+	return gd.OpenBrace
+}

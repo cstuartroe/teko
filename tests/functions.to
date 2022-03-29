@@ -15,6 +15,11 @@ g1 := f(7)
 h1 := g1()
 println(h1()$)
 
+minusOne := fn(n: int) -> n - 1
+
+minusOne(5)$ |> println
+
 /* EXPECT
 48
-7   */
+7
+4   */

@@ -189,22 +189,19 @@ var keywords map[string]tokenType = map[string]tokenType{
 	"true":  BoolT,
 	"false": BoolT,
 
-	"var": VarT,
-	"fn":  FnT,
+	"var":  VarT,
+	"fn":   FnT,
+	"type": TypeT,
 
-	"in":    InT,
-	"for":   ForT,
 	"while": WhileT,
 	"if":    IfT,
 	"then":  ThenT,
 	"else":  ElseT,
+	"do":    DoT,
 	"scope": ScopeT,
 
-	"set":  SetT,
-	"map":  MapT,
-	"data": DataT,
-	"type": TypeT,
-	"do":   DoT,
+	"Set": SetT,
+	"Map": MapT,
 }
 
 func (lexer *Lexer) grabSymbol() {

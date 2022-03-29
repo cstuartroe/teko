@@ -11,22 +11,19 @@ const (
 	FloatT  = "float"
 	BoolT   = "bool"
 
-	VarT = "var"
-	FnT  = "fn"
+	VarT  = "var"
+	FnT   = "fn"
+	TypeT = "type"
 
-	InT    = "in"
-	ForT   = "for"
 	WhileT = "while"
 	IfT    = "if"
 	ThenT  = "then"
 	ElseT  = "else"
+	DoT    = "do"
 	ScopeT = "scope"
 
-	SetT  = "set"
-	MapT  = "map"
-	DataT = "data"
-	TypeT = "type"
-	DoT   = "do"
+	SetT = "Set"
+	MapT = "Map"
 
 	BinopT      = "binary operation" // + - * / ^ % & |
 	ComparisonT = "comparison"       // == != < > <= >=

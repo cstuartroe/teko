@@ -1,0 +1,5 @@
+fn ident[T](t: T): T -> t
+
+n: int = ident(0)
+
+b: bool = ident(false)

@@ -580,13 +580,45 @@ func (parser *Parser) grabFunctionRight(prec int) Expression {
 	}
 }
 
+func (parser *Parser) grabGenericDeclarationList() GenericDeclarationList {
+	out := GenericDeclarationList{
+		OpenBrace: *parser.expect(LSquareBrT),
+	}
+
+	for parser.currentToken().TType != RSquareBrT {
+		name := *parser.expect(SymbolT)
+
+		var supertype Expression = nil
+		if parser.currentToken().TType == SubtypeT {
+			parser.advance()
+			supertype = parser.grabExpression(add_sub_prec)
+		}
+
+		out.Declarations = append(out.Declarations, GenericDeclaration{Name: name, Supertype: supertype})
+
+		if parser.currentToken().TType == CommaT {
+			parser.advance()
+		} else {
+			break
+		}
+	}
+
+	parser.expect(RSquareBrT)
+
+	return out
+}
+
 func (parser *Parser) grabFunctionDefinition(prec int) FunctionExpression {
 	fn := *parser.expect(FnT)
 
 	var name *Token = nil
 	if parser.currentToken().TType == SymbolT {
-		name = parser.currentToken()
-		parser.advance()
+		name = parser.expect(SymbolT)
+	}
+
+	var gdl GenericDeclarationList
+	if parser.currentToken().TType == LSquareBrT {
+		gdl = parser.grabGenericDeclarationList()
 	}
 
 	parser.expect(LParT)
@@ -601,6 +633,7 @@ func (parser *Parser) grabFunctionDefinition(prec int) FunctionExpression {
 	return FunctionExpression{
 		FnToken: fn,
 		Name:    name,
+		GDL:     gdl,
 		Argdefs: argdefs,
 		Rtype:   rtype,
 		Right:   right,

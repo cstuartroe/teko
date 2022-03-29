@@ -1,11 +1,11 @@
 /* EXPECT ERROR
 
-Syntax Error (tests/primepowers.to:18:14)
-fn object_str[T](t: T) {
-             ^
-Expected (  */
+Syntax Error (tests/primepowers.to:23:9)
+        {to_str: fn(): str}: val$,
+        ^
+Expected symbol    */
 
-// Eventually I'd like this to pass but first I need to implement generics and string interpolation
+// Eventually I'd like this to pass but first I need to implement generics, switch-case, and string interpolation
 
 primes := [2, 3, 5, 7, 11, 13, 17, 19]
 
@@ -18,14 +18,14 @@ type PrimePower = {
 fn object_str[T](t: T) {
   "{" +
   "".join(
-    members(t).map(fn(name: str, val: {}) ->
+    members(t).map(fn(name: str, val: {}) {
       val_str := switch val {
         {to_str: fn(): str}: val$,
         default: object_str(val)
       }
 
       "${name}: ${val_str}, "
-    )
+    })
   ) + "}"
 }
 
