@@ -1,3 +1,10 @@
+/* EXPECT ERROR
+
+Type Error (tests/generics.to:33:9)
+b = bar(false)
+        ^
+Cannot resolve Generic[int] to bool   */
+
 fn ident[T](t: T): T -> t
 
 n: var int = ident(0)
@@ -18,3 +25,9 @@ fn get_foo(t) -> t.foo
 n = get_foo({foo: 0})
 
 b = get_foo({foo: false})
+
+fn bar(t) -> 0 + t
+
+n = bar(0)
+
+b = bar(false)

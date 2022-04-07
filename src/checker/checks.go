@@ -89,7 +89,17 @@ func (c *Checker) checkExpressionAllowingVar(expr lexparse.Expression, expectedT
 		expr.Token().Raise(shared.TypeError, "Evaluated to nil type")
 	}
 	if (expectedType != nil) && !isTekoSubtype(ttype, expectedType) {
-		expr.Token().Raise(shared.TypeError, "Actual type "+ttype.tekotypeToString()+" does not fulfill expected type "+expectedType.tekotypeToString())
+		switch p := ttype.(type) {
+		case *GenericType:
+			if isTekoSubtype(expectedType, ttype) {
+				p.ttype = expectedType
+			} else {
+				expr.Token().Raise(shared.TypeError, p.tekotypeToString()+" cannot be inferred to "+expectedType.tekotypeToString())
+			}
+
+		default:
+			expr.Token().Raise(shared.TypeError, "Actual type "+ttype.tekotypeToString()+" does not fulfill expected type "+expectedType.tekotypeToString())
+		}
 	}
 
 	if expectedType == nil {
@@ -208,7 +218,12 @@ func (c *Checker) resolveArg(arg lexparse.Expression, ttype TekoType) {
 			c.checkExpression(arg, resolved_type)
 		} else {
 			resolve_to := c.checkExpression(arg, nil)
-			c.resolveGeneric(p, resolve_to)
+
+			if isTekoSubtype(resolve_to, p) {
+				c.resolveGeneric(p, resolve_to)
+			} else {
+				arg.Token().Raise(shared.TypeError, "Cannot resolve "+p.tekotypeToString()+" to "+resolve_to.tekotypeToString())
+			}
 		}
 
 	default:
