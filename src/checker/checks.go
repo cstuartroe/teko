@@ -157,7 +157,10 @@ func (c *Checker) declare(symbol lexparse.Token, right lexparse.Expression, teko
 }
 
 func (c *Checker) checkCallExpression(expr lexparse.CallExpression) TekoType {
-	receiver_tekotype := c.checkExpression(expr.Receiver, nil)
+	call_checker := NewChecker(c) // for resolving generics
+	call_checker.generic_resolutions = map[*GenericType]TekoType{}
+
+	receiver_tekotype := call_checker.checkExpression(expr.Receiver, nil)
 
 	switch ftype := receiver_tekotype.(type) {
 	case *FunctionType:
@@ -169,10 +172,22 @@ func (c *Checker) checkCallExpression(expr lexparse.CallExpression) TekoType {
 				expr.Token().Raise(shared.ArgumentError, "Argument was not passed: "+argdef.name)
 			}
 
-			c.checkExpression(arg, argdef.ttype)
+			call_checker.resolveArg(arg, argdef.ttype)
 		}
 
-		return ftype.rtype
+		switch p := ftype.rtype.(type) {
+		case *GenericType:
+			resolution, ok := call_checker.generic_resolutions[p]
+
+			if !ok {
+				panic("Generic not resolved by arguments?")
+			}
+
+			return resolution
+
+		default:
+			return ftype.rtype
+		}
 
 	case FunctionType:
 		panic("Use *FunctionType instead of FunctionType")
@@ -180,6 +195,24 @@ func (c *Checker) checkCallExpression(expr lexparse.CallExpression) TekoType {
 	default:
 		expr.Token().Raise(shared.TypeError, "Expression does not have a function type")
 		return nil
+	}
+}
+
+func (c *Checker) resolveArg(arg lexparse.Expression, ttype TekoType) {
+	switch p := ttype.(type) {
+
+	case *GenericType:
+		resolved_type, ok := c.generic_resolutions[p]
+
+		if ok {
+			c.checkExpression(arg, resolved_type)
+		} else {
+			resolve_to := c.checkExpression(arg, nil)
+			c.resolveGeneric(p, resolve_to)
+		}
+
+	default:
+		c.checkExpression(arg, ttype)
 	}
 }
 
@@ -192,12 +225,22 @@ func (c *Checker) checkAttributeExpression(expr lexparse.AttributeExpression) Te
 		left_tekotype = c.checkExpression(expr.Left, nil)
 	}
 
-	tekotype := getField(left_tekotype, string(expr.Symbol.Value))
+	name := string(expr.Symbol.Value)
+	tekotype := getField(left_tekotype, name)
+
 	if tekotype != nil {
 		return tekotype
 	} else {
-		expr.Symbol.Raise(shared.NameError, "No such field: "+string(expr.Symbol.Value)+" on "+left_tekotype.tekotypeToString())
-		return nil
+		switch p := left_tekotype.(type) {
+		case *GenericType:
+			out := newGenericType("")
+			p.addField(name, out)
+			return out
+
+		default:
+			expr.Symbol.Raise(shared.NameError, "No such field: "+string(expr.Symbol.Value)+" on "+left_tekotype.tekotypeToString())
+			return nil
+		}
 	}
 }
 
@@ -305,15 +348,25 @@ func (c *Checker) checkFunctionDefinition(expr lexparse.FunctionExpression) Teko
 
 	argdefs := []FunctionArgDef{}
 
+	for _, gd := range expr.GDL.Declarations {
+		blockChecker.declareNamedType(
+			gd.Name,
+			newGenericType(string(gd.Name.Value)),
+		)
+	}
+
 	for _, ad := range expr.Argdefs {
+		var ttype TekoType
+
 		if ad.Tekotype == nil {
-			ad.Symbol.Raise(shared.NotImplementedError, "Type inference for function arguments not yet implemented")
+			ttype = newGenericType("")
+		} else {
+			ttype = blockChecker.evaluateType(ad.Tekotype)
+			if isvar(ttype) {
+				ad.Tekotype.Token().Raise(shared.TypeError, "Function arguments cannot be mutable. Complain to Conor if you hate this fact.")
+			}
 		}
 
-		ttype := c.evaluateType(ad.Tekotype)
-		if isvar(ttype) {
-			ad.Tekotype.Token().Raise(shared.TypeError, "Function arguments cannot be mutable. Complain to Conor if you hate this fact.")
-		}
 		blockChecker.declareFieldType(ad.Symbol, ttype)
 
 		// TODO: get argdefs from blockChecker
@@ -325,7 +378,7 @@ func (c *Checker) checkFunctionDefinition(expr lexparse.FunctionExpression) Teko
 
 	var rtype TekoType = nil
 	if expr.Rtype != nil {
-		rtype = c.evaluateType(expr.Rtype)
+		rtype = blockChecker.evaluateType(expr.Rtype)
 	}
 
 	ftype := &FunctionType{

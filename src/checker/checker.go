@@ -66,8 +66,9 @@ func (ctype *CheckerType) setField(name string, tekotype TekoType) {
 }
 
 type Checker struct {
-	typeTable *TypeTable
-	ctype     *CheckerType
+	typeTable           *TypeTable
+	ctype               *CheckerType
+	generic_resolutions map[*GenericType]TekoType
 }
 
 func NewChecker(parent *Checker) Checker {

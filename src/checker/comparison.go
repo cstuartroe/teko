@@ -22,6 +22,9 @@ func isTekoSubtype(sub TekoType, sup TekoType) bool {
 			return false // TODO
 		}
 
+	case *GenericType:
+		return isTekoSubtype(sub, psup.ttype)
+
 	case FunctionType:
 		panic("type is not a pointer: " + sup.tekotypeToString())
 	case UnionType:

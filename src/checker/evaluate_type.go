@@ -66,7 +66,7 @@ func (c *Checker) evaluateSimpleType(expr lexparse.SimpleExpression) TekoType {
 }
 
 func (c *Checker) evaluateObjectType(expr lexparse.ObjectExpression) *BasicType {
-	out := newBasicType("")
+	out := newBasicType("") // TODO: Do we need object type name? If so, set it.
 
 	for _, field := range expr.Fields {
 		out.setField(string(field.Symbol.Value), c.evaluateType(field.Value))

@@ -1,5 +1,20 @@
 fn ident[T](t: T): T -> t
 
-n: int = ident(0)
+n: var int = ident(0)
 
-b: bool = ident(false)
+b: var bool = ident(false)
+
+// Generics can be implicit
+
+fn implicit_ident(t) -> t
+
+n = implicit_ident(0)
+
+// Generics can even implicitly beget generics
+
+// Equivalent to: fn get_foo[S, T <: {foo: S}](t: T): S -> t.foo
+fn get_foo(t) -> t.foo 
+
+n = get_foo({foo: 0})
+
+b = get_foo({foo: false})
