@@ -202,8 +202,15 @@ func (c *Checker) checkAttributeExpression(expr lexparse.AttributeExpression) Te
 	} else {
 		switch p := left_tekotype.(type) {
 		case *GenericType:
+			if !c.isDeclared(p) {
+				panic("Generic must be declared")
+			}
+
 			out := newGenericType("")
+
 			p.addField(name, out)
+			c.declareGeneric(out)
+
 			return out
 
 		default:
