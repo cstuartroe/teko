@@ -82,3 +82,19 @@ func newConstantStringType(s []rune) TekoType {
 
 	return out
 }
+
+func deconstantize(ttype TekoType) TekoType {
+	switch p := ttype.(type) {
+	case *ConstantType:
+		switch p.ctype {
+		case IntConstant:
+			return IntType
+		case StringConstant:
+			return StringType
+		default:
+			panic("Unknown constant type: " + ttype.tekotypeToString())
+		}
+	default:
+		return ttype
+	}
+}

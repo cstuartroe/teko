@@ -1,6 +1,6 @@
 /* EXPECT ERROR
 
-Type Error (tests/generics.to:45:9)
+Type Error (tests/generics.to:56:9)
 b = bar(false)
         ^
 Actual type bool does not fulfill expected type Generic[int]   */
@@ -11,13 +11,24 @@ n: var int = ident(0)
 
 b: var bool = ident(false)
 
-println("In the teko file")
+// Structural typing extends to self-reference
+
+// type SelfReferencer1 = {
+//   x: SelfReferencer1 | str,
+// }
+
+// type SelfReferencer2 = {
+//   x: SelfReferencer2 | str
+// }
+
+// sr1 : SelfReferencer1 = {x: "sr"}
+// sr2 : SelfReferencer2 = sr1
 
 // Generic types can also be present only as an attribute of other types
 
-fn list_name[T](o: {name: T}): T -> o.name
+fn list_name[T](o: {name: T}) -> [o.name]
 
-println(list_name({name: "boo"}))
+println(list_name({name: "boo"})$)
 
 // println(list_name({name: 3}))
 

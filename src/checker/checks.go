@@ -174,7 +174,7 @@ func (c *Checker) checkCallExpression(expr lexparse.CallExpression) TekoType {
 			call_checker.checkExpression(arg, argdef.ttype)
 		}
 
-		return call_checker.translateType(ftype.rtype)
+		return call_checker.degenericizeReturnType(ftype.rtype)
 
 	case FunctionType:
 		panic("Use *FunctionType instead of FunctionType")
@@ -231,22 +231,6 @@ func (c *Checker) checkIfExpression(expr lexparse.IfExpression, expectedType Tek
 	}
 
 	return then_tekotype
-}
-
-func deconstantize(ttype TekoType) TekoType {
-	switch p := ttype.(type) {
-	case *ConstantType:
-		switch p.ctype {
-		case IntConstant:
-			return IntType
-		case StringConstant:
-			return StringType
-		default:
-			panic("Unknown constant type: " + ttype.tekotypeToString())
-		}
-	default:
-		return ttype
-	}
 }
 
 func (c *Checker) checkSequenceExpression(expr lexparse.SequenceExpression, expectedType TekoType) TekoType {

@@ -65,6 +65,8 @@ func makeSetFields(etype TekoType) map[string]TekoType {
 }
 
 func newSetType(etype TekoType) *SetType {
+	etype = deconstantize(etype)
+
 	stype := &SetType{
 		etype:  etype,
 		fields: makeSetFields(etype),
@@ -162,6 +164,8 @@ func (t ArrayType) allFields() map[string]TekoType {
 // }
 
 func newArrayType(etype TekoType) *ArrayType {
+	etype = deconstantize(etype)
+
 	atype := &ArrayType{
 		etype:  etype,
 		fields: makeMapFields(IntType, etype),
