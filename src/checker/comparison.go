@@ -16,7 +16,19 @@ func (c *Checker) translateType(ttype TekoType) TekoType {
 		}
 
 	case *FunctionType:
-		return nil // TODO
+		argdefs := []FunctionArgDef{}
+
+		for _, argdef := range p.argdefs {
+			argdefs = append(argdefs, FunctionArgDef{
+				name:  argdef.name,
+				ttype: c.translateType(ttype),
+			})
+		}
+
+		return &FunctionType{
+			rtype:   c.translateType(p.rtype),
+			argdefs: argdefs,
+		}
 
 	default:
 		return ttype
