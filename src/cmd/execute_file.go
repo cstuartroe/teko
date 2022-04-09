@@ -26,7 +26,7 @@ func ExecuteFileSafe(filename string) {
 	defer func() {
 		if r := recover(); r == shared.TekoErrorMessage {
 			os.Exit(1)
-		} else {
+		} else if r != nil {
 			panic(r)
 		}
 	}()

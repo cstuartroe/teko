@@ -28,9 +28,17 @@ func (c *Checker) isTekoSubtype(sub TekoType, sup TekoType) bool {
 		return true
 	}
 
+	switch psub := sub.(type) {
+	case *GenericType:
+		if c.isDeclared(psub) && psub.ttype == nil {
+			psub.ttype = sup
+			return true
+		}
+	}
+
 	switch psup := sup.(type) {
 	case *GenericType:
-		if !c.isTekoSubtype(sub, psup.ttype) {
+		if !(psup.ttype == nil || c.isTekoSubtype(sub, psup.ttype)) {
 			return false
 		}
 

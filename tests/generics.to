@@ -1,9 +1,9 @@
 /* EXPECT ERROR
 
-Type Error (tests/generics.to:41:9)
+Type Error (tests/generics.to:45:9)
 b = bar(false)
         ^
-Cannot resolve Generic[int] to bool   */
+Actual type bool does not fulfill expected type Generic[int]   */
 
 fn ident[T](t: T): T -> t
 
