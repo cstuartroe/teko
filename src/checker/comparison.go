@@ -1,29 +1,67 @@
 package checker
 
-func isTekoSubtype(sub TekoType, sup TekoType) bool {
+func (c *Checker) translateType(ttype TekoType) TekoType {
+	switch p := ttype.(type) {
+	case *GenericType:
+		return c.generic_resolutions[p]
+
+	case *UnionType:
+		types := []TekoType{}
+		for _, ttype := range p.types {
+			types = append(types, c.translateType(ttype))
+		}
+
+		return &UnionType{
+			types: types,
+		}
+
+	case *FunctionType:
+		return nil // TODO
+
+	default:
+		return ttype
+	}
+}
+
+func (c *Checker) isTekoSubtype(sub TekoType, sup TekoType) bool {
 	if sub == sup {
 		return true
 	}
 
 	switch psup := sup.(type) {
+	case *GenericType:
+		if !c.isTekoSubtype(sub, psup.ttype) {
+			return false
+		}
+
+		if !c.isDeclared(psup) {
+			_, resolved := c.generic_resolutions[psup]
+
+			if !resolved {
+				c.generic_resolutions[psup] = sub
+			} else {
+				// TODO: common ancestor type
+				panic("Please implement")
+			}
+		}
+
+		return true
+
 	case *UnionType:
 		switch psub := sub.(type) {
 		case *UnionType:
-			return isUnionSubtype(psub, psup)
+			return c.isUnionSubtype(psub, psup)
 		default:
-			return isTypeInUnion(psub, psup)
+			return c.isTypeInUnion(psub, psup)
 		}
 
 	case *FunctionType:
 		switch psub := sub.(type) {
 		case *FunctionType:
-			return isFunctionSubtype(psub, psup)
+			return c.isFunctionSubtype(psub, psup)
 		default:
-			return false // TODO
+			return false // TODO: some resolving generics should be ok
 		}
-
-	case *GenericType:
-		return isTekoSubtype(sub, psup.ttype)
 
 	case FunctionType:
 		panic("type is not a pointer: " + sup.tekotypeToString())
@@ -31,14 +69,27 @@ func isTekoSubtype(sub TekoType, sup TekoType) bool {
 		panic("type is not a pointer: " + sup.tekotypeToString())
 
 	default:
-		return isObjectSubtype(sub, psup)
+		return c.isObjectSubtype(sub, psup)
 	}
 }
 
-func isObjectSubtype(sub TekoType, sup TekoType) bool {
+func (c *Checker) isObjectSubtype(sub TekoType, sup TekoType) bool {
 	for name, ttype := range sup.allFields() {
 		sub_ttype := getField(sub, name)
-		if (sub_ttype == nil) || !isTekoSubtype(sub_ttype, ttype) {
+
+		if sub_ttype == nil {
+			switch psub := sub.(type) {
+			case *GenericType:
+				if c.isDeclared(psub) {
+					psub.addField(name, ttype)
+				} else {
+					panic("How should this scenario be handled?")
+				}
+
+			default:
+				return false
+			}
+		} else if !c.isTekoSubtype(sub_ttype, ttype) {
 			return false
 		}
 	}
@@ -46,8 +97,8 @@ func isObjectSubtype(sub TekoType, sup TekoType) bool {
 	return true
 }
 
-func isFunctionSubtype(fsub *FunctionType, fsup *FunctionType) bool {
-	if !isTekoSubtype(fsub.rtype, fsup.rtype) {
+func (c *Checker) isFunctionSubtype(fsub *FunctionType, fsup *FunctionType) bool {
+	if !c.isTekoSubtype(fsub.rtype, fsup.rtype) {
 		return false
 	}
 
@@ -63,7 +114,7 @@ func isFunctionSubtype(fsub *FunctionType, fsup *FunctionType) bool {
 		}
 
 		// Yes, this is the right order.
-		if !isTekoSubtype(sup_argdef.ttype, sub_argdef.ttype) {
+		if !c.isTekoSubtype(sup_argdef.ttype, sub_argdef.ttype) {
 			return false
 		}
 
@@ -75,9 +126,9 @@ func isFunctionSubtype(fsub *FunctionType, fsup *FunctionType) bool {
 	return true
 }
 
-func isTypeInUnion(sub TekoType, sup *UnionType) bool {
+func (c *Checker) isTypeInUnion(sub TekoType, sup *UnionType) bool {
 	for _, ttype := range sup.types {
-		if isTekoSubtype(sub, ttype) {
+		if c.isTekoSubtype(sub, ttype) {
 			return true
 		}
 	}
@@ -85,10 +136,10 @@ func isTypeInUnion(sub TekoType, sup *UnionType) bool {
 	return false
 }
 
-func isUnionSubtype(usub *UnionType, usup *UnionType) bool {
-	return false
+func (c *Checker) isUnionSubtype(usub *UnionType, usup *UnionType) bool {
+	return false // TODO
 }
 
-func isTekoEqType(t1 TekoType, t2 TekoType) bool {
-	return isTekoSubtype(t1, t2) && isTekoSubtype(t2, t1)
+func (c *Checker) isTekoEqType(t1 TekoType, t2 TekoType) bool {
+	return c.isTekoSubtype(t1, t2) && c.isTekoSubtype(t2, t1)
 }

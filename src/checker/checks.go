@@ -88,18 +88,8 @@ func (c *Checker) checkExpressionAllowingVar(expr lexparse.Expression, expectedT
 	if ttype == nil {
 		expr.Token().Raise(shared.TypeError, "Evaluated to nil type")
 	}
-	if (expectedType != nil) && !isTekoSubtype(ttype, expectedType) {
-		switch p := ttype.(type) {
-		case *GenericType:
-			if isTekoSubtype(expectedType, ttype) {
-				p.ttype = expectedType
-			} else {
-				expr.Token().Raise(shared.TypeError, p.tekotypeToString()+" cannot be inferred to "+expectedType.tekotypeToString())
-			}
-
-		default:
-			expr.Token().Raise(shared.TypeError, "Actual type "+ttype.tekotypeToString()+" does not fulfill expected type "+expectedType.tekotypeToString())
-		}
+	if (expectedType != nil) && !c.isTekoSubtype(ttype, expectedType) {
+		expr.Token().Raise(shared.TypeError, "Actual type "+ttype.tekotypeToString()+" does not fulfill expected type "+expectedType.tekotypeToString())
 	}
 
 	if expectedType == nil {
@@ -167,8 +157,7 @@ func (c *Checker) declare(symbol lexparse.Token, right lexparse.Expression, teko
 }
 
 func (c *Checker) checkCallExpression(expr lexparse.CallExpression) TekoType {
-	call_checker := NewChecker(c) // for resolving generics
-	call_checker.generic_resolutions = map[*GenericType]TekoType{}
+	call_checker := NewChecker(c)
 
 	receiver_tekotype := call_checker.checkExpression(expr.Receiver, nil)
 
@@ -182,22 +171,10 @@ func (c *Checker) checkCallExpression(expr lexparse.CallExpression) TekoType {
 				expr.Token().Raise(shared.ArgumentError, "Argument was not passed: "+argdef.name)
 			}
 
-			call_checker.resolveArg(arg, argdef.ttype)
+			call_checker.checkExpression(arg, argdef.ttype)
 		}
 
-		switch p := ftype.rtype.(type) {
-		case *GenericType:
-			resolution, ok := call_checker.generic_resolutions[p]
-
-			if !ok {
-				panic("Generic not resolved by arguments?")
-			}
-
-			return resolution
-
-		default:
-			return ftype.rtype
-		}
+		return call_checker.translateType(ftype.rtype)
 
 	case FunctionType:
 		panic("Use *FunctionType instead of FunctionType")
@@ -205,29 +182,6 @@ func (c *Checker) checkCallExpression(expr lexparse.CallExpression) TekoType {
 	default:
 		expr.Token().Raise(shared.TypeError, "Expression does not have a function type")
 		return nil
-	}
-}
-
-func (c *Checker) resolveArg(arg lexparse.Expression, ttype TekoType) {
-	switch p := ttype.(type) {
-
-	case *GenericType:
-		resolved_type, ok := c.generic_resolutions[p]
-
-		if ok {
-			c.checkExpression(arg, resolved_type)
-		} else {
-			resolve_to := c.checkExpression(arg, nil)
-
-			if isTekoSubtype(resolve_to, p) {
-				c.resolveGeneric(p, resolve_to)
-			} else {
-				arg.Token().Raise(shared.TypeError, "Cannot resolve "+p.tekotypeToString()+" to "+resolve_to.tekotypeToString())
-			}
-		}
-
-	default:
-		c.checkExpression(arg, ttype)
 	}
 }
 
@@ -360,21 +314,24 @@ func (c *Checker) checkObjectExpression(expr lexparse.ObjectExpression, expected
 
 func (c *Checker) checkFunctionDefinition(expr lexparse.FunctionExpression) TekoType {
 	blockChecker := NewChecker(c)
+	blockChecker.declared_generics = map[*GenericType]bool{}
 
 	argdefs := []FunctionArgDef{}
 
 	for _, gd := range expr.GDL.Declarations {
-		blockChecker.declareNamedType(
-			gd.Name,
-			newGenericType(string(gd.Name.Value)),
-		)
+		g := newGenericType(string(gd.Name.Value))
+
+		blockChecker.declareGeneric(g)
+		blockChecker.declareNamedType(gd.Name, g)
 	}
 
 	for _, ad := range expr.Argdefs {
 		var ttype TekoType
 
 		if ad.Tekotype == nil {
-			ttype = newGenericType("")
+			g := newGenericType("")
+			blockChecker.declareGeneric(g)
+			ttype = g
 		} else {
 			ttype = blockChecker.evaluateType(ad.Tekotype)
 			if isvar(ttype) {

@@ -6,8 +6,9 @@ import (
 )
 
 type TypeTable struct {
-	parent *TypeTable
-	table  map[string]TekoType
+	parent            *TypeTable
+	table             map[string]TekoType
+	declared_generics map[*GenericType]bool
 }
 
 func (ttable *TypeTable) get(name string) TekoType {
@@ -68,19 +69,22 @@ func (ctype *CheckerType) setField(name string, tekotype TekoType) {
 type Checker struct {
 	typeTable           *TypeTable
 	ctype               *CheckerType
+	declared_generics   map[*GenericType]bool
 	generic_resolutions map[*GenericType]TekoType
 }
 
 func NewChecker(parent *Checker) Checker {
 	c := Checker{
 		typeTable: &TypeTable{
-			parent: parent.typeTable,
-			table:  map[string]TekoType{},
+			parent:            parent.typeTable,
+			table:             map[string]TekoType{},
+			declared_generics: map[*GenericType]bool{},
 		},
 		ctype: &CheckerType{
 			fields: map[string]TekoType{},
 			parent: parent.ctype,
 		},
+		generic_resolutions: map[*GenericType]TekoType{},
 	}
 
 	return c

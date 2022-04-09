@@ -1,6 +1,6 @@
 /* EXPECT ERROR
 
-Type Error (tests/generics.to:33:9)
+Type Error (tests/generics.to:41:9)
 b = bar(false)
         ^
 Cannot resolve Generic[int] to bool   */
@@ -11,20 +11,32 @@ n: var int = ident(0)
 
 b: var bool = ident(false)
 
+println("In the teko file")
+
+// Generic types can also be present only as an attribute of other types
+
+fn list_name[T](o: {name: T}): T -> o.name
+
+println(list_name({name: "boo"}))
+
+// println(list_name({name: 3}))
+
 // Generics can be implicit
 
 fn implicit_ident(t) -> t
 
 n = implicit_ident(0)
 
-// Generics can even implicitly beget generics
+// // Generics can even implicitly beget generics
 
-// Equivalent to: fn get_foo[S, T <: {foo: S}](t: T): S -> t.foo
+// // Equivalent to: fn get_foo[S, T <: {foo: S}](t: T): S -> t.foo
 fn get_foo(t) -> t.foo 
 
 n = get_foo({foo: 0})
 
 b = get_foo({foo: false})
+
+// // Generics are subject to type inference
 
 fn bar(t) -> 0 + t
 

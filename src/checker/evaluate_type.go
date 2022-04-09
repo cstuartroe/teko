@@ -82,7 +82,7 @@ func (c *Checker) evaluateUnionType(expr lexparse.BinopExpression) TekoType {
 
 	// TODO raise on something like `int | int`
 
-	return unionTypes(
+	return c.unionTypes(
 		c.evaluateType(expr.Left),
 		c.evaluateType(expr.Right),
 	)

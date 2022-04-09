@@ -21,8 +21,8 @@ func (ut UnionType) allFields() map[string]TekoType {
 	return map[string]TekoType{} // TODO should actually be all fields shared by types
 }
 
-func unionTypes(t1 TekoType, t2 TekoType) TekoType {
-	if isTekoEqType(t1, t2) {
+func (c *Checker) unionTypes(t1 TekoType, t2 TekoType) TekoType {
+	if c.isTekoEqType(t1, t2) {
 		return t1
 	}
 

@@ -24,7 +24,7 @@ type Token struct {
 	Value []rune
 }
 
-func (t Token) to_str() string {
+func (t Token) ToStr() string {
 	return fmt.Sprintf(
 		"{line: %d, col: %d, type: %s, value: %s}",
 		t.Line.Num,
@@ -35,7 +35,7 @@ func (t Token) to_str() string {
 }
 
 func (t Token) to_indented_str(indent int) string {
-	return strings.Repeat(" ", indent*INDENT_AMOUNT) + t.to_str() + "\n"
+	return strings.Repeat(" ", indent*INDENT_AMOUNT) + t.ToStr() + "\n"
 }
 
 func raiseTekoError(line *Line, col int, errorClass shared.TekoErrorClass, message string) {

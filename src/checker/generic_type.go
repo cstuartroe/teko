@@ -27,17 +27,26 @@ func newGenericType(name string) *GenericType {
 	}
 }
 
-func (c *Checker) resolveGeneric(generic *GenericType, resolution TekoType) {
-	if !isTekoSubtype(resolution, generic.ttype) {
-		panic("Can't resolve a generic to non-subtype")
+func (tt *TypeTable) isDeclared(g *GenericType) bool {
+	_, ok := tt.declared_generics[g]
+
+	if ok {
+		return true
+	} else if tt.parent == nil {
+		return false
+	} else {
+		return tt.parent.isDeclared(g)
+	}
+}
+
+func (c *Checker) isDeclared(g *GenericType) bool {
+	return c.typeTable.isDeclared(g)
+}
+
+func (c *Checker) declareGeneric(g *GenericType) {
+	if c.isDeclared(g) {
+		panic("Cannot redeclare generic")
 	}
 
-	c.generic_resolutions[generic] = resolution
-
-	for name, ttype := range generic.allFields() {
-		switch p := ttype.(type) {
-		case *GenericType:
-			c.resolveGeneric(p, getField(resolution, name))
-		}
-	}
+	c.typeTable.declared_generics[g] = true
 }
