@@ -54,3 +54,24 @@ func (ttype *BasicType) setField(name string, tekotype TekoType) {
 
 	ttype.fields[name] = tekotype
 }
+
+func (c *Checker) greatestCommonAncestor(t1 TekoType, t2 TekoType) TekoType {
+	if c.isTekoEqType(t1, t2) {
+		return t1
+	}
+
+	fields := map[string]TekoType{}
+
+	for name, ttype1 := range t1.allFields() {
+		ttype2 := getField(t2, name)
+
+		if ttype2 != nil {
+			fields[name] = c.unionTypes(ttype1, ttype2)
+		}
+	}
+
+	return &BasicType{
+		name:   "",
+		fields: fields,
+	}
+}

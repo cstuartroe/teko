@@ -147,22 +147,6 @@ func (t ArrayType) allFields() map[string]TekoType {
 	return t.fields
 }
 
-// func forEachType(etype TekoType) *FunctionType {
-// 	rtype := newGenericType("")
-
-// 	return &FunctionType{
-// 		rtype: rtype,
-// 		argdefs: []FunctionArgDef{
-// 			{
-// 				name: "f",
-// 				ttype: &FunctionType{
-// 					rtype:
-// 				}
-// 			}
-// 		}
-// 	}
-// }
-
 func newArrayType(etype TekoType) *ArrayType {
 	etype = deconstantize(etype)
 
@@ -181,8 +165,6 @@ func newArrayType(etype TekoType) *ArrayType {
 		},
 	}
 
-	// atype.fields["forEach"] = forEachType(etype)
-
 	return atype
 }
 
@@ -200,4 +182,29 @@ var PrintType *FunctionType = &FunctionType{
 
 func SetupStringTypes() {
 	*StringType = *newArrayType(CharType)
+}
+
+var mapGenericA *GenericType = newGenericType("")
+var mapGenericB *GenericType = newGenericType("")
+
+var arrayMapType *FunctionType = &FunctionType{
+	rtype: newArrayType(mapGenericB),
+	argdefs: []FunctionArgDef{
+		{
+			name: "f",
+			ttype: &FunctionType{
+				rtype: mapGenericB,
+				argdefs: []FunctionArgDef{
+					{
+						name:  "e",
+						ttype: mapGenericA,
+					},
+				},
+			},
+		},
+		{
+			name:  "l",
+			ttype: newArrayType(mapGenericA),
+		},
+	},
 }

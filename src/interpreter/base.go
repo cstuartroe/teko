@@ -33,6 +33,7 @@ var TekoPrint TekoFunction = customExecutedFunction(TekoPrintExecutor, []string{
 
 var StdLibFieldValues map[string]*TekoObject = map[string]*TekoObject{
 	"print": tp(TekoPrint),
+	"map":   tp(ArrayMap),
 }
 
 var StdLibSymbolTable SymbolTable = SymbolTable{

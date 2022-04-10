@@ -16,6 +16,7 @@ var stdlibTypeTable *TypeTable = &TypeTable{
 
 var StdlibSymbolTable map[string]TekoType = map[string]TekoType{
 	"print": PrintType,
+	"map":   arrayMapType,
 }
 
 var stdLibType *CheckerType = &CheckerType{

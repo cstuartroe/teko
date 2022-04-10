@@ -102,24 +102,13 @@ func (c *Checker) isTekoSubtypeWithAncestry(sub TekoTypeWithAncestry, sup TekoTy
 		}
 
 		if !c.isDeclared(psup) {
-			_, resolved := c.generic_resolutions[psup]
-
-			// fmt.Printf("%p\n", c)
-			// fmt.Println(c.generic_resolutions)
-			// fmt.Println(psup)
-			// fmt.Println(psup.tekotypeToString())
-			// fmt.Printf("%p\n", sub)
-			// fmt.Println(sub.tekotypeToString())
+			resolution, resolved := c.generic_resolutions[psup]
 
 			if !resolved {
 				c.generic_resolutions[psup] = sub.ttype
 			} else {
-				// TODO: common ancestor type
-				panic("Please implement")
+				c.generic_resolutions[psup] = c.greatestCommonAncestor(resolution, sub.ttype)
 			}
-
-			// fmt.Println(c.generic_resolutions)
-			// fmt.Println("")
 		}
 
 		return true
@@ -160,8 +149,12 @@ func (c *Checker) isObjectSubtype(sub TekoTypeWithAncestry, sup TekoTypeWithAnce
 			case *GenericType:
 				if c.isDeclared(psub) {
 					psub.addField(name, sup_ta.ttype)
+					// TODO: is this logic right?
+				} else if resolution, ok := c.generic_resolutions[psub]; ok {
+					return c.isObjectSubtype(TekoTypeWithAncestry{ttype: resolution, ancestors: sub.ancestors}, sup)
 				} else {
-					panic("How should this scenario be handled?")
+					c.generic_resolutions[psub] = sup.ttype
+					return true
 				}
 
 			default:

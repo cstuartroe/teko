@@ -4,6 +4,10 @@ println(arr.size$)
 println(if arr.includes(1) then "yeppers" else "nopers")
 println(arr$)
 
+fn int_to_str(e: int) -> e.to_str()
+
+println(map(int_to_str, arr)$)
+
 /* EXPECT
 1
 10

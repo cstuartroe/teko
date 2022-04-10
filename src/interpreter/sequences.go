@@ -80,16 +80,16 @@ func ArrayToStrExecutor(receiverElements []*TekoObject) executorType {
 
 		return tp(newArray(
 			append(
-				[]*TekoObject{tp(TekoChar{'['})},
+				[]*TekoObject{tp(newChar('['))},
 				append(
 					join(
 						elements,
 						[]*TekoObject{
-							tp(TekoChar{','}),
-							tp(TekoChar{' '}),
+							tp(newChar(',')),
+							tp(newChar(' ')),
 						},
 					),
-					tp(TekoChar{']'}),
+					tp(newChar(']')),
 				)...,
 			),
 		))
@@ -125,11 +125,45 @@ func newArray(elements []*TekoObject) Array {
 	return Array{elements, newSymbolTable(nil)}
 }
 
+func ArrayMapExecutor(function TekoFunction, evaluatedArgs map[string]*TekoObject) *TekoObject {
+	l, ok := evaluatedArgs["l"]
+	if !ok {
+		panic("No array parameter passed to map")
+	}
+
+	switch lp := (*l).(type) {
+	case Array:
+		f, ok2 := evaluatedArgs["f"]
+		if !ok2 {
+			panic("No function parameter passed to map")
+		}
+
+		switch fp := (*f).(type) {
+		case TekoFunction:
+			elements := []*TekoObject{}
+
+			for _, e := range lp.elements {
+				elements = append(elements, fp.executor(fp, map[string]*TekoObject{"e": e}))
+			}
+
+			return tp(newArray(elements))
+
+		default:
+			panic("Non-function made it past the type checker as an argument to map!")
+		}
+	default:
+		panic("Non-array somehow made it past the type checker as an argument to map!")
+	}
+	return nil
+}
+
+var ArrayMap TekoFunction = customExecutedFunction(ArrayMapExecutor, []string{"f", "l"})
+
 func newTekoString(runes []rune) Array {
 	chars := []*TekoObject{}
 
 	for _, c := range runes {
-		chars = append(chars, tp(TekoChar{value: c}))
+		chars = append(chars, tp(newChar(c)))
 	}
 
 	return newArray(chars)
