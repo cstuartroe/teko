@@ -25,6 +25,9 @@ func (c *Checker) evaluateType(expr lexparse.Expression) TekoType {
 	case lexparse.VarExpression:
 		return c.evaluateVarType(p)
 
+	case lexparse.SliceExpression:
+		return c.evaluateSliceType(p)
+
 	default:
 		panic("Unknown type format!")
 	}
@@ -90,4 +93,12 @@ func (c *Checker) evaluateUnionType(expr lexparse.BinopExpression) TekoType {
 
 func (c *Checker) evaluateVarType(expr lexparse.VarExpression) *VarType {
 	return newVarType(c.evaluateType(expr.Right))
+}
+
+func (c *Checker) evaluateSliceType(expr lexparse.SliceExpression) TekoType {
+	if expr.Inside != nil {
+		panic("Still need to implement fixed-size arrays") // TODO
+	}
+
+	return newArrayType(c.evaluateType(expr.Left))
 }

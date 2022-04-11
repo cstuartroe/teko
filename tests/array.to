@@ -1,5 +1,5 @@
-arr := [1,2,3,4,5] + [6,7,8,9,10]
-println(arr.at(0)$)
+arr : int[] = [1,2,3,4,5] + [6,7,8,9,10]
+println(arr[0]$)
 println(arr.size$)
 println(if arr.includes(1) then "yeppers" else "nopers")
 println(arr$)

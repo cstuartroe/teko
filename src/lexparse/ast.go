@@ -362,3 +362,16 @@ type GenericDeclarationList struct {
 func (gd GenericDeclarationList) Token() Token {
 	return gd.OpenBrace
 }
+
+//---
+
+type SliceExpression struct {
+	Left   Expression
+	Inside Expression
+}
+
+func (e SliceExpression) Token() Token {
+	return e.Left.Token()
+}
+
+func (e SliceExpression) expressionNode() {}

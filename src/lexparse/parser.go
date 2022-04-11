@@ -337,6 +337,43 @@ func (parser *Parser) continueExpression(expr Expression, prec int) Expression {
 				}
 			}
 		}
+
+	case LSquareBrT:
+		br := *parser.expect(LSquareBrT)
+
+		var inside Expression = nil
+		if parser.currentToken().TType != RSquareBrT {
+			inside = parser.grabExpression(min_prec)
+		}
+
+		parser.expect(RSquareBrT)
+
+		if parser.Transform {
+			if inside == nil {
+				br.Raise(shared.SyntaxError, "Empty slice")
+			}
+
+			out = CallExpression{
+				Receiver: AttributeExpression{
+					Left: expr,
+					Symbol: Token{
+						Line:  br.Line,
+						Col:   br.Col,
+						TType: SymbolT,
+						Value: []rune("at"),
+					},
+				},
+				Args: []Expression{
+					inside,
+				},
+				Kwargs: []FunctionKwarg{},
+			}
+		} else {
+			out = SliceExpression{
+				Left:   expr,
+				Inside: inside,
+			}
+		}
 	}
 
 	if out != nil {
@@ -472,6 +509,8 @@ func (parser *Parser) grabArray() SequenceExpression {
 
 func (parser *Parser) grabSet() SequenceExpression {
 	open := *parser.expect(SetT)
+
+	// TODO: Typehints for sets would be nice
 
 	parser.expect(LCurlyBrT)
 
