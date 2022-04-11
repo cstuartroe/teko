@@ -344,10 +344,6 @@ func (c *Checker) checkMapExpression(expr lexparse.MapExpression, expectedType T
 }
 
 func (c *Checker) checkObjectExpression(expr lexparse.ObjectExpression, expectedType TekoType) TekoType {
-	if expectedType == nil {
-		expectedType = VoidType
-	}
-
 	fields := map[string]TekoType{}
 
 	for _, of := range expr.Fields {
@@ -357,11 +353,19 @@ func (c *Checker) checkObjectExpression(expr lexparse.ObjectExpression, expected
 			of.Symbol.Raise(shared.NameError, "Duplicate member")
 		}
 
+		var expectedFieldType TekoType = nil
+		if expectedType != nil {
+			expectedFieldType = getField(expectedType, field_name)
+			if expectedFieldType == nil {
+				of.Symbol.Raise(shared.TypeError, "Object literal cannot have unreachable field")
+			}
+		}
+
 		switch p := of.Value.(type) {
 		case lexparse.VarExpression:
-			fields[field_name] = newVarType(c.checkExpression(p.Right, devar(getField(expectedType, field_name))))
+			fields[field_name] = newVarType(c.checkExpression(p.Right, devar(expectedFieldType)))
 		default:
-			fields[field_name] = c.checkExpression(of.Value, getField(expectedType, field_name))
+			fields[field_name] = c.checkExpression(of.Value, expectedFieldType)
 		}
 	}
 

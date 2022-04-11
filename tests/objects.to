@@ -12,8 +12,13 @@ o : var OType = {
     bar: true,
   },
   n: 3,
-  m: 0,
 }
+
+println(o.foo.foo)
+
+n := "sup"
+nHolder := { n }
+println(nHolder.n)
 
 o = {
   foo: {
@@ -24,12 +29,8 @@ o = {
   other_field: 0,
 }
 
-println(o.foo.foo)
-
-n := "sup"
-nHolder := { n }
-println(nHolder.n)
-
-/* EXPECT 
-foo
-sup */
+/* EXPECT ERROR
+Type Error (tests/objects.to:29:3)
+  other_field: 0,
+  ^
+Object literal cannot have unreachable field */
