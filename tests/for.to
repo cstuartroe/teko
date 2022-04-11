@@ -1,4 +1,4 @@
-third_powers := for n in [1, 3, 4, 7] do {
+third_powers := for n in [1, 3, 4, 7] {
     println((n^2)$)
 
     n^3
@@ -6,13 +6,24 @@ third_powers := for n in [1, 3, 4, 7] do {
 
 println(third_powers$)
 
+// You must put object literals in double curly braces for control blocks
+
+objects := for n in [1, 3, 4, 7] {{
+    number: n,
+    s: n$,
+}}
+
+for obj in objects {
+    println(obj.s)
+}
+
 // For looping preserves reference
 
 o := {name: var "Bob"}
 
 l := [o]
 
-for e in l do {
+for e in l {
     e.name = "Susan"
 }
 
@@ -27,7 +38,7 @@ fakeArray := scope {
     fn at(i: int) -> i - 3
 }
 
-for n in fakeArray do {
+for n in fakeArray {
     println(n$)
 }
 
@@ -37,6 +48,10 @@ for n in fakeArray do {
 16
 49
 [1, 27, 64, 343]
+1
+3
+4
+7
 Susan
 -3
 -2

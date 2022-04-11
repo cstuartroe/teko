@@ -7,9 +7,9 @@ fn Foo(_n: int) -> scope {
 f1 := Foo(1)
 f2 := Foo(2)
 
-if f1 < f2 do {
+if f1 < f2 {
     println("f1 < f2")
-} else do {
+} else {
     println("Nope")
 }
 

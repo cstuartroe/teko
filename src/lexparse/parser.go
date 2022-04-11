@@ -482,6 +482,21 @@ func (parser *Parser) grabSet() SequenceExpression {
 	}
 }
 
+func (parser *Parser) grabControlBlock(prec int) Expression {
+	if parser.currentToken().TType == LCurlyBrT {
+		return DoExpression{
+			DoToken:   nil,
+			Codeblock: parser.grabCodeblock(),
+		}
+	} else {
+		if parser.currentToken().TType == DoT {
+			parser.currentToken().Raise(shared.SyntaxError, "Do keyword not needed in control block")
+		}
+
+		return parser.grabExpression(prec)
+	}
+}
+
 func (parser *Parser) grabIf(prec int) IfExpression {
 	if_token := *parser.expect(IfT)
 
@@ -491,12 +506,12 @@ func (parser *Parser) grabIf(prec int) IfExpression {
 		parser.advance()
 	}
 
-	then := parser.grabExpression(prec)
+	then := parser.grabControlBlock(prec)
 	var else_expr Expression = nil
 
 	if parser.currentToken().TType == ElseT {
 		parser.advance()
-		else_expr = parser.grabExpression(prec)
+		else_expr = parser.grabControlBlock(prec)
 	}
 
 	return IfExpression{
@@ -687,7 +702,7 @@ func (parser *Parser) grabWhileExpression(prec int) WhileExpression {
 	return WhileExpression{
 		WhileToken: *parser.expect(WhileT),
 		Condition:  parser.grabExpression(prec),
-		Body:       parser.grabExpression(prec),
+		Body:       parser.grabControlBlock(prec),
 	}
 }
 
@@ -703,7 +718,7 @@ func (parser *Parser) grabForLoop(prec int) ForExpression {
 		Iterand:  iterand,
 		Tekotype: ttype,
 		Iterator: parser.grabExpression(prec),
-		Body:     parser.grabExpression(prec),
+		Body:     parser.grabControlBlock(prec),
 	}
 }
 
