@@ -1,21 +1,33 @@
 // Until I implement equality checks my options for while loops are pretty ugly
 
-bool1 : var bool = true
-bool2 : var bool = true
-i : var int = 0-1
+i : var int = 90
 
-a := while bool2 do {
-  if bool1 do {
-    bool1 = false
-  } else if bool2 do {
-    bool2 = false
-  } else false
+a := while i != 1 do {
+  println(i$)
 
-  i = i + 1
+  if i % 2 == 0 do {
+    i = i / 2
+  } else do {
+    i = 3*i + 1
+  }
 }
 
-println(a$)
-
 /* EXPECT
-[0, 1]
+90
+45
+136
+68
+34
+17
+52
+26
+13
+40
+20
+10
+5
+16
+8
+4
+2
 */

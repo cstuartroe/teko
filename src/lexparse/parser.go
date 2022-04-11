@@ -307,6 +307,15 @@ func (parser *Parser) continueExpression(expr Expression, prec int) Expression {
 			}
 		}
 
+	case ComparisonT:
+		if prec <= comparison_prec {
+			return ComparisonExpression{
+				Left:       expr,
+				Comparator: *parser.expect(ComparisonT),
+				Right:      parser.grabExpression(comparison_prec + 1),
+			}
+		}
+
 	case PipeT:
 		if prec <= setter_prec {
 			pipe := *parser.expect(PipeT)
@@ -683,5 +692,23 @@ func (parser *Parser) grabScopeExpression() ScopeExpression {
 	return ScopeExpression{
 		ScopeToken: *parser.expect(ScopeT),
 		Codeblock:  parser.grabCodeblock(),
+	}
+}
+
+func ComparisonCallExpression(expr ComparisonExpression) CallExpression {
+	return CallExpression{
+		Receiver: AttributeExpression{
+			Left: expr.Left,
+			Symbol: Token{
+				Line:  expr.Comparator.Line,
+				Col:   expr.Comparator.Col,
+				TType: expr.Comparator.TType,
+				Value: []rune("compare"),
+			},
+		},
+		Args: []Expression{
+			expr.Right,
+		},
+		Kwargs: []FunctionKwarg{},
 	}
 }

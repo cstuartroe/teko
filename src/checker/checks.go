@@ -81,6 +81,9 @@ func (c *Checker) checkExpressionAllowingVar(expr lexparse.Expression, expectedT
 	case lexparse.ScopeExpression:
 		ttype = c.checkScopeExpression(p)
 
+	case lexparse.ComparisonExpression:
+		ttype = c.checkComparisonExpression(p)
+
 	default:
 		expr.Token().Raise(shared.NotImplementedError, "Cannot typecheck expression type")
 	}
@@ -392,4 +395,14 @@ func (c *Checker) checkScopeExpression(expr lexparse.ScopeExpression) TekoType {
 	return &BasicType{
 		fields: blockChecker.ctype.fields,
 	}
+}
+
+func (c *Checker) checkComparisonExpression(expr lexparse.ComparisonExpression) TekoType {
+	rtype := c.checkCallExpression(lexparse.ComparisonCallExpression(expr))
+
+	if !c.isTekoEqType(rtype, IntType) {
+		expr.Token().Raise(shared.TypeError, "compare method must return an int")
+	}
+
+	return BoolType
 }

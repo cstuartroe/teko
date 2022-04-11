@@ -123,6 +123,20 @@ func (e BinopExpression) expressionNode() {}
 
 //---
 
+type ComparisonExpression struct {
+	Left       Expression
+	Comparator Token
+	Right      Expression
+}
+
+func (e ComparisonExpression) Token() Token {
+	return e.Comparator
+}
+
+func (e ComparisonExpression) expressionNode() {}
+
+//---
+
 type AttributeExpression struct {
 	Left   Expression
 	Symbol Token

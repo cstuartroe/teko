@@ -5,13 +5,14 @@ var ToStrType *FunctionType = &FunctionType{}
 var IntType *BasicType = &BasicType{
 	name: "int",
 	fields: map[string]TekoType{
-		"add":    IntBinopType,
-		"sub":    IntBinopType,
-		"mult":   IntBinopType,
-		"div":    IntBinopType,
-		"exp":    IntBinopType,
-		"mod":    IntBinopType,
-		"to_str": ToStrType,
+		"add":     IntBinopType,
+		"sub":     IntBinopType,
+		"mult":    IntBinopType,
+		"div":     IntBinopType,
+		"exp":     IntBinopType,
+		"mod":     IntBinopType,
+		"compare": IntBinopType,
+		"to_str":  ToStrType,
 	},
 }
 

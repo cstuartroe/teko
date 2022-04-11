@@ -31,11 +31,13 @@ func IntBinopExecutor(receiverValue int, op intOpType) executorType {
 }
 
 var intOps map[string]intOpType = map[string]intOpType{
-	"add":  func(n1 int, n2 int) int { return n1 + n2 },
-	"sub":  func(n1 int, n2 int) int { return n1 - n2 },
-	"mult": func(n1 int, n2 int) int { return n1 * n2 },
-	"div":  func(n1 int, n2 int) int { return n1 / n2 },
-	"exp":  func(n1 int, n2 int) int { return int(math.Pow(float64(n1), float64(n2))) },
+	"add":     func(n1 int, n2 int) int { return n1 + n2 },
+	"sub":     func(n1 int, n2 int) int { return n1 - n2 },
+	"mult":    func(n1 int, n2 int) int { return n1 * n2 },
+	"div":     func(n1 int, n2 int) int { return n1 / n2 },
+	"exp":     func(n1 int, n2 int) int { return int(math.Pow(float64(n1), float64(n2))) },
+	"mod":     func(n1 int, n2 int) int { return n1 % n2 },
+	"compare": func(n1 int, n2 int) int { return n1 - n2 },
 }
 
 func IntToStrExecutor(receiverValue int) executorType {

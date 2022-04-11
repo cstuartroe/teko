@@ -89,13 +89,13 @@ var binops map[string]string = map[string]string{
 	"^": "exp",
 }
 
-var comparisons map[string]string = map[string]string{
-	"==": "eq",
-	"!":  "neq",
-	"<":  "lt",
-	">":  "gt",
-	"<=": "leq",
-	">=": "geq",
+var comparisons map[string]bool = map[string]bool{
+	"==": true,
+	"!=": true,
+	"<":  true,
+	">":  true,
+	"<=": true,
+	">=": true,
 }
 
 var updaters map[string]string = map[string]string{
@@ -124,6 +124,7 @@ var suffixes map[string]string = map[string]string{
 const (
 	min_prec int = iota
 	setter_prec
+	comparison_prec
 	add_sub_prec
 	mult_div_prec
 	exp_prec

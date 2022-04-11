@@ -1,0 +1,17 @@
+fn Foo(_n: int) -> scope {
+    n := _n
+
+    fn compare(other: {n: int}) -> n.compare(other.n)
+}
+
+f1 := Foo(1)
+f2 := Foo(2)
+
+if f1 < f2 do {
+    println("f1 < f2")
+} else do {
+    println("Nope")
+}
+
+/* EXPECT
+f1 < f2 */

@@ -81,6 +81,9 @@ func (m InterpreterModule) evaluateExpression(expr lexparse.Expression) *TekoObj
 	case lexparse.ScopeExpression:
 		return m.evaluateScope(p)
 
+	case lexparse.ComparisonExpression:
+		return m.evaluateComparisonExpression(p)
+
 	default:
 		expr.Token().Raise(shared.NotImplementedError, "Intepretation of expression type not implemented")
 		return nil
@@ -272,4 +275,30 @@ func (m *InterpreterModule) evaluateScope(expr lexparse.ScopeExpression) *TekoOb
 	interpreter := New(m)
 	interpreter.Execute(&expr.Codeblock)
 	return tp(*interpreter.scope)
+}
+
+var comparisons map[string]func(int) bool = map[string]func(int) bool{
+	"==": func(n int) bool { return n == 0 },
+	"!=": func(n int) bool { return n != 0 },
+	"<":  func(n int) bool { return n < 0 },
+	"<=": func(n int) bool { return n <= 0 },
+	">":  func(n int) bool { return n > 0 },
+	">=": func(n int) bool { return n >= 0 },
+}
+
+func (m *InterpreterModule) evaluateComparisonExpression(expr lexparse.ComparisonExpression) *TekoObject {
+	comparison_int := m.evaluateFunctionCall(lexparse.ComparisonCallExpression(expr))
+
+	switch p := (*comparison_int).(type) {
+	case Integer:
+		f := comparisons[string(expr.Comparator.Value)]
+
+		if f(p.value) {
+			return True
+		} else {
+			return False
+		}
+	default:
+		panic("Not an int. What trickery is this?")
+	}
 }
