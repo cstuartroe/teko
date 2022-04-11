@@ -138,6 +138,9 @@ func (parser *Parser) grabExpression(prec int) Expression {
 	case SetT:
 		expr = parser.grabSet()
 
+	case MapT:
+		expr = parser.grabMap()
+
 	case LCurlyBrT:
 		expr = parser.grabObject()
 
@@ -518,6 +521,51 @@ func (parser *Parser) grabSet() SequenceExpression {
 		OpenBrace: open,
 		Stype:     SetSeqType,
 		Elements:  parser.grabSequence(RCurlyBrT),
+	}
+}
+
+func (parser *Parser) grabMap() MapExpression {
+	map_token := *parser.expect(MapT)
+
+	var ktype, vtype Expression = nil, nil
+	if parser.currentToken().TType == LSquareBrT {
+		parser.advance()
+		ktype = parser.grabTypeExpression(min_prec)
+		parser.expect(CommaT)
+		vtype = parser.grabTypeExpression(min_prec)
+		parser.expect(RSquareBrT)
+	}
+
+	kvpairs := []KVPair{}
+	has_braces := false
+
+	if parser.currentToken().TType == LCurlyBrT {
+		parser.advance()
+		has_braces = true
+
+		for parser.currentToken().TType != RCurlyBrT {
+			key := parser.grabExpression(setter_prec + 1)
+			parser.expect(ColonT)
+			value := parser.grabExpression(min_prec)
+
+			kvpairs = append(kvpairs, KVPair{Key: key, Value: value})
+
+			if parser.currentToken().TType == CommaT {
+				parser.advance()
+			} else {
+				break
+			}
+		}
+
+		parser.expect(RCurlyBrT)
+	}
+
+	return MapExpression{
+		MapToken:  map_token,
+		Ktype:     ktype,
+		Vtype:     vtype,
+		HasBraces: has_braces,
+		KVPairs:   kvpairs,
 	}
 }
 

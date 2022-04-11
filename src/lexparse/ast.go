@@ -210,6 +210,27 @@ func (e SequenceExpression) expressionNode() {}
 
 //---
 
+type KVPair struct {
+	Key   Expression
+	Value Expression
+}
+
+type MapExpression struct {
+	MapToken  Token
+	Ktype     Expression
+	Vtype     Expression
+	HasBraces bool
+	KVPairs   []KVPair
+}
+
+func (e MapExpression) Token() Token {
+	return e.MapToken
+}
+
+func (e MapExpression) expressionNode() {}
+
+//---
+
 type ObjectField struct {
 	Symbol Token
 	Value  Expression

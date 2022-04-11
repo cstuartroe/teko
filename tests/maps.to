@@ -1,0 +1,29 @@
+type Person = {
+    name: str,
+    age: int,
+}
+
+users_by_id : Map[int, Person] = Map{
+    0: {
+        name: "Alice",
+        age: 25,
+    },
+    1: {
+        name: "Bob",
+        age: 67,
+    },
+}
+
+n : Hashable = 0
+
+println(users_by_id[1].name)
+
+users_by_name := Map{
+    "Alice": {
+        name: "Alice",
+        age: 25,
+    }
+}
+
+/* EXPECT
+Bob */

@@ -28,6 +28,9 @@ func (c *Checker) evaluateType(expr lexparse.Expression) TekoType {
 	case lexparse.SliceExpression:
 		return c.evaluateSliceType(p)
 
+	case lexparse.MapExpression:
+		return c.evaluateMapType(p)
+
 	default:
 		panic("Unknown type format!")
 	}
@@ -101,4 +104,14 @@ func (c *Checker) evaluateSliceType(expr lexparse.SliceExpression) TekoType {
 	}
 
 	return newArrayType(c.evaluateType(expr.Left))
+}
+
+func (c *Checker) evaluateMapType(expr lexparse.MapExpression) TekoType {
+	if expr.Ktype == nil || expr.Vtype == nil {
+		expr.Token().Raise(shared.SyntaxError, "Map type must specify both key and value type")
+	} else if expr.HasBraces {
+		expr.Token().Raise(shared.SyntaxError, "Map type cannot have contents")
+	}
+
+	return newMapType(c.evaluateType(expr.Ktype), c.evaluateType(expr.Vtype))
 }

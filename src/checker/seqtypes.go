@@ -128,6 +128,18 @@ func newMapType(keyType TekoType, valueType TekoType) *MapType {
 	}
 }
 
+var HashType *FunctionType = &FunctionType{
+	rtype:   IntType,
+	argdefs: []FunctionArgDef{},
+}
+
+var Hashable TekoType = &BasicType{
+	name: "Hashable",
+	fields: map[string]TekoType{
+		"hash": HashType,
+	},
+}
+
 // Arrays, strings
 
 type ArrayType struct {

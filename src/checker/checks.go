@@ -62,6 +62,9 @@ func (c *Checker) checkExpressionAllowingVar(expr lexparse.Expression, expectedT
 	case lexparse.SequenceExpression:
 		ttype = c.checkSequenceExpression(p, expectedType)
 
+	case lexparse.MapExpression:
+		ttype = c.checkMapExpression(p, expectedType)
+
 	case lexparse.ObjectExpression:
 		ttype = c.checkObjectExpression(p, expectedType)
 
@@ -279,6 +282,65 @@ func (c *Checker) checkSequenceExpression(expr lexparse.SequenceExpression, expe
 	}
 
 	return seqtype
+}
+
+func (c *Checker) checkMapExpression(expr lexparse.MapExpression, expectedType TekoType) TekoType {
+	var ktype, vtype TekoType = nil, nil
+
+	switch p := expectedType.(type) {
+	case nil:
+		if expr.Ktype != nil {
+			ktype = c.evaluateType(expr.Ktype)
+			vtype = c.evaluateType(expr.Vtype)
+		}
+
+	case *MapType:
+		if expr.Ktype != nil {
+			stated_ktype := c.evaluateType(expr.Ktype)
+
+			if !c.isTekoEqType(stated_ktype, p.ktype) {
+				expr.Ktype.Token().Raise(shared.TypeError, "Expected key type "+p.ktype.tekotypeToString()+" not "+ktype.tekotypeToString())
+			}
+
+			stated_vtype := c.evaluateType(expr.Vtype)
+
+			if !c.isTekoEqType(stated_vtype, p.vtype) {
+				expr.Vtype.Token().Raise(shared.TypeError, "Expected value type "+p.vtype.tekotypeToString()+" not "+vtype.tekotypeToString())
+			}
+		}
+
+		// Want ktype and vtype to come from expectedType just in case one of them is equivalent to but
+		// structurally different from stated_ktype/stated_vtype
+		ktype, vtype = p.ktype, p.vtype
+	}
+
+	if (ktype == nil) != (vtype == nil) {
+		panic("?")
+	}
+
+	i := 0
+
+	if ktype == nil {
+		if len(expr.KVPairs) == 0 {
+			expr.MapToken.Raise(shared.TypeError, "Map without stated or expected type cannot be empty")
+		}
+
+		ktype = deconstantize(c.checkExpression(expr.KVPairs[0].Key, nil))
+		vtype = c.checkExpression(expr.KVPairs[0].Value, nil)
+		i += 1
+	}
+
+	if !c.isTekoSubtype(ktype, Hashable) {
+		expr.Token().Raise(shared.TypeError, "Unhashable type: "+ktype.tekotypeToString())
+	}
+
+	for i < len(expr.KVPairs) {
+		c.checkExpression(expr.KVPairs[i].Key, ktype)
+		c.checkExpression(expr.KVPairs[i].Value, vtype)
+		i += 1
+	}
+
+	return newMapType(ktype, vtype)
 }
 
 func (c *Checker) checkObjectExpression(expr lexparse.ObjectExpression, expectedType TekoType) TekoType {

@@ -63,6 +63,9 @@ func (m InterpreterModule) evaluateExpression(expr lexparse.Expression) *TekoObj
 	case lexparse.SequenceExpression:
 		return m.evaluateSequenceExpression(p)
 
+	case lexparse.MapExpression:
+		return m.evaluateMapExpression(p)
+
 	case lexparse.ObjectExpression:
 		return m.evaluateObjectExpression(p)
 
@@ -219,6 +222,16 @@ func (m InterpreterModule) evaluateSet(expr lexparse.SequenceExpression) Set {
 		elements = append(elements, o)
 	}
 	return Set{elements}
+}
+
+func (m InterpreterModule) evaluateMapExpression(expr lexparse.MapExpression) *TekoObject {
+	tmap := newTekoMap()
+
+	for _, kvpair := range expr.KVPairs {
+		tmap.set(m.evaluateExpression(kvpair.Key), m.evaluateExpression(kvpair.Value))
+	}
+
+	return tp(tmap)
 }
 
 func (m InterpreterModule) evaluateObjectExpression(expr lexparse.ObjectExpression) *TekoObject {

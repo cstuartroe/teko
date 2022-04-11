@@ -14,10 +14,11 @@ var ProcessType TekoType = &BasicType{
 var stdlibTypeTable *TypeTable = &TypeTable{
 	parent: nil,
 	table: map[string]TekoType{
-		"int":  IntType,
-		"bool": BoolType,
-		"str":  StringType,
-		"char": CharType,
+		"int":      IntType,
+		"bool":     BoolType,
+		"str":      StringType,
+		"char":     CharType,
+		"Hashable": Hashable,
 	},
 }
 

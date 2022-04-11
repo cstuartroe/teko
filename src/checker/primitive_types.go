@@ -37,6 +37,8 @@ var VoidType *BasicType = newBasicType("")
 
 // avoids circular initialization
 func SetupFunctionTypes() {
+	IntType.fields["hash"] = HashType
+
 	IntBinopType.rtype = IntType
 	IntBinopType.argdefs = []FunctionArgDef{
 		{

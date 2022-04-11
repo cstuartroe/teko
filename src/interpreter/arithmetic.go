@@ -46,6 +46,12 @@ func IntToStrExecutor(receiverValue int) executorType {
 	}
 }
 
+func IntHashExecutor(receiver Integer) executorType {
+	return func(function TekoFunction, evaluatedArgs map[string]*TekoObject) *TekoObject {
+		return tp(receiver)
+	}
+}
+
 func (n Integer) getFieldValue(name string) *TekoObject {
 	return n.symbolTable.cached_get(name, func() *TekoObject {
 		if op, ok := intOps[name]; ok {
@@ -56,6 +62,9 @@ func (n Integer) getFieldValue(name string) *TekoObject {
 
 		case "to_str":
 			return tp(customExecutedFunction(IntToStrExecutor(n.value), []string{}))
+
+		case "hash":
+			return tp(customExecutedFunction(IntHashExecutor(n), []string{}))
 
 		default:
 			panic("Operation not implemented: " + name)
