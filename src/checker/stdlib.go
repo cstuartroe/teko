@@ -4,6 +4,13 @@ import (
 	"github.com/cstuartroe/teko/src/lexparse"
 )
 
+var ProcessType TekoType = &BasicType{
+	name: "",
+	fields: map[string]TekoType{
+		"args": newArrayType(StringType),
+	},
+}
+
 var stdlibTypeTable *TypeTable = &TypeTable{
 	parent: nil,
 	table: map[string]TekoType{
@@ -15,8 +22,9 @@ var stdlibTypeTable *TypeTable = &TypeTable{
 }
 
 var StdlibSymbolTable map[string]TekoType = map[string]TekoType{
-	"print": PrintType,
-	"map":   arrayMapType,
+	"print":   PrintType,
+	"map":     arrayMapType,
+	"process": ProcessType,
 }
 
 var stdLibType *CheckerType = &CheckerType{
