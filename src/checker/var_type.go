@@ -35,7 +35,7 @@ func newVarType(ttype TekoType) *VarType {
 	case VarType:
 		panic("VarType")
 	default:
-		return &VarType{ttype}
+		return &VarType{deconstantize(ttype)}
 	}
 }
 

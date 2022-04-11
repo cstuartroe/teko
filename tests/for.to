@@ -8,7 +8,7 @@ println(third_powers$)
 
 // For looping preserves reference
 
-o : {name: var str} = {name: var "Bob"}
+o := {name: var "Bob"}
 
 l := [o]
 
