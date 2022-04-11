@@ -302,6 +302,22 @@ func (e WhileExpression) expressionNode() {}
 
 //---
 
+type ForExpression struct {
+	ForToken Token
+	Iterand  Token
+	Tekotype Expression
+	Iterator Expression
+	Body     Expression
+}
+
+func (e ForExpression) Token() Token {
+	return e.ForToken
+}
+
+func (e ForExpression) expressionNode() {}
+
+//---
+
 type ScopeExpression struct {
 	ScopeToken Token
 	Codeblock  Codeblock

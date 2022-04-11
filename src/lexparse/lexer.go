@@ -194,6 +194,8 @@ var keywords map[string]tokenType = map[string]tokenType{
 	"type": TypeT,
 
 	"while": WhileT,
+	"for":   ForT,
+	"in":    InT,
 	"if":    IfT,
 	"then":  ThenT,
 	"else":  ElseT,

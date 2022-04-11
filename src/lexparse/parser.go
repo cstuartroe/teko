@@ -153,6 +153,9 @@ func (parser *Parser) grabExpression(prec int) Expression {
 	case WhileT:
 		expr = parser.grabWhileExpression(prec)
 
+	case ForT:
+		expr = parser.grabForLoop(prec)
+
 	case ScopeT:
 		expr = parser.grabScopeExpression()
 
@@ -685,6 +688,22 @@ func (parser *Parser) grabWhileExpression(prec int) WhileExpression {
 		WhileToken: *parser.expect(WhileT),
 		Condition:  parser.grabExpression(prec),
 		Body:       parser.grabExpression(prec),
+	}
+}
+
+func (parser *Parser) grabForLoop(prec int) ForExpression {
+	for_t := *parser.expect(ForT)
+	iterand := *parser.expect(SymbolT)
+	ttype := parser.grabOptionalType(min_prec)
+
+	parser.expect(InT)
+
+	return ForExpression{
+		ForToken: for_t,
+		Iterand:  iterand,
+		Tekotype: ttype,
+		Iterator: parser.grabExpression(prec),
+		Body:     parser.grabExpression(prec),
 	}
 }
 

@@ -1,0 +1,50 @@
+third_powers := for n in [1, 3, 4, 7] do {
+    println((n^2)$)
+
+    n^3
+}
+
+println(third_powers$)
+
+// For looping preserves reference
+
+o : {name: var str} = {name: var "Bob"}
+
+l := [o]
+
+for e in l do {
+    e.name = "Susan"
+}
+
+println(o.name)
+
+// You don't have to loop over an array
+// as long as it has .size and .at()
+
+fakeArray := scope {
+    size := 10
+
+    fn at(i: int) -> i - 3
+}
+
+for n in fakeArray do {
+    println(n$)
+}
+
+/* EXPECT
+1
+9
+16
+49
+[1, 27, 64, 343]
+Susan
+-3
+-2
+-1
+0
+1
+2
+3
+4
+5
+6 */

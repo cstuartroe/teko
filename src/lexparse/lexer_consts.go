@@ -16,6 +16,8 @@ const (
 	TypeT = "type"
 
 	WhileT = "while"
+	ForT   = "for"
+	InT    = "in"
 	IfT    = "if"
 	ThenT  = "then"
 	ElseT  = "else"

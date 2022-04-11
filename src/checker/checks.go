@@ -78,6 +78,9 @@ func (c *Checker) checkExpressionAllowingVar(expr lexparse.Expression, expectedT
 	case lexparse.WhileExpression:
 		ttype = c.checkWhileExpression(p)
 
+	case lexparse.ForExpression:
+		ttype = c.checkForLoop(p)
+
 	case lexparse.ScopeExpression:
 		ttype = c.checkScopeExpression(p)
 
@@ -383,6 +386,25 @@ func (c *Checker) checkWhileExpression(expr lexparse.WhileExpression) TekoType {
 	c.checkExpression(expr.Condition, BoolType)
 
 	return newArrayType(c.checkExpression(expr.Body, nil))
+}
+
+func (c *Checker) checkForLoop(expr lexparse.ForExpression) TekoType {
+	etype := c.generalEtype(c.checkExpression(expr.Iterator, nil))
+
+	if expr.Tekotype != nil {
+		stated_etype := c.evaluateType(expr.Tekotype)
+
+		if !c.isTekoSubtype(stated_etype, etype) {
+			expr.Iterator.Token().Raise(shared.TypeError, "Iterator does not have element type "+stated_etype.tekotypeToString())
+		} else {
+			etype = stated_etype
+		}
+	}
+
+	blockChecker := NewChecker(c)
+	blockChecker.declareFieldType(expr.Iterand, etype)
+
+	return newArrayType(blockChecker.checkExpression(expr.Body, nil))
 }
 
 func (c *Checker) checkScopeExpression(expr lexparse.ScopeExpression) TekoType {

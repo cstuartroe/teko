@@ -208,3 +208,24 @@ var arrayMapType *FunctionType = &FunctionType{
 		},
 	},
 }
+
+func (c *Checker) generalEtype(ttype TekoType) TekoType {
+	if !c.isTekoSubtype(getField(ttype, "size"), IntType) {
+		return nil
+	}
+
+	at_type := getField(ttype, "at")
+
+	switch p := at_type.(type) {
+	case *FunctionType:
+		if len(p.argdefs) != 1 {
+			return nil
+		} else if !c.isTekoSubtype(IntType, p.argdefs[0].ttype) {
+			return nil
+		}
+
+		return p.rtype
+	default:
+		return nil
+	}
+}
