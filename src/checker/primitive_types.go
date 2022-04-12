@@ -29,8 +29,10 @@ var BoolType *BasicType = &BasicType{
 var BoolBinopType *FunctionType = &FunctionType{}
 
 var CharType *BasicType = &BasicType{
-	name:   "char",
-	fields: map[string]TekoType{},
+	name: "char",
+	fields: map[string]TekoType{
+		"to_str": ToStrType,
+	},
 }
 
 var VoidType *BasicType = newBasicType("")

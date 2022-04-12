@@ -148,10 +148,6 @@ type ArrayType struct {
 }
 
 func (t ArrayType) tekotypeToString() string {
-	if t.etype == CharType {
-		return "string"
-	}
-
 	return t.etype.tekotypeToString() + "[]"
 }
 
@@ -180,7 +176,9 @@ func newArrayType(etype TekoType) *ArrayType {
 	return atype
 }
 
-var StringType *ArrayType = &ArrayType{}
+var StringType *BasicType = &BasicType{
+	name: "string",
+}
 
 var PrintType *FunctionType = &FunctionType{
 	rtype: VoidType,
@@ -193,7 +191,19 @@ var PrintType *FunctionType = &FunctionType{
 }
 
 func SetupStringTypes() {
-	*StringType = *newArrayType(CharType)
+	StringType.fields = makeMapFields(IntType, CharType)
+
+	StringType.fields["add"] = &FunctionType{
+		rtype: StringType,
+		argdefs: []FunctionArgDef{
+			{
+				name:  "other",
+				ttype: StringType,
+			},
+		},
+	}
+
+	StringType.fields["hash"] = HashType
 }
 
 var mapGenericA *GenericType = newGenericType("")

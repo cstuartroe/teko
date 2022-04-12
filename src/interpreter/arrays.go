@@ -32,6 +32,8 @@ func ArrayAtExecutor(receiverElements []*TekoObject) executorType {
 func ArrayIncludesExecutor(receiverElements []*TekoObject) executorType {
 	return func(function TekoFunction, evaluatedArgs map[string]*TekoObject) *TekoObject {
 		for _, e := range receiverElements {
+			// TODO we need to do better than pointer equality
+			// It seems like maybe this shouldn't be a method of the array?
 			if e == evaluatedArgs["element"] {
 				return True
 			}
@@ -40,8 +42,8 @@ func ArrayIncludesExecutor(receiverElements []*TekoObject) executorType {
 	}
 }
 
-func join(slices [][]*TekoObject, joiner []*TekoObject) []*TekoObject {
-	out := []*TekoObject{}
+func join(slices [][]rune, joiner []rune) []rune {
+	out := []rune{}
 
 	for i, r := range slices {
 		if i > 0 {
@@ -56,7 +58,7 @@ func join(slices [][]*TekoObject, joiner []*TekoObject) []*TekoObject {
 
 func ArrayToStrExecutor(receiverElements []*TekoObject) executorType {
 	return func(function TekoFunction, evaluatedArgs map[string]*TekoObject) *TekoObject {
-		elements := [][]*TekoObject{}
+		elements := [][]rune{}
 
 		for _, e := range receiverElements {
 			f := (*e).getFieldValue("to_str")
@@ -66,11 +68,11 @@ func ArrayToStrExecutor(receiverElements []*TekoObject) executorType {
 				s := fp.executor(fp, map[string]*TekoObject{})
 
 				switch sp := (*s).(type) {
-				case Array:
-					elements = append(elements, sp.elements)
+				case String:
+					elements = append(elements, sp.runes)
 
 				default:
-					panic("to_str did not return an array")
+					panic("to_str did not return a string")
 				}
 
 			default:
@@ -78,18 +80,15 @@ func ArrayToStrExecutor(receiverElements []*TekoObject) executorType {
 			}
 		}
 
-		return tp(newArray(
+		return tp(newTekoString(
 			append(
-				[]*TekoObject{tp(newChar('['))},
+				[]rune{'['},
 				append(
 					join(
 						elements,
-						[]*TekoObject{
-							tp(newChar(',')),
-							tp(newChar(' ')),
-						},
+						[]rune(", "),
 					),
-					tp(newChar(']')),
+					']',
 				)...,
 			),
 		))
@@ -116,7 +115,7 @@ func (a Array) getFieldValue(name string) *TekoObject {
 			return tp(customExecutedFunction(ArrayToStrExecutor(a.elements), []string{}))
 
 		default:
-			panic("Unknown array function")
+			panic("Unknown array function: " + name)
 		}
 	})
 }
@@ -158,13 +157,3 @@ func ArrayMapExecutor(function TekoFunction, evaluatedArgs map[string]*TekoObjec
 }
 
 var ArrayMap TekoFunction = customExecutedFunction(ArrayMapExecutor, []string{"f", "l"})
-
-func newTekoString(runes []rune) Array {
-	chars := []*TekoObject{}
-
-	for _, c := range runes {
-		chars = append(chars, tp(newChar(c)))
-	}
-
-	return newArray(chars)
-}

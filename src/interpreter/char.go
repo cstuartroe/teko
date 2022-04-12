@@ -24,7 +24,7 @@ func tekoEscape(c rune, escapeDoubleQuotes bool, escapeSingleQuotes bool) string
 
 func CharToStrExecutor(c rune) executorType {
 	return func(function TekoFunction, evaluatedArgs map[string]*TekoObject) *TekoObject {
-		return tp(newTekoString([]rune("'" + tekoEscape(c, true, false) + "'")))
+		return tp(newTekoString([]rune("'" + tekoEscape(c, false, true) + "'")))
 	}
 }
 

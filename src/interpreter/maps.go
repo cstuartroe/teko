@@ -47,7 +47,7 @@ func (m TekoMap) getFieldValue(name string) *TekoObject {
 			return tp(getInteger(len(m.kvpairs)))
 
 		default:
-			panic("Unknown array function")
+			panic("Unknown map function")
 		}
 	})
 }

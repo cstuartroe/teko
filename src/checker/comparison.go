@@ -3,10 +3,11 @@ package checker
 import "fmt"
 
 var primitives map[*BasicType]bool = map[*BasicType]bool{
-	IntType:  true,
-	BoolType: true,
-	CharType: true,
-	VoidType: true,
+	IntType:    true,
+	BoolType:   true,
+	CharType:   true,
+	VoidType:   true,
+	StringType: true,
 }
 
 func (c *Checker) isTekoSubtype(sub TekoType, sup TekoType) bool {
