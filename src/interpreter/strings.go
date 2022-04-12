@@ -50,10 +50,8 @@ func StringToStrExecutor(receiverRunes []rune) executorType {
 	}
 }
 
-const GENERATOR uint64 = 30922101
-
-func intExp(base uint64, exp uint64) uint64 {
-	var out uint64 = 1
+func intExp(base int64, exp int64) int64 {
+	var out int64 = 1
 
 	for exp > 0 {
 		if exp%2 == 0 {
@@ -68,15 +66,26 @@ func intExp(base uint64, exp uint64) uint64 {
 	return out
 }
 
+const GENERATOR int64 = 30922493929929101
+const OFFSET int64 = 7920982390293083290
+
+// This is not a cryptographic hash. It would probably be pretty straightforward to find a collision if you wanted to,
+// but I tried 26^6 random strings and didn't find one so it should be fine for anyone not actively trying to break it.
+func hash(runes []rune) int64 {
+	var n int64 = OFFSET
+
+	for i, c := range runes {
+		n += intExp(GENERATOR, int64(i)+1) * int64(c)
+	}
+
+	return n
+}
+
 func StringHashExecutor(receiverRunes []rune) executorType {
 	return func(function TekoFunction, evaluatedArgs map[string]*TekoObject) *TekoObject {
-		var n uint64 = 0
-
-		for i, c := range receiverRunes {
-			n += intExp(GENERATOR, uint64(i)) * uint64(int(c))
-		}
-
-		return tp(getInteger(int(n)))
+		// TODO on 32-bit systems this cast to int will lead to a possibility of collision
+		// but I won't bother converting everything to int64s because I should ultimately use variable-width integers anyway
+		return tp(getInteger(int(hash(receiverRunes))))
 	}
 }
 
