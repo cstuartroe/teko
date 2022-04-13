@@ -18,6 +18,7 @@ var stdlibTypeTable *TypeTable = &TypeTable{
 		"bool":     BoolType,
 		"str":      StringType,
 		"char":     CharType,
+		"null":     NullType,
 		"Hashable": Hashable,
 	},
 }
@@ -26,6 +27,7 @@ var StdlibSymbolTable map[string]TekoType = map[string]TekoType{
 	"print":   PrintType,
 	"map":     arrayMapType,
 	"process": ProcessType,
+	"null":    NullType,
 }
 
 var stdLibType *CheckerType = &CheckerType{

@@ -80,3 +80,5 @@ func (b Boolean) getFieldValue(name string) *TekoObject {
 		panic("Attributes haven't been implemented for bools yet")
 	}
 }
+
+var Null *TekoObject = tp(BasicObject{})

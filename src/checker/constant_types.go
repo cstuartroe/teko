@@ -56,7 +56,7 @@ func newConstantIntType(n int) TekoType {
 		ctype:  IntConstant,
 	}
 
-	out.setField(strconv.Itoa(n), VoidType)
+	out.setField(strconv.Itoa(n), NullType)
 
 	constantIntTypeCache[n] = out
 
@@ -76,7 +76,7 @@ func newConstantStringType(s []rune) TekoType {
 		ctype:  StringConstant,
 	}
 
-	out.setField("$"+string(s), VoidType)
+	out.setField("$"+string(s), NullType)
 
 	constantStringTypeCache[string(s)] = out
 

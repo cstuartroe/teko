@@ -429,7 +429,7 @@ func (c *Checker) checkFunctionDefinition(expr lexparse.FunctionExpression) Teko
 }
 
 func (c *Checker) checkDoExpression(expr lexparse.DoExpression, expectedType TekoType) TekoType {
-	var out TekoType = VoidType
+	var out TekoType = NullType
 	blockChecker := NewChecker(c)
 
 	for i, stmt := range expr.Codeblock.Statements {

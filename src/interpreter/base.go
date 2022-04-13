@@ -48,6 +48,7 @@ var StdLibFieldValues map[string]*TekoObject = map[string]*TekoObject{
 	"print":   tp(TekoPrint),
 	"map":     tp(ArrayMap),
 	"process": tp(Process),
+	"null":    Null,
 }
 
 var StdLibSymbolTable SymbolTable = SymbolTable{

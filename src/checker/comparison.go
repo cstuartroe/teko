@@ -6,7 +6,6 @@ var primitives map[*BasicType]bool = map[*BasicType]bool{
 	IntType:    true,
 	BoolType:   true,
 	CharType:   true,
-	VoidType:   true,
 	StringType: true,
 }
 
@@ -30,7 +29,7 @@ func getAncestorConstant(i int) TekoType {
 	} else {
 		t = &BasicType{
 			fields: map[string]TekoType{
-				(fmt.Sprintf("#%d", i)): VoidType,
+				(fmt.Sprintf("#%d", i)): NullType,
 			},
 		}
 		ancestor_constants[i] = t
@@ -130,10 +129,8 @@ func (c *Checker) isTekoSubtypeWithAncestry(sub TekoTypeWithAncestry, sup TekoTy
 			return false // TODO: some resolving generics should be ok
 		}
 
-	case FunctionType:
-		panic("type is not a pointer: " + psup.tekotypeToString())
-	case UnionType:
-		panic("type is not a pointer: " + psup.tekotypeToString())
+	case *_NullType:
+		return false
 
 	default:
 		return c.isObjectSubtype(sub, sup)

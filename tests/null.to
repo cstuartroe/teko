@@ -1,0 +1,11 @@
+n : int | null = null
+
+f : {} = fn() -> null
+
+type MaybeInt = int | null
+
+l : MaybeInt[] = [0, 1, null, 4, null]
+
+x : {} = 0
+
+z : null = 0

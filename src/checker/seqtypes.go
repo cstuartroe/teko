@@ -28,7 +28,7 @@ func includesType(etype TekoType) *FunctionType {
 
 func setAddType(etype TekoType) *FunctionType {
 	return &FunctionType{
-		rtype: VoidType,
+		rtype: NullType,
 		argdefs: []FunctionArgDef{
 			{
 				name:  "element",
@@ -181,7 +181,7 @@ var StringType *BasicType = &BasicType{
 }
 
 var PrintType *FunctionType = &FunctionType{
-	rtype: VoidType,
+	rtype: NullType,
 	argdefs: []FunctionArgDef{
 		{
 			name:  "s",

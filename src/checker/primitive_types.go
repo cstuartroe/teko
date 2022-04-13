@@ -35,7 +35,17 @@ var CharType *BasicType = &BasicType{
 	},
 }
 
-var VoidType *BasicType = newBasicType("")
+type _NullType struct{}
+
+func (n _NullType) allFields() map[string]TekoType {
+	return map[string]TekoType{}
+}
+
+func (n _NullType) tekotypeToString() string {
+	return "null"
+}
+
+var NullType *_NullType = &_NullType{}
 
 // avoids circular initialization
 func SetupFunctionTypes() {
