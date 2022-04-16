@@ -9,17 +9,17 @@ No type called float   */
 
 fn Complex(real: float, imaginary : float) -> scope {
   fn add(other : Complex) -> Complex(
-    real: real + other.real,
-    imaginary: imaginary + other.imaginary,
+    real=real + other.real,
+    imaginary=imaginary + other.imaginary,
   )
 
   fn sub(other: Complex) -> Complex(
-    real: real - other.real,
-    imaginary: imaginary - other.imaginary,
+    real=real - other.real,
+    imaginary=imaginary - other.imaginary,
   )
 
   fn mult(other: Complex) -> Complex(
-    real: (real * other.real) - (imaginary - other.imaginary),
-    imaginary: (real * other.imaginary) + (imaginary * other.real),
+    real=(real * other.real) - (imaginary - other.imaginary),
+    imaginary=(real * other.imaginary) + (imaginary * other.real),
   )
 }

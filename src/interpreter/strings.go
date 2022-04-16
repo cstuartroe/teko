@@ -1,5 +1,7 @@
 package interpreter
 
+import "github.com/cstuartroe/teko/src/checker"
+
 type String struct {
 	runes       []rune
 	symbolTable SymbolTable
@@ -94,19 +96,19 @@ func (s String) getFieldValue(name string) *TekoObject {
 	return s.symbolTable.cached_get(name, func() *TekoObject {
 		switch name {
 		case "add":
-			return tp(customExecutedFunction(StringAddExecutor(s.runes), []string{"other"}))
+			return tp(customExecutedFunction(StringAddExecutor(s.runes), checker.NoDefaults("other")))
 
 		case "at":
-			return tp(customExecutedFunction(StringAtExecutor(s.runes), []string{"key"}))
+			return tp(customExecutedFunction(StringAtExecutor(s.runes), checker.NoDefaults("key")))
 
 		case "size":
 			return tp(getInteger(len(s.runes)))
 
 		case "to_str":
-			return tp(customExecutedFunction(StringToStrExecutor(s.runes), []string{}))
+			return tp(customExecutedFunction(StringToStrExecutor(s.runes), checker.NoDefaults()))
 
 		case "hash":
-			return tp(customExecutedFunction(StringHashExecutor(s.runes), []string{}))
+			return tp(customExecutedFunction(StringHashExecutor(s.runes), checker.NoDefaults()))
 
 		default:
 			panic("Unknown string function: " + name)

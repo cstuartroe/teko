@@ -19,7 +19,7 @@ func (t VarType) allFields() map[string]TekoType {
 		rtype: t.ttype,
 		argdefs: []FunctionArgDef{
 			{
-				name:  "value",
+				Name:  "value",
 				ttype: t.ttype,
 			},
 		},

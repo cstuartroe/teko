@@ -1,5 +1,7 @@
 package interpreter
 
+import "github.com/cstuartroe/teko/src/checker"
+
 type TekoMap struct {
 	kvpairs     map[int]*TekoObject
 	symbolTable SymbolTable
@@ -41,7 +43,7 @@ func (m TekoMap) getFieldValue(name string) *TekoObject {
 	return m.symbolTable.cached_get(name, func() *TekoObject {
 		switch name {
 		case "at":
-			return tp(customExecutedFunction(MapAtExecutor(m.kvpairs), []string{"key"}))
+			return tp(customExecutedFunction(MapAtExecutor(m.kvpairs), checker.NoDefaults("key")))
 
 		case "size":
 			return tp(getInteger(len(m.kvpairs)))

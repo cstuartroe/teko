@@ -54,7 +54,7 @@ func SetupFunctionTypes() {
 	IntBinopType.rtype = IntType
 	IntBinopType.argdefs = []FunctionArgDef{
 		{
-			name:  "other",
+			Name:  "other",
 			ttype: IntType,
 		},
 	}
@@ -62,7 +62,7 @@ func SetupFunctionTypes() {
 	BoolBinopType.rtype = BoolType
 	BoolBinopType.argdefs = []FunctionArgDef{
 		{
-			name:  "other",
+			Name:  "other",
 			ttype: BoolType,
 		},
 	}

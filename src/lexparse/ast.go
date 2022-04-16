@@ -256,6 +256,7 @@ func (e ObjectExpression) expressionNode() {}
 type ArgdefNode struct {
 	Symbol   Token
 	Tekotype Expression
+	Default  Expression
 }
 
 func (a ArgdefNode) Token() Token {

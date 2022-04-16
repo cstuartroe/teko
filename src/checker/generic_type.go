@@ -88,7 +88,7 @@ func (c *Checker) degenericizeReturnType(ttype TekoType) TekoType {
 
 		for _, argdef := range p.argdefs {
 			argdefs = append(argdefs, FunctionArgDef{
-				name:  argdef.name,
+				Name:  argdef.Name,
 				ttype: c.degenericizeReturnType(argdef.ttype),
 			})
 		}

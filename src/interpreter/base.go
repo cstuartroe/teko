@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/cstuartroe/teko/src/checker"
 	"github.com/cstuartroe/teko/src/lexparse"
 	"github.com/cstuartroe/teko/src/shared"
 )
@@ -23,7 +24,7 @@ func TekoPrintExecutor(function TekoFunction, evaluatedArgs map[string]*TekoObje
 	return nil
 }
 
-var TekoPrint TekoFunction = customExecutedFunction(TekoPrintExecutor, []string{"s"})
+var TekoPrint TekoFunction = customExecutedFunction(TekoPrintExecutor, checker.NoDefaults("s"))
 
 func getProcessArgs() []*TekoObject {
 	out := []*TekoObject{}

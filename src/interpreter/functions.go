@@ -11,14 +11,14 @@ type TekoFunction struct {
 	context  *InterpreterModule
 	owner    *TekoObject
 	body     lexparse.Expression
-	argnames []string
+	argdefs  []checker.FunctionArgDef
 	executor executorType
 }
 
 func (f TekoFunction) getFieldValue(name string) *TekoObject { return nil }
 
 func (t TekoFunction) execute(callingContext InterpreterModule, call lexparse.CallExpression) *TekoObject {
-	resolvedArgs := checker.ResolveArgs(t.argnames, call)
+	resolvedArgs := checker.ResolveArgs(t.argdefs, call)
 	evaluatedArgs := t.evaluateArgs(callingContext, resolvedArgs)
 	return t.executor(t, evaluatedArgs)
 }
@@ -53,12 +53,12 @@ func defaultFunctionExecutor(function TekoFunction, evaluatedArgs map[string]*Te
 	return interpreter.Execute(codeblock)
 }
 
-func customExecutedFunction(executor executorType, argnames []string) TekoFunction {
+func customExecutedFunction(executor executorType, argdefs []checker.FunctionArgDef) TekoFunction {
 	return TekoFunction{
 		context:  nil,
 		owner:    nil,
 		body:     nil,
-		argnames: argnames,
+		argdefs:  argdefs,
 		executor: executor,
 	}
 }

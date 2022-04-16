@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/cstuartroe/teko/src/checker"
 	"github.com/cstuartroe/teko/src/lexparse"
 	"github.com/cstuartroe/teko/src/shared"
 )
@@ -165,10 +166,15 @@ func (m InterpreterModule) evaluateAttributeExpression(expr lexparse.AttributeEx
 
 	if string(expr.Symbol.Value) == "=" {
 		return tp(TekoFunction{
-			context:  nil,
-			owner:    left,
-			body:     nil,
-			argnames: []string{"value"},
+			context: nil,
+			owner:   left,
+			body:    nil,
+			argdefs: []checker.FunctionArgDef{
+				{
+					Name:    "value",
+					Default: nil,
+				},
+			},
 			executor: updateExecutor,
 		})
 	} else {
@@ -244,15 +250,19 @@ func (m InterpreterModule) evaluateObjectExpression(expr lexparse.ObjectExpressi
 }
 
 func (m *InterpreterModule) evaluateFunctionDefinition(expr lexparse.FunctionExpression) *TekoObject {
-	argnames := []string{}
+	argdefs := []checker.FunctionArgDef{}
 	for _, ad := range expr.Argdefs {
-		argnames = append(argnames, string(ad.Symbol.Value))
+		ad := checker.FunctionArgDef{
+			Name:    string(ad.Symbol.Value),
+			Default: ad.Default,
+		}
+		argdefs = append(argdefs, ad)
 	}
 
 	f := tp(TekoFunction{
 		context:  m,
 		body:     expr.Right,
-		argnames: argnames,
+		argdefs:  argdefs,
 		executor: defaultFunctionExecutor,
 	})
 
@@ -312,7 +322,7 @@ func (m *InterpreterModule) evaluateFor(expr lexparse.ForExpression) *TekoObject
 	}
 
 	for i := 0; i < size; i++ {
-		el := at.executor(at, map[string]*TekoObject{at.argnames[0]: tp(getInteger(i))})
+		el := at.executor(at, map[string]*TekoObject{at.argdefs[0].Name: tp(getInteger(i))})
 
 		blockInterpreter := New(m)
 

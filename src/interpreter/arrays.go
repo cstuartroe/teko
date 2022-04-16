@@ -1,5 +1,7 @@
 package interpreter
 
+import "github.com/cstuartroe/teko/src/checker"
+
 type Array struct {
 	elements    []*TekoObject
 	symbolTable SymbolTable
@@ -100,19 +102,19 @@ func (a Array) getFieldValue(name string) *TekoObject {
 	return a.symbolTable.cached_get(name, func() *TekoObject {
 		switch name {
 		case "add":
-			return tp(customExecutedFunction(ArrayAddExecutor(a.elements), []string{"other"}))
+			return tp(customExecutedFunction(ArrayAddExecutor(a.elements), checker.NoDefaults("other")))
 
 		case "at":
-			return tp(customExecutedFunction(ArrayAtExecutor(a.elements), []string{"key"}))
+			return tp(customExecutedFunction(ArrayAtExecutor(a.elements), checker.NoDefaults("key")))
 
 		case "size":
 			return tp(getInteger(len(a.elements)))
 
 		case "includes":
-			return tp(customExecutedFunction(ArrayIncludesExecutor(a.elements), []string{"element"}))
+			return tp(customExecutedFunction(ArrayIncludesExecutor(a.elements), checker.NoDefaults("element")))
 
 		case "to_str":
-			return tp(customExecutedFunction(ArrayToStrExecutor(a.elements), []string{}))
+			return tp(customExecutedFunction(ArrayToStrExecutor(a.elements), checker.NoDefaults()))
 
 		default:
 			panic("Unknown array function: " + name)
@@ -156,4 +158,4 @@ func ArrayMapExecutor(function TekoFunction, evaluatedArgs map[string]*TekoObjec
 	return nil
 }
 
-var ArrayMap TekoFunction = customExecutedFunction(ArrayMapExecutor, []string{"f", "l"})
+var ArrayMap TekoFunction = customExecutedFunction(ArrayMapExecutor, checker.NoDefaults("f", "l"))

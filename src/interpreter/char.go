@@ -1,5 +1,7 @@
 package interpreter
 
+import "github.com/cstuartroe/teko/src/checker"
+
 type TekoChar struct {
 	value       rune
 	symbolTable SymbolTable
@@ -33,7 +35,7 @@ func (c TekoChar) getFieldValue(name string) *TekoObject {
 		switch name {
 
 		case "to_str":
-			return tp(customExecutedFunction(CharToStrExecutor(c.value), []string{}))
+			return tp(customExecutedFunction(CharToStrExecutor(c.value), checker.NoDefaults()))
 
 		default:
 			panic("Operation not implemented: " + name)

@@ -9,3 +9,9 @@ l : MaybeInt[] = [0, 1, null, 4, null]
 x : {} = 0
 
 z : null = 0
+
+/* EXPECT ERROR
+Type Error (tests/null.to:11:12)
+z : null = 0
+           ^
+Actual type 0 does not fulfill expected type null */

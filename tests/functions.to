@@ -19,7 +19,26 @@ minusOne := fn(n: int) -> n - 1
 
 minusOne(5)$ |> println
 
+fn defaults(m: int = 0, n: int = 4) -> (2*m) + n
+
+println(defaults(n=6)$)
+
+fn set_element_and_print(index: int, value: int, l: (var int)[] = [0, 0, 0]) {
+  l[index] = 1
+  println(l$)
+}
+
+l1 : (var int)[] = [2, 2, 2]
+set_element_and_print(0, 0, l1) // [0, 2, 2]
+set_element_and_print(0, 3) // [3, 0, 0]
+
+// Try this in Python! You'll get [3, 4, 0] because default arguments refer 
+// to the same object from call to call
+set_element_and_print(1, 4) // [0, 4, 0]
+
+
 /* EXPECT
 48
 7
-4   */
+4
+6   */

@@ -1,6 +1,7 @@
 package interpreter
 
 import (
+	"github.com/cstuartroe/teko/src/checker"
 	"math"
 	"strconv"
 )
@@ -55,16 +56,16 @@ func IntHashExecutor(receiver Integer) executorType {
 func (n Integer) getFieldValue(name string) *TekoObject {
 	return n.symbolTable.cached_get(name, func() *TekoObject {
 		if op, ok := intOps[name]; ok {
-			return tp(customExecutedFunction(IntBinopExecutor(n.value, op), []string{"other"}))
+			return tp(customExecutedFunction(IntBinopExecutor(n.value, op), checker.NoDefaults("other")))
 		}
 
 		switch name {
 
 		case "to_str":
-			return tp(customExecutedFunction(IntToStrExecutor(n.value), []string{}))
+			return tp(customExecutedFunction(IntToStrExecutor(n.value), checker.NoDefaults()))
 
 		case "hash":
-			return tp(customExecutedFunction(IntHashExecutor(n), []string{}))
+			return tp(customExecutedFunction(IntHashExecutor(n), checker.NoDefaults()))
 
 		default:
 			panic("Operation not implemented: " + name)

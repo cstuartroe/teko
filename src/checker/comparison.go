@@ -191,7 +191,7 @@ func (a TekoTypeWithAncestry) getArgdefs() []ArgDefWithAncestry {
 
 		for _, ad := range p.argdefs {
 			out = append(out, ArgDefWithAncestry{
-				name: ad.name,
+				name: ad.Name,
 				ta: TekoTypeWithAncestry{
 					ttype:     ad.ttype,
 					ancestors: next,

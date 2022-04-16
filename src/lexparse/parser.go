@@ -411,7 +411,7 @@ func (parser *Parser) makeCallExpression(receiver Expression) CallExpression {
 	for cont {
 		arg := parser.grabExpression(add_sub_prec)
 
-		if parser.currentToken().TType == ColonT {
+		if parser.currentToken().TType == EqualT {
 			switch p := arg.(type) {
 			case SimpleExpression:
 				if p.token.TType != SymbolT {
@@ -669,7 +669,17 @@ func (parser *Parser) grabArgdefs() []ArgdefNode {
 
 		tekotype := parser.grabOptionalType(min_prec)
 
-		argdefs = append(argdefs, ArgdefNode{Symbol: symbol, Tekotype: tekotype})
+		var dft Expression = nil
+		if parser.currentToken().TType == EqualT {
+			parser.advance()
+			dft = parser.grabExpression(max_prec)
+		}
+
+		argdefs = append(argdefs, ArgdefNode{
+			Symbol:   symbol,
+			Tekotype: tekotype,
+			Default:  dft,
+		})
 
 		if parser.currentToken().TType == CommaT {
 			parser.advance()

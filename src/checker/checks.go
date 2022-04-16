@@ -172,12 +172,12 @@ func (c *Checker) checkCallExpression(expr lexparse.CallExpression) TekoType {
 
 	switch ftype := receiver_tekotype.(type) {
 	case *FunctionType:
-		args_by_name := ResolveArgs(ftype.argnames(), expr)
+		args_by_name := ResolveArgs(ftype.argdefs, expr)
 
 		for _, argdef := range ftype.argdefs {
-			arg, ok := args_by_name[argdef.name]
+			arg, ok := args_by_name[argdef.Name]
 			if !ok {
-				expr.Token().Raise(shared.ArgumentError, "Argument was not passed: "+argdef.name)
+				expr.Token().Raise(shared.ArgumentError, "Argument was not passed: "+argdef.Name)
 			}
 
 			call_checker.checkExpression(arg, argdef.ttype)
@@ -379,14 +379,14 @@ func (c *Checker) checkFunctionDefinition(expr lexparse.FunctionExpression) Teko
 	blockChecker := NewChecker(c)
 	blockChecker.declared_generics = map[*GenericType]bool{}
 
-	argdefs := []FunctionArgDef{}
-
 	for _, gd := range expr.GDL.Declarations {
 		g := newGenericType(string(gd.Name.Value))
 
 		blockChecker.declareGeneric(g)
 		blockChecker.declareNamedType(gd.Name, g)
 	}
+
+	argdefs := []FunctionArgDef{}
 
 	for _, ad := range expr.Argdefs {
 		var ttype TekoType
@@ -406,8 +406,9 @@ func (c *Checker) checkFunctionDefinition(expr lexparse.FunctionExpression) Teko
 
 		// TODO: get argdefs from blockChecker
 		argdefs = append(argdefs, FunctionArgDef{
-			name:  string(ad.Symbol.Value),
-			ttype: ttype,
+			Name:    string(ad.Symbol.Value),
+			ttype:   ttype,
+			Default: ad.Default,
 		})
 	}
 

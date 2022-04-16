@@ -7,7 +7,7 @@ func atType(keyType TekoType, valueType TekoType) *FunctionType {
 		rtype: valueType,
 		argdefs: []FunctionArgDef{
 			{
-				name:  "key",
+				Name:  "key",
 				ttype: keyType,
 			},
 		},
@@ -19,7 +19,7 @@ func includesType(etype TekoType) *FunctionType {
 		rtype: BoolType,
 		argdefs: []FunctionArgDef{
 			{
-				name:  "element",
+				Name:  "element",
 				ttype: etype,
 			},
 		},
@@ -31,7 +31,7 @@ func setAddType(etype TekoType) *FunctionType {
 		rtype: NullType,
 		argdefs: []FunctionArgDef{
 			{
-				name:  "element",
+				Name:  "element",
 				ttype: etype,
 			},
 		},
@@ -76,7 +76,7 @@ func newSetType(etype TekoType) *SetType {
 		rtype: stype,
 		argdefs: []FunctionArgDef{
 			{
-				name:  "other",
+				Name:  "other",
 				ttype: stype,
 			},
 		},
@@ -167,7 +167,7 @@ func newArrayType(etype TekoType) *ArrayType {
 		rtype: atype,
 		argdefs: []FunctionArgDef{
 			{
-				name:  "other",
+				Name:  "other",
 				ttype: atype,
 			},
 		},
@@ -184,7 +184,7 @@ var PrintType *FunctionType = &FunctionType{
 	rtype: NullType,
 	argdefs: []FunctionArgDef{
 		{
-			name:  "s",
+			Name:  "s",
 			ttype: StringType,
 		},
 	},
@@ -197,7 +197,7 @@ func SetupStringTypes() {
 		rtype: StringType,
 		argdefs: []FunctionArgDef{
 			{
-				name:  "other",
+				Name:  "other",
 				ttype: StringType,
 			},
 		},
@@ -213,19 +213,19 @@ var arrayMapType *FunctionType = &FunctionType{
 	rtype: newArrayType(mapGenericB),
 	argdefs: []FunctionArgDef{
 		{
-			name: "f",
+			Name: "f",
 			ttype: &FunctionType{
 				rtype: mapGenericB,
 				argdefs: []FunctionArgDef{
 					{
-						name:  "e",
+						Name:  "e",
 						ttype: mapGenericA,
 					},
 				},
 			},
 		},
 		{
-			name:  "l",
+			Name:  "l",
 			ttype: newArrayType(mapGenericA),
 		},
 	},
