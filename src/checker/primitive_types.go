@@ -1,6 +1,16 @@
 package checker
 
-var ToStrType *FunctionType = &FunctionType{}
+func makeBinopType(ttype TekoType) *FunctionType {
+	return &FunctionType{
+		rtype: ttype,
+		argdefs: []FunctionArgDef{
+			{
+				Name:  "other",
+				ttype: ttype,
+			},
+		},
+	}
+}
 
 var IntType *BasicType = &BasicType{
 	name: "int",
@@ -51,22 +61,7 @@ var NullType *_NullType = &_NullType{}
 func SetupFunctionTypes() {
 	IntType.fields["hash"] = HashType
 
-	IntBinopType.rtype = IntType
-	IntBinopType.argdefs = []FunctionArgDef{
-		{
-			Name:  "other",
-			ttype: IntType,
-		},
-	}
+	*IntBinopType = *makeBinopType(IntType)
 
-	BoolBinopType.rtype = BoolType
-	BoolBinopType.argdefs = []FunctionArgDef{
-		{
-			Name:  "other",
-			ttype: BoolType,
-		},
-	}
-
-	ToStrType.rtype = StringType
-	ToStrType.argdefs = []FunctionArgDef{}
+	*BoolBinopType = *makeBinopType(BoolType)
 }

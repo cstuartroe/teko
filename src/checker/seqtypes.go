@@ -163,15 +163,7 @@ func newArrayType(etype TekoType) *ArrayType {
 		fields: makeMapFields(IntType, etype),
 	}
 
-	atype.fields["add"] = &FunctionType{
-		rtype: atype,
-		argdefs: []FunctionArgDef{
-			{
-				Name:  "other",
-				ttype: atype,
-			},
-		},
-	}
+	atype.fields["add"] = makeBinopType(atype)
 
 	return atype
 }
@@ -179,6 +171,8 @@ func newArrayType(etype TekoType) *ArrayType {
 var StringType *BasicType = &BasicType{
 	name: "string",
 }
+
+var ToStrType *FunctionType = &FunctionType{}
 
 var PrintType *FunctionType = &FunctionType{
 	rtype: NullType,
@@ -191,18 +185,11 @@ var PrintType *FunctionType = &FunctionType{
 }
 
 func SetupStringTypes() {
+	ToStrType.rtype = StringType
+	ToStrType.argdefs = []FunctionArgDef{}
+
 	StringType.fields = makeMapFields(IntType, CharType)
-
-	StringType.fields["add"] = &FunctionType{
-		rtype: StringType,
-		argdefs: []FunctionArgDef{
-			{
-				Name:  "other",
-				ttype: StringType,
-			},
-		},
-	}
-
+	StringType.fields["add"] = makeBinopType(StringType)
 	StringType.fields["hash"] = HashType
 }
 
