@@ -1,6 +1,7 @@
 package checker
 
 import (
+	"fmt"
 	"github.com/cstuartroe/teko/src/lexparse"
 	"github.com/cstuartroe/teko/src/shared"
 )
@@ -98,6 +99,8 @@ func (c *Checker) checkExpressionAllowingVar(expr lexparse.Expression, expectedT
 		expr.Token().Raise(shared.TypeError, "Evaluated to nil type")
 	}
 	if (expectedType != nil) && !c.isTekoSubtype(ttype, expectedType) {
+		fmt.Println(expectedType)
+		fmt.Println(ttype)
 		expr.Token().Raise(shared.TypeError, "Actual type "+ttype.tekotypeToString()+" does not fulfill expected type "+expectedType.tekotypeToString())
 	}
 
@@ -266,7 +269,7 @@ func (c *Checker) checkSequenceExpression(expr lexparse.SequenceExpression, expe
 			etype = deconstantize(c.checkExpression(expr.Elements[0], nil))
 
 			if expr.Stype == lexparse.ArraySeqType {
-				seqtype = newArrayType(etype)
+				seqtype = c.newArrayType(etype, mutable_sequence)
 			} else if expr.Stype == lexparse.SetSeqType {
 				seqtype = newSetType(etype)
 			} else {
@@ -340,7 +343,7 @@ func (c *Checker) checkMapExpression(expr lexparse.MapExpression, expectedType T
 		i += 1
 	}
 
-	return newMapType(ktype, vtype)
+	return c.newMapType(ktype, vtype, mutable_sequence)
 }
 
 func (c *Checker) checkObjectExpression(expr lexparse.ObjectExpression, expectedType TekoType) TekoType {
@@ -452,7 +455,7 @@ func (c *Checker) checkDoExpression(expr lexparse.DoExpression, expectedType Tek
 func (c *Checker) checkWhileExpression(expr lexparse.WhileExpression) TekoType {
 	c.checkExpression(expr.Condition, BoolType)
 
-	return newArrayType(c.checkExpression(expr.Body, nil))
+	return c.newArrayType(c.checkExpression(expr.Body, nil), mutable_sequence)
 }
 
 func (c *Checker) checkForLoop(expr lexparse.ForExpression) TekoType {
@@ -471,7 +474,7 @@ func (c *Checker) checkForLoop(expr lexparse.ForExpression) TekoType {
 	blockChecker := NewChecker(c)
 	blockChecker.declareFieldType(expr.Iterand, etype)
 
-	return newArrayType(blockChecker.checkExpression(expr.Body, nil))
+	return c.newArrayType(blockChecker.checkExpression(expr.Body, nil), mutable_sequence)
 }
 
 func (c *Checker) checkScopeExpression(expr lexparse.ScopeExpression) TekoType {

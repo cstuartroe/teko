@@ -90,6 +90,19 @@ func NewChecker(parent *Checker) Checker {
 	return c
 }
 
+var emptyChecker Checker = Checker{
+	typeTable: &TypeTable{
+		parent:            nil,
+		table:             map[string]TekoType{},
+		declared_generics: map[*GenericType]bool{},
+	},
+	ctype: &CheckerType{
+		fields: map[string]TekoType{},
+		parent: nil,
+	},
+	generic_resolutions: map[*GenericType]TekoType{},
+}
+
 func (c *Checker) GetType() TekoType {
 	return c.ctype
 }

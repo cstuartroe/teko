@@ -115,7 +115,7 @@ func (c *Checker) degenericizeReturnType(ttype TekoType) TekoType {
 		}
 
 	case *ArrayType:
-		return newArrayType(c.degenericizeReturnType(p.etype))
+		return c.newArrayType(c.degenericizeReturnType(p.etype), p.variant)
 
 	default:
 		return ttype

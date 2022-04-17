@@ -105,29 +105,6 @@ func (t MapType) allFields() map[string]TekoType {
 	return t.fields
 }
 
-func makeMapFields(keyType TekoType, valueType TekoType) map[string]TekoType {
-	at_t := atType(keyType, valueType)
-	in_t := includesType(valueType)
-
-	return map[string]TekoType{
-		"at":       at_t,
-		"size":     IntType,
-		"includes": in_t,
-		"to_str": &FunctionType{
-			rtype:   StringType,
-			argdefs: []FunctionArgDef{},
-		},
-	}
-}
-
-func newMapType(keyType TekoType, valueType TekoType) *MapType {
-	return &MapType{
-		ktype:  keyType,
-		vtype:  valueType,
-		fields: makeMapFields(keyType, valueType),
-	}
-}
-
 var HashType *FunctionType = &FunctionType{
 	rtype:   IntType,
 	argdefs: []FunctionArgDef{},
@@ -140,44 +117,134 @@ var Hashable TekoType = &BasicType{
 	},
 }
 
+type sequence_variant int
+
+const (
+	mutable_sequence   sequence_variant = iota // retrieved elements are mutable, and (for arrays) an append method is present
+	hashable_sequence                          // elements are not overwritable, and so the object has a hash_method
+	sequence_supertype                         // the fewest assumptions are made - elements are immutable but there is no hash method
+)
+
+func (c *Checker) makeMapFields(keyType TekoType, valueType TekoType, variant sequence_variant) map[string]TekoType {
+	at_rtype := valueType
+	if variant == mutable_sequence {
+		at_rtype = newVarType(valueType)
+	}
+
+	at_t := atType(keyType, at_rtype)
+	in_t := includesType(valueType)
+
+	out := map[string]TekoType{
+		"at":       at_t,
+		"size":     IntType,
+		"includes": in_t,
+		"to_str": &FunctionType{
+			rtype:   StringType,
+			argdefs: []FunctionArgDef{},
+		},
+	}
+
+	if variant == hashable_sequence && c.isTekoSubtype(valueType, Hashable) {
+		out["hash"] = HashType
+	}
+
+	return out
+}
+
+func (c *Checker) newMapType(keyType TekoType, valueType TekoType, variant sequence_variant) *MapType {
+	return &MapType{
+		ktype:  keyType,
+		vtype:  valueType,
+		fields: c.makeMapFields(keyType, valueType, variant),
+	}
+}
+
 // Arrays, strings
 
 type ArrayType struct {
-	etype  TekoType
-	fields map[string]TekoType
+	etype   TekoType
+	variant sequence_variant
+	fields  map[string]TekoType
 }
 
 func (t ArrayType) tekotypeToString() string {
-	return t.etype.tekotypeToString() + "[]"
+	if t.etype == CharType && t.variant == hashable_sequence {
+		return "string"
+	}
+
+	out := t.etype.tekotypeToString()
+
+	if t.variant == mutable_sequence {
+		out = "(var " + out + ")"
+	}
+
+	out += "[]"
+
+	if t.variant == hashable_sequence {
+		out += "!"
+	}
+
+	return out
 }
 
 func (t ArrayType) allFields() map[string]TekoType {
 	return t.fields
 }
 
-func newArrayType(etype TekoType) *ArrayType {
-	etype = deconstantize(etype)
-
+func (c *Checker) newArrayType(etype TekoType, variant sequence_variant) *ArrayType {
 	atype := &ArrayType{
-		etype:  etype,
-		fields: makeMapFields(IntType, etype),
+		etype:   etype,
+		variant: variant,
 	}
 
-	atype.fields["add"] = &FunctionType{
-		rtype: atype,
-		argdefs: []FunctionArgDef{
-			{
-				Name:  "other",
-				ttype: atype,
-			},
-		},
-	}
+	c.setArrayFields(atype)
 
 	return atype
 }
 
-var StringType *BasicType = &BasicType{
-	name: "string",
+func (c *Checker) makeArrayAddType(atype *ArrayType) *FunctionType {
+	rtype := atype
+	// if atype.variant != mutable_sequence {
+	// 	rtype = c.newArrayType(atype.etype, mutable_sequence)
+	// }
+
+	argtype := atype
+	if atype.variant != sequence_supertype {
+		argtype = c.newArrayType(atype.etype, sequence_supertype)
+	}
+
+	return &FunctionType{
+		rtype: rtype,
+		argdefs: []FunctionArgDef{
+			{
+				Name:  "other",
+				ttype: argtype,
+			},
+		},
+	}
+}
+
+func (c *Checker) setArrayFields(atype *ArrayType) {
+	atype.fields = c.makeMapFields(IntType, atype.etype, atype.variant)
+
+	atype.fields["add"] = c.makeArrayAddType(atype)
+
+	if atype.variant == mutable_sequence {
+		atype.fields["append"] = &FunctionType{
+			rtype: NullType,
+			argdefs: []FunctionArgDef{
+				{
+					Name:  "element",
+					ttype: atype.etype,
+				},
+			},
+		}
+	}
+}
+
+var StringType *ArrayType = &ArrayType{
+	etype:   CharType,
+	variant: hashable_sequence,
 }
 
 var PrintType *FunctionType = &FunctionType{
@@ -191,26 +258,14 @@ var PrintType *FunctionType = &FunctionType{
 }
 
 func SetupStringTypes() {
-	StringType.fields = makeMapFields(IntType, CharType)
-
-	StringType.fields["add"] = &FunctionType{
-		rtype: StringType,
-		argdefs: []FunctionArgDef{
-			{
-				Name:  "other",
-				ttype: StringType,
-			},
-		},
-	}
-
-	StringType.fields["hash"] = HashType
+	emptyChecker.setArrayFields(StringType)
 }
 
 var mapGenericA *GenericType = newGenericType("")
 var mapGenericB *GenericType = newGenericType("")
 
 var arrayMapType *FunctionType = &FunctionType{
-	rtype: newArrayType(mapGenericB),
+	rtype: emptyChecker.newArrayType(mapGenericB, mutable_sequence),
 	argdefs: []FunctionArgDef{
 		{
 			Name: "f",
@@ -226,7 +281,7 @@ var arrayMapType *FunctionType = &FunctionType{
 		},
 		{
 			Name:  "l",
-			ttype: newArrayType(mapGenericA),
+			ttype: emptyChecker.newArrayType(mapGenericA, sequence_supertype),
 		},
 	},
 }

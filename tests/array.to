@@ -8,6 +8,8 @@ fn int_to_str(e: int) -> e.to_str()
 
 println(map(int_to_str, arr)$)
 
+s : char[] = "hello"
+
 /* EXPECT
 1
 10

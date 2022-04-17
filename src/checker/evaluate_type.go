@@ -103,7 +103,7 @@ func (c *Checker) evaluateSliceType(expr lexparse.SliceExpression) TekoType {
 		panic("Still need to implement fixed-size arrays") // TODO
 	}
 
-	return newArrayType(c.evaluateType(expr.Left))
+	return c.newArrayType(c.evaluateType(expr.Left), sequence_supertype) // TODO other annotations
 }
 
 func (c *Checker) evaluateMapType(expr lexparse.MapExpression) TekoType {
@@ -113,5 +113,5 @@ func (c *Checker) evaluateMapType(expr lexparse.MapExpression) TekoType {
 		expr.Token().Raise(shared.SyntaxError, "Map type cannot have contents")
 	}
 
-	return newMapType(c.evaluateType(expr.Ktype), c.evaluateType(expr.Vtype))
+	return c.newMapType(c.evaluateType(expr.Ktype), c.evaluateType(expr.Vtype), sequence_supertype)
 }

@@ -4,13 +4,6 @@ import (
 	"github.com/cstuartroe/teko/src/lexparse"
 )
 
-var ProcessType TekoType = &BasicType{
-	name: "",
-	fields: map[string]TekoType{
-		"args": newArrayType(StringType),
-	},
-}
-
 var stdlibTypeTable *TypeTable = &TypeTable{
 	parent: nil,
 	table: map[string]TekoType{
@@ -24,10 +17,9 @@ var stdlibTypeTable *TypeTable = &TypeTable{
 }
 
 var StdlibSymbolTable map[string]TekoType = map[string]TekoType{
-	"print":   PrintType,
-	"map":     arrayMapType,
-	"process": ProcessType,
-	"null":    NullType,
+	"print": PrintType,
+	"map":   arrayMapType,
+	"null":  NullType,
 }
 
 var stdLibType *CheckerType = &CheckerType{
@@ -41,5 +33,14 @@ var BaseChecker *Checker = &Checker{
 }
 
 func CheckTekoLangStdLib() {
+	process_type := &BasicType{
+		name: "",
+		fields: map[string]TekoType{
+			"args": emptyChecker.newArrayType(StringType, hashable_sequence),
+		},
+	}
+
+	BaseChecker.ctype.setField("process", process_type)
+
 	BaseChecker.CheckTree(lexparse.StdLibParser.Codeblock)
 }

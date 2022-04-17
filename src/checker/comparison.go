@@ -3,10 +3,10 @@ package checker
 import "fmt"
 
 var primitives map[*BasicType]bool = map[*BasicType]bool{
-	IntType:    true,
-	BoolType:   true,
-	CharType:   true,
-	StringType: true,
+	IntType:  true,
+	BoolType: true,
+	CharType: true,
+	// StringType: true,
 }
 
 func (c *Checker) isTekoSubtype(sub TekoType, sup TekoType) bool {
@@ -159,6 +159,16 @@ func (c *Checker) isObjectSubtype(sub TekoTypeWithAncestry, sup TekoTypeWithAnce
 				return false
 			}
 		} else if !c.isTekoSubtypeWithAncestry(sub_ta, sup_ta) {
+			fmt.Println("Not object subtype")
+			fmt.Println(sub.ttype)
+			fmt.Println(sup.ttype)
+			fmt.Println(sub.ttype.tekotypeToString())
+			fmt.Println(sup.ttype.tekotypeToString())
+			fmt.Println(tekoObjectTypeShowFields(sub.ttype))
+			fmt.Println(tekoObjectTypeShowFields(sup.ttype))
+			fmt.Println(name)
+			fmt.Println(sub_ta.ttype.tekotypeToString())
+			fmt.Println(sup_ta.ttype.tekotypeToString())
 			return false
 		}
 	}
@@ -227,6 +237,9 @@ func (c *Checker) isFunctionSubtype(sub TekoTypeWithAncestry, sup TekoTypeWithAn
 
 		// Yes, this is the right order.
 		if !c.isTekoSubtypeWithAncestry(sup_argdef.ta, sub_argdef.ta) {
+			fmt.Println("Incompatible args:")
+			fmt.Println(sup_argdef.ta.ttype.tekotypeToString())
+			fmt.Println(sub_argdef.ta.ttype.tekotypeToString())
 			return false
 		}
 
