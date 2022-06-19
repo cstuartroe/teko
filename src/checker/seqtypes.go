@@ -155,7 +155,7 @@ func (t ArrayType) allFields() map[string]TekoType {
 	return t.fields
 }
 
-func newArrayType(etype TekoType) *ArrayType {
+func _newArrayTypeWithoutForEach(etype TekoType) *ArrayType {
 	etype = deconstantize(etype)
 
 	atype := &ArrayType{
@@ -164,6 +164,37 @@ func newArrayType(etype TekoType) *ArrayType {
 	}
 
 	atype.fields["add"] = makeBinopType(atype)
+
+	return atype
+}
+
+var mapGeneric *GenericType = newGenericType("")
+
+func forEachType(etype TekoType, rtype TekoType) *FunctionType {
+	g := newGenericType("")
+
+	return &FunctionType{
+		rtype: rtype,
+		argdefs: []FunctionArgDef{
+			{
+				Name: "f",
+				ttype: &FunctionType{
+					rtype: g,
+					argdefs: []FunctionArgDef{
+						{
+							Name: "e",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func newArrayType(etype TekoType) *ArrayType {
+	atype := _newArrayTypeWithoutForEach(etype)
+
+	atype.fields["forEach"] = forEachType(etype, atype)
 
 	return atype
 }
@@ -191,31 +222,7 @@ func SetupStringTypes() {
 	StringType.fields = makeMapFields(IntType, CharType)
 	StringType.fields["add"] = makeBinopType(StringType)
 	StringType.fields["hash"] = HashType
-}
-
-var mapGenericA *GenericType = newGenericType("")
-var mapGenericB *GenericType = newGenericType("")
-
-var arrayMapType *FunctionType = &FunctionType{
-	rtype: newArrayType(mapGenericB),
-	argdefs: []FunctionArgDef{
-		{
-			Name: "f",
-			ttype: &FunctionType{
-				rtype: mapGenericB,
-				argdefs: []FunctionArgDef{
-					{
-						Name:  "e",
-						ttype: mapGenericA,
-					},
-				},
-			},
-		},
-		{
-			Name:  "l",
-			ttype: newArrayType(mapGenericA),
-		},
-	},
+	StringType.fields["forEach"] = forEachType(CharType, StringType)
 }
 
 func (c *Checker) generalEtype(ttype TekoType) TekoType {
