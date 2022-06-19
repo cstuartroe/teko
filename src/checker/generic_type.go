@@ -40,7 +40,7 @@ func (t *GenericType) addField(name string, ttype TekoType) {
 
 func newGenericType(name string) *GenericType {
 	return &GenericType{
-		ttype: nil,
+		ttype: nil, // TODO?: newBasicType(name),
 	}
 }
 
