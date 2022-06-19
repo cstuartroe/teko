@@ -155,7 +155,6 @@ func ArrayMapExecutor(function TekoFunction, evaluatedArgs map[string]*TekoObjec
 	default:
 		panic("Non-array somehow made it past the type checker as an argument to map!")
 	}
-	return nil
 }
 
 var ArrayMap TekoFunction = customExecutedFunction(ArrayMapExecutor, checker.NoDefaults("f", "l"))

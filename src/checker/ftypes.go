@@ -8,8 +8,12 @@ import (
 )
 
 type FunctionArgDef struct {
-	Name    string
-	ttype   TekoType
+	Name  string
+	ttype TekoType
+	// TODO the typechecker doesn't really need to know the default value,
+	// it just needs to know whether there is one. Change this to a boolean
+	// and get the interpreter module its own arg def struct that doesn't have
+	// a ttype field.
 	Default lexparse.Expression
 }
 
@@ -45,16 +49,6 @@ func (ftype FunctionType) tekotypeToString() string {
 func (ftype FunctionType) allFields() map[string]TekoType {
 	return map[string]TekoType{} // TODO should actually be all fields shared by types
 }
-
-// func (ftype FunctionType) argnames() []string {
-// 	var out []string = []string{}
-
-// 	for _, argdef := range ftype.argdefs {
-// 		out = append(out, argdef.name)
-// 	}
-
-// 	return out
-// }
 
 func containsName(argdefs []FunctionArgDef, name string) bool {
 	for _, ad := range argdefs {
