@@ -1,3 +1,5 @@
 *.gz
 *.exe
 teko
+.idea
+
