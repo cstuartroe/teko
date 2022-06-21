@@ -40,7 +40,7 @@ alice : Person = {
 }
 ```
 
-It should be apparent than `alice` has two attributes: `alice.name` evaluates to the string `"Alice"`,
+It should be apparent that `alice` has two attributes: `alice.name` evaluates to the string `"Alice"`,
 and `alice.age` evaluates to the integer `25`. In Teko, these two facts comprise the entire value
 of `alice`, thus the type `Person` with its two fields is an appropriate description of `alice`.
 
@@ -98,6 +98,18 @@ be as permissive as possible while maintaining safety. Ideally, if a programmer 
 code and infer that a type error is impossible, then that block of code should pass the type checker,
 and the Teko type checker is willing to go to fairly great lengths to try to attain this goal.
 
+## A note on type equality
+
+Throughout this document, when I refer to a type being a *subtype* of another, this includes the
+possibility that they are equal types. This is because, within the logic of Teko's structural typing,
+one type is a subtype of another iff all instances of the first type may be used wherever an instance
+of the second type is required.
+
+Similarly, one type being a *supertype* of another includes the possibility that they are equal.
+
+Indeed, all Teko types are both a supertype and a subtype of themselves, and the Teko type checker's
+test of type equality is whether a type is both a supertype and a subtype of another.
+
 ## Kinds of types
 
 Teko sports at least five kinds of types: object types, function types, tuple types, union types,
@@ -105,7 +117,7 @@ and generic types.
 
 In covering each of the kinds, I will also present the criteria for subtyping between two types of
 that kind, as it tends to fit naturally into discussion of the nature of the kind.
-I'll reserve another section about ([subtyping between kinds](#subtyping-between-kinds)),
+I've reserved another section about [subtyping between kinds](#subtyping-between-kinds),
 as there are many more possible combinations but the rules tend to either be quite simple or reduce
 to the subtyping rules given in this section.
 
@@ -139,15 +151,64 @@ variable names), and the Teko parser will not parse type definitions with fields
 However, this guideline is intentionally broken by some special object types defined by the Teko
 interpreter, specifically to avoid being accidentally or maliciously subtyped by user-defined types.
 
-In fact, many special interpreter-defined types are in fact just object types (cf. 
+In fact, many special interpreter-defined types are actually just object types (cf. 
 [Special Object Types](#special-object-types)).
+
+#### Object subtyping
+
+For an object type `S` to be a subtype of `T`, two criteria must be met:
+
+* All field names present in `T` must be present in `S`.
+* For a given field name `n`, the type `S.n` must be a subtype of `T.n`.
+
+These criteria ensure that any time an attribute of a variable of type `T` is used, an object
+of type `S` has an attribute of the same name which can be used as expected:
+
+```
+fn printName(n: Named) {
+  println(n.name)
+}
+
+alice : Person = {
+  name: "Alice",
+  age: 25,
+}
+
+printName(alice)
+```
+
+These criteria seem simple enough to assess, but become complex when a type is self-referential, e.g.:
+
+```
+type IntegerLinkedListNode = {
+  n: int,
+  next: null | LinkedListNode,
+}
+```
+
+To determine whether another type `TwoValueLinkedListNode`
+
+```
+type TwoValueLinkedListNode = {
+  m: int,
+  n: int,
+  next: null | TwoValueLinkedListNode,
+}
+```
+
+is a subtype of `IntegerLinkedListNode`, then the type checker must determine whether
+`null | TwoValueLinkedListNode` is a subtype of `null | LinkedListNode`, which requires knowing
+whether `TwoValueLinkedListNode` is a subtype of `LinkedListNode`, which is exactly what the
+type checker is in the middle of figuring out!
+
+I've dedicated an entire section to this - [Self-Referential Types](#self-referential-types)
 
 ### Function types
 
 Teko function types are defined by an ordered sequence of arguments (each of which has a type, and
 optionally a name and a default value) as well as a single return type.
 
-Function types are defined with the following two structs in Go:
+The Teko type checker uses the following two Go structs to represent function types:
 
 ```go
 type FunctionArgDef struct {
@@ -162,10 +223,7 @@ type FunctionType struct {
 }
 ```
 
-`Name` and `Default` are both nullable fields of `FunctionArgDef`, but `ttype` is always present.
-The actual AST value of `Default` is not taken into account by the typechecker; however, its presence
-or absence does affect subtyping and the resolution of function calls. `Name` is also used by the
-typechecker for both determining subtype relationships and resolving function calls.
+`Name` is a nullable field of `FunctionArgDef`, but `ttype` and `Default` are always present.
 
 #### Argument names, positional vs. keyword arguments
 
@@ -214,7 +272,7 @@ which is agnostic as to argument name.
 
 Argument names are considered by the Teko type checker because function arguments aren't always
 passed positionally in Teko. Function arguments may also be passed as keyword arguments, in which
-case their name obviously becomes salient. For instance, the last line of the following ought not
+case their name becomes salient. For instance, the last line of the following ought not
 to pass type checking:
 
 ```
@@ -232,14 +290,14 @@ judgeName(hasEvenLength, alice)
 ```
 
 This is because this version of `judgeName` passes a keyword argument to `criterion` with the
-key `name`, and `hasEventLength` doesn't have an argument called `name`.
+key `name`, and `hasEvenLength` doesn't have an argument called `name`.
 
 This implies something else about function subtyping - a function type with a named argument
 cannot be subtyped by another function type which has either a different or null name for the same
 argument!
 
 It is a syntactic constraint in Teko that all positional arguments must be passed prior to
-all keyword arguments. Consider a function type like
+all keyword arguments. Consider a hypothetical function type
 
 ```
 type TakesBoolAndStr = fn(b: bool, str): null
@@ -255,8 +313,8 @@ fn giveBoolAndStr(f: TakesBoolAndStr) {
 ```
 
 As such, the name `b` of the first argument in the definition of `TakesBoolAndStr` needlessly
-reduces the set of functions which could be considered instances of `TakesBoolAndStr`. For instance,
-the following function
+reduces the set of functions which could be considered instances of `TakesBoolAndStr` - `b`
+can never be passed as a keyword argument. For instance, the following function
 
 ```
 fn stateEmotion(isHappy: bool, name: str) {
@@ -277,4 +335,193 @@ must precede all named arguments.
 
 #### Number of arguments, and default values
 
+Teko allows function definitions to state default values for arguments, which allow for the argument
+to optionally not be passed as part of the function call.
 
+```
+fn describePerson(p: Person, hideAge: bool ? false) {
+  println("Their name is " + p.name)
+  if !hideAge {
+    println("Their age is " + p.age$)
+  }
+}
+
+describePerson(alice, true)
+describePerson(alice)
+```
+
+The value of the default argument is not considered to comprise part of the function type, but
+the presence or absence of a default argument is, and affects subtyping.
+
+When denoting function types with default arguments, a trailing question mark is used to indicate
+that an argument has a default value. For example, the type of `describePerson` above is
+
+```
+fn(p: Person, hideAge: bool?)
+```
+
+Because arguments with default values may be omitted, a function type with a default argument
+is a subtype of a function type with all of the same arguments, but lacking that argument. For
+example, the above function type is a subtype of
+
+```
+fn(p: Person)
+```
+
+The justification for this can be seen in the fact that function of type
+`fn(p: Person, hideAge: bool?)` can be used anywhere that a function of type `fn(p: Person)`
+is required:
+
+```
+fn passAlice(f: fn(p: Person)) {
+  f(alice)
+}
+
+passAlice(describePerson)
+```
+
+Teko restricts all arguments with default values to appearing in a function definition
+after all arguments with no default value.
+
+A function type may have an unnamed argument with a default value. That is, the following is a
+valid function type:
+
+```
+fn(int?)
+```
+
+An example of its use:
+
+```
+fn passZeroThenNothing(f: fn(int?)) {
+  f(0)
+  f()
+}
+```
+
+#### Argument type and subtyping
+
+For a function type `F` to be a subtype of another function type `G`, all argument types of `F` must be
+equal to or *supertypes* of the types of corresponding arguments for `G`. For example, `fn(Named)` is
+a subtype of `fn(Person)`, in that a function of the former type may be used anywhere that a function
+of the latter type is required.
+
+```
+fn sayName(n: Named) {
+  println(n.name)
+}
+
+fn passAlice(f: fn(Person)) {
+  f(alice)
+}
+
+passAlice(sayName)
+```
+
+#### Return type
+
+For a function type `F` to be a subtype of another function type `G`, `F`'s return type must be
+a subtype of `G`'s return type:
+
+```
+fn makePerson(n: int): Person {
+  {
+    name: "Alice",
+    age: n*5,
+  }
+}
+
+type IntToNamed = fn(int): Named
+
+fn printNameFromInt(f: IntToNamed) {
+  println(f(5).name)
+}
+
+printNameFromInt(makePerson)
+```
+
+#### Summary of function subtyping criteria
+
+Because there are many validity and subtyping rules for function types, I will present them all
+again in brief for clarity, without repeating the justification for each.
+
+For a function type `F` to be valid:
+
+* All of its arguments must have a type
+* All of its unnamed arguments must precede all of its named arguments
+* All of its arguments with no default value must precede all of its arguments with default values
+
+For a function type `F` with `m` arguments and a function type `G` with `n` arguments, `F` is a
+subtype of `G` if and only if:
+
+(in the rules below, I refer to argument positions with zero-indexing)
+
+* `m >= n`
+* For all `i, 0 <= i < n`, the `i`th argument type of `F` is a supertype of the `i`th argument type of `G`
+* For all `i, 0 <= i < n`, the `i`th argument of `G` either has no name, or has the same name as the `i`th argument of `F`
+* For all `i, i <= n < m`, the `i`th argument of `F` has a default value
+* The return type of `F` is a subtype of the return type of `G`
+
+### Tuple types
+
+### Union Types
+
+### Generic types
+
+## Subtyping between kinds
+
+I've organized this section primarily by the kind of supertype, and secondarily by the kind of subtype.
+
+### Supertype is an object type
+
+#### Subtype is a function or tuple type
+
+Function types and tuple type are only subtypes of the empty object type `{}`. In fact, the
+empty object type is a supertype of all types in Teko. Function types and tuple types cannot
+be subtypes of any other object types, because functions and tuples do not have attributes.
+
+#### Subtype is a union type
+
+A union type is a subtype of an object type if and only if each type in the union is a
+subtype of the object type. This is because, regardless of the underlying value of an
+instance of the union type, it must be able to be used as the object type.
+
+```
+type Foo = {
+  a: int,
+}
+
+fn printFooA(foo: Foo) {
+  println(foo.a$)
+}
+
+type Bar = {
+  a: int,
+  b: int,
+}
+
+type Baz = {
+  a: int,
+  c: int,
+}
+
+b : (Bar | Baz) = if condition {
+  {
+    a: 1,
+    b: 2,
+  }
+} else {
+  {
+    a: 1,
+    c: 3,
+  }
+}
+
+printFooA(b)
+```
+
+### Supertype is a function type
+
+No other kind of function may be a subtype of a function type. This is because an object of
+function type must be permitted to be called using function call syntax, and no value of a
+non-function type may do so.
