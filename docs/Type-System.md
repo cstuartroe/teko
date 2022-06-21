@@ -112,8 +112,7 @@ test of type equality is whether a type is both a supertype and a subtype of ano
 
 ## Kinds of types
 
-Teko sports at least five kinds of types: object types, function types, tuple types, union types,
-and generic types.
+Teko sports at least four kinds of types: object types, function types, tuple types, and union types.
 
 In covering each of the kinds, I will also present the criteria for subtyping between two types of
 that kind, as it tends to fit naturally into discussion of the nature of the kind.
@@ -464,9 +463,116 @@ subtype of `G` if and only if:
 
 ### Tuple types
 
+Tuple types are defined with a sequence of types.
+
+```
+type TupType = (int, str, bool)
+```
+
+The only way to use a value of tuple type in Teko is by unpacking it:
+
+```
+tup: TupType = (0, "", false)
+
+n, s, b := tup
+
+println(s)
+```
+
+Tuples and tuple types must have length of at least two.
+
+#### Tuple subtyping
+
+A tuple type `S` is a subtype of another tuple type `T` if they have the same number of elements,
+and if each element of `S` is a subtype of the corresponding element of `T`:
+
+```
+fn doSomeThings(t: (int, Named)) {
+  n, named := t
+
+  n2 : int = n + 1
+
+  println(named.name)
+}
+
+tup : (int, Person) = (0, alice)
+
+doSomeThings(tup)
+```
+
 ### Union Types
 
-### Generic types
+A union type in Teko is simply defined with a set of types. This is expressed in Teko by
+listing types separated by a pipe `|`. For example, `int | str`:
+
+```
+fn addZero(x: int | str): int | str {
+  switch x {
+    case int {
+      x + 0
+    }
+
+    case str {
+      x + "0"
+    }
+  }
+}
+
+addZero(5) // 5
+addZero("5") // "50"
+
+seven : int | str = if condition then 7 else "7"
+
+addZero(seven)
+```
+
+Union types are represented in the Teko type checker with the Go struct
+
+```go
+type UnionType struct {
+	types []TekoType
+}
+```
+
+Although they are stored with an ordered slice in Go, the order of constituent types does not matter.
+
+The constituent types of a union type cannot themselves be be union types
+(cf. [Union operation](#union-operation)).
+
+#### Union subtyping
+
+A union type `U` is a subtype of another union type `V` if each constituent type of `U` is a
+subtype of `V`; that is, if each constituent type of `U` is a subtype of at least one constituent
+type of `V` (cf. [Supertype is a union type](#supertype-is-a-union-type)). This guarantees that 
+regardless of the underlying value of an instance of `U`, it can be used as an instance of `V`.
+
+```
+type U = int | Person
+
+type V = int | str | Named
+
+fn handleUnion(v: V) {
+  switch v {
+    case int {
+      println((v + 5)$)
+    }
+
+    case str {
+      println(v)
+    }
+
+    case Named {
+      println(v.name)
+    }
+  }
+}
+
+u1 : U = 3
+u2 : U = alice
+
+handleUnion(u1) // prints "8"
+handleUnion(u2) // prints "Alice"
+```
 
 ## Subtyping between kinds
 
@@ -522,6 +628,36 @@ printFooA(b)
 
 ### Supertype is a function type
 
-No other kind of function may be a subtype of a function type. This is because an object of
+No other kind of type may be a subtype of a function type. This is because an object of
 function type must be permitted to be called using function call syntax, and no value of a
 non-function type may do so.
+
+### Supertype is a tuple type
+
+No other kind of type may be a subtype of a tuple type. This is because an object of a tuple
+type must be permitted to be unpacked, and no value of non-tuple type may do so.
+
+### Supertype is a union type
+
+A non-union type `T` is a subtype of a union type `U` if and only if `T` is a subtype
+of at least one of `U`'s constituent types.
+
+```
+type U = int | Person
+
+fn handleUnion(u: U) {
+  switch u {
+    case int {
+      println((u + 5)$)
+    }
+
+    case Person {
+      println(v.name)
+    }
+  }
+}
+
+t : int = 3
+
+handleUnion(t)
+```
