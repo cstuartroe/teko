@@ -536,7 +536,8 @@ type UnionType struct {
 
 Although they are stored with an ordered slice in Go, the order of constituent types does not matter.
 
-The constituent types of a union type cannot themselves be be union types
+The constituent types of a union type cannot themselves be be union types. Additionally, no
+constituent type in the union may be a subtype of any other constituent type
 (cf. [Union operation](#union-operation)).
 
 #### Union subtyping
@@ -582,7 +583,7 @@ I've organized this section primarily by the kind of supertype, and secondarily 
 
 #### Subtype is a function or tuple type
 
-Function types and tuple type are only subtypes of the empty object type `{}`. In fact, the
+Function types and tuple types are only subtypes of the empty object type `{}`. In fact, the
 empty object type is a supertype of all types in Teko. Function types and tuple types cannot
 be subtypes of any other object types, because functions and tuples do not have attributes.
 
@@ -661,3 +662,81 @@ t : int = 3
 
 handleUnion(t)
 ```
+
+## Special object types
+
+The Teko type checker internally defines a number of groups of types, which are simply
+object types.
+
+### "Primitive" types
+
+Fundamental data types (`int`, `char`, `bool`) in Teko are defined simply as object types.
+This may seem strange, since objects of those types need to receive special treatment by the
+interpreter, but there is no need for the type checker to concern itself with the abnormal implementation
+of methods for these types; it simply needs to know that those methods are available.
+
+The definitions of those types are as follows:
+
+```
+type int = {
+  add: fn(int): int,
+  sub: fn(int): int,
+  mult: fn(int): int,
+  div: fn(int): int,
+  exp: fn(int): int,
+  mod: fn(int): int,
+  compare: fn(int): int,
+  to_str: fn(): str,
+}
+
+type char = {
+  to_str: fn(): str,
+  to_int: fn(): int,
+}
+
+type bool = {
+  and: fn(bool): bool,
+  or: fn(bool): bool,
+  to_str: fn(): str,
+}
+```
+
+They also each have an additional field with a name that does not match Teko's regex syntax,
+to avoid being subtyped by user-defined types.
+
+### Constant types
+
+Specific values of any of the above primitive types can also be treated as types in themselves.
+That is, values like `true`, `false`, `0`, and `"foo"` can be treated as types in themselves.
+They are implemented as subtypes of the corresponding primitive type, with all the fields of that
+type plus one additional field specific to the constant value, so that primitive types are not
+subtypes of constant types, and no constant type is a subtype of any other constant type.
+
+In fact, in the absence of a type hint the Teko type checker will infer constant types for
+any primitive value by itself or in an object literal. For instance, in the following code
+
+```
+b := true
+
+o := {
+  s: "foo",
+}
+```
+
+`b` will be inferred to have the type `true`, not `bool`, and `o` will be inferred to have the
+type `{s: "foo"}`, not `{s: str}`. This will never cause an issue if the programmer chooses
+to treat these variables having non-constant types; since `true` is a subtype of `bool` and
+`{s: "foo"}` is a subtype of `{s: str}`, values of the former types can always simply be
+treated as values of the latter type. However, it also makes usages like the following legal:
+
+```
+foo : "foo" = o.s
+```
+
+This would of course fail type checking if the type of `o.s` were regarded as `str`.
+
+### Variable types
+
+Variable types (cf. [Var operation](#var-operation)) are derived from another type. They are
+object types with all the fields of the type `T` they are derived from, plus an additional
+field `=` of type `fn(T)`.
