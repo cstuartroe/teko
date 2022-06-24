@@ -183,7 +183,7 @@ func (c *Checker) checkCallExpression(expr lexparse.CallExpression) TekoType {
 			call_checker.checkExpression(arg, argdef.ttype)
 		}
 
-		return call_checker.degenericizeReturnType(ftype.rtype)
+		return degenericize(ftype.rtype, call_checker.generic_resolutions)
 
 	case FunctionType:
 		panic("Use *FunctionType instead of FunctionType")
@@ -261,6 +261,7 @@ func (c *Checker) checkSequenceExpression(expr lexparse.SequenceExpression, expe
 		}
 	case nil:
 		if len(expr.Elements) == 0 {
+			// TODO see whether it's possible to defer inference
 			expr.Token().Raise(shared.TypeError, "With no expected type, sequence cannot be empty")
 		} else {
 			etype = deconstantize(c.checkExpression(expr.Elements[0], nil))

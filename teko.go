@@ -26,6 +26,7 @@ func commandsList() []string {
 func main() {
 	lexparse.ParseStldLib()
 	checker.SetupFunctionTypes()
+	checker.SetupSequenceTypes()
 	checker.SetupStringTypes()
 	checker.CheckTekoLangStdLib()
 	interpreter.SetupStdLibModule()

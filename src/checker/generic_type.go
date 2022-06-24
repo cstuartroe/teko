@@ -68,15 +68,22 @@ func (c *Checker) declareGeneric(g *GenericType) {
 	c.typeTable.declared_generics[g] = true
 }
 
-func (c *Checker) degenericizeReturnType(ttype TekoType) TekoType {
+func degenericize(ttype TekoType, generic_resolutions map[*GenericType]TekoType) TekoType {
 	switch p := ttype.(type) {
 	case *GenericType:
-		return c.generic_resolutions[p] // TODO what about declared generics?
+		if res, ok := generic_resolutions[p]; ok { // TODO what about declared generics?
+			return res
+		} else {
+			return ttype
+		}
+
+	case *TemplateType:
+		return p.degenericize(generic_resolutions)
 
 	case *UnionType:
 		types := []TekoType{}
 		for _, ttype := range p.types {
-			types = append(types, c.degenericizeReturnType(ttype))
+			types = append(types, degenericize(ttype, generic_resolutions))
 		}
 
 		return &UnionType{
@@ -89,12 +96,12 @@ func (c *Checker) degenericizeReturnType(ttype TekoType) TekoType {
 		for _, argdef := range p.argdefs {
 			argdefs = append(argdefs, FunctionArgDef{
 				Name:  argdef.Name,
-				ttype: c.degenericizeReturnType(argdef.ttype),
+				ttype: degenericize(argdef.ttype, generic_resolutions),
 			})
 		}
 
 		return &FunctionType{
-			rtype:   c.degenericizeReturnType(p.rtype),
+			rtype:   degenericize(p.rtype, generic_resolutions),
 			argdefs: argdefs,
 		}
 
@@ -106,7 +113,7 @@ func (c *Checker) degenericizeReturnType(ttype TekoType) TekoType {
 		fields := map[string]TekoType{}
 
 		for name, ttype := range p.fields {
-			fields[name] = c.degenericizeReturnType(ttype)
+			fields[name] = degenericize(ttype, generic_resolutions)
 		}
 
 		return &BasicType{
@@ -115,10 +122,9 @@ func (c *Checker) degenericizeReturnType(ttype TekoType) TekoType {
 		}
 
 	case *ArrayType:
-		return newArrayType(c.degenericizeReturnType(p.etype))
+		return newArrayType(degenericize(p.etype, generic_resolutions))
 
 	default:
 		return ttype
-		// panic("Unknown kind of type")
 	}
 }

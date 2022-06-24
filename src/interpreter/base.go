@@ -29,6 +29,10 @@ var TekoPrint TekoFunction = customExecutedFunction(TekoPrintExecutor, checker.N
 func getProcessArgs() []*TekoObject {
 	out := []*TekoObject{}
 
+	if len(os.Args) < 2 {
+		return out
+	}
+
 	for _, arg := range os.Args[2:] {
 		out = append(out, tp(newTekoString([]rune(arg))))
 	}

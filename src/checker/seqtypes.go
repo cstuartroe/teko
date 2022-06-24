@@ -143,8 +143,8 @@ var Hashable TekoType = &BasicType{
 // Arrays, strings
 
 type ArrayType struct {
-	etype  TekoType
-	fields map[string]TekoType
+	etype TekoType
+	ttype *TemplateType
 }
 
 func (t ArrayType) tekotypeToString() string {
@@ -152,20 +152,59 @@ func (t ArrayType) tekotypeToString() string {
 }
 
 func (t ArrayType) allFields() map[string]TekoType {
-	return t.fields
+	return t.ttype.allFields()
 }
+
+var sequenceGeneric *GenericType = newGenericType("T")
+var sequenceResolutionGeneric *GenericType = newGenericType("U")
+
+var ArrayTemplate *TemplateType = &TemplateType{
+	declared_generics: []*GenericType{sequenceGeneric},
+	template:          &BasicType{},
+}
+
+func constructArrayTemplate() {
+	other_type := newArrayType(sequenceResolutionGeneric)
+
+	fields := makeMapFields(IntType, sequenceGeneric)
+
+	fields["add"] = &FunctionType{
+		rtype: other_type,
+		argdefs: []FunctionArgDef{
+			{
+				Name:  "o",
+				ttype: other_type,
+			},
+		},
+	}
+
+	switch p := ArrayTemplate.template.(type) {
+	case *BasicType:
+		p.fields = fields
+	}
+}
+
+var arrayTypeCache map[TekoType]*ArrayType = map[TekoType]*ArrayType{}
 
 func newArrayType(etype TekoType) *ArrayType {
 	etype = deconstantize(etype)
 
-	atype := &ArrayType{
-		etype:  etype,
-		fields: makeMapFields(IntType, etype),
+	if at, ok := arrayTypeCache[etype]; ok {
+		return at
 	}
 
-	atype.fields["add"] = makeBinopType(atype)
+	at := &ArrayType{
+		etype: etype,
+		ttype: ArrayTemplate.resolveByList(etype),
+	}
 
-	return atype
+	arrayTypeCache[etype] = at
+
+	return at
+}
+
+func SetupSequenceTypes() {
+	constructArrayTemplate()
 }
 
 var StringType *BasicType = &BasicType{
