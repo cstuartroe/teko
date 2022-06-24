@@ -178,6 +178,23 @@ func constructArrayTemplate() {
 		},
 	}
 
+	fields["forEach"] = &FunctionType{
+		rtype: other_type,
+		argdefs: []FunctionArgDef{
+			{
+				Name: "f",
+				ttype: &FunctionType{
+					rtype: sequenceResolutionGeneric,
+					argdefs: []FunctionArgDef{
+						{
+							ttype: sequenceGeneric,
+						},
+					},
+				},
+			},
+		},
+	}
+
 	switch p := ArrayTemplate.template.(type) {
 	case *BasicType:
 		p.fields = fields
@@ -230,31 +247,6 @@ func SetupStringTypes() {
 	StringType.fields = makeMapFields(IntType, CharType)
 	StringType.fields["add"] = makeBinopType(StringType)
 	StringType.fields["hash"] = HashType
-}
-
-var mapGenericA *GenericType = newGenericType("")
-var mapGenericB *GenericType = newGenericType("")
-
-var arrayMapType *FunctionType = &FunctionType{
-	rtype: newArrayType(mapGenericB),
-	argdefs: []FunctionArgDef{
-		{
-			Name: "f",
-			ttype: &FunctionType{
-				rtype: mapGenericB,
-				argdefs: []FunctionArgDef{
-					{
-						Name:  "e",
-						ttype: mapGenericA,
-					},
-				},
-			},
-		},
-		{
-			Name:  "l",
-			ttype: newArrayType(mapGenericA),
-		},
-	},
 }
 
 func (c *Checker) generalEtype(ttype TekoType) TekoType {

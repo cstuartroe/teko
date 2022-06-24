@@ -125,36 +125,3 @@ func (a Array) getFieldValue(name string) *TekoObject {
 func newArray(elements []*TekoObject) Array {
 	return Array{elements, newSymbolTable(nil)}
 }
-
-func ArrayMapExecutor(function TekoFunction, evaluatedArgs map[string]*TekoObject) *TekoObject {
-	l, ok := evaluatedArgs["l"]
-	if !ok {
-		panic("No array parameter passed to map")
-	}
-
-	switch lp := (*l).(type) {
-	case Array:
-		f, ok2 := evaluatedArgs["f"]
-		if !ok2 {
-			panic("No function parameter passed to map")
-		}
-
-		switch fp := (*f).(type) {
-		case TekoFunction:
-			elements := []*TekoObject{}
-
-			for _, e := range lp.elements {
-				elements = append(elements, fp.executor(fp, map[string]*TekoObject{"e": e}))
-			}
-
-			return tp(newArray(elements))
-
-		default:
-			panic("Non-function made it past the type checker as an argument to map!")
-		}
-	default:
-		panic("Non-array somehow made it past the type checker as an argument to map!")
-	}
-}
-
-var ArrayMap TekoFunction = customExecutedFunction(ArrayMapExecutor, checker.NoDefaults("f", "l"))

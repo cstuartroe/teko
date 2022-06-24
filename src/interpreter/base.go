@@ -51,7 +51,6 @@ var Process BasicObject = BasicObject{
 
 var StdLibFieldValues map[string]*TekoObject = map[string]*TekoObject{
 	"print":   tp(TekoPrint),
-	"map":     tp(ArrayMap),
 	"process": tp(Process),
 	"null":    Null,
 }

@@ -73,6 +73,7 @@ func (a TekoTypeWithAncestry) getField(name string) TekoTypeWithAncestry {
 func (a TekoTypeWithAncestry) degenericize() TekoTypeWithAncestry {
 	switch p := a.ttype.(type) {
 	case *GenericType:
+		fmt.Println(p.ttype.tekotypeToString())
 		return TekoTypeWithAncestry{
 			ttype:     p.ttype,
 			ancestors: a.ancestors,
@@ -221,7 +222,7 @@ func (c *Checker) isFunctionSubtype(sub TekoTypeWithAncestry, sup TekoTypeWithAn
 	for i, sub_argdef := range sub_argdefs {
 		sup_argdef := sup_argdefs[i]
 
-		if sub_argdef.name != sup_argdef.name {
+		if sup_argdef.name != "" && sub_argdef.name != sup_argdef.name {
 			return false
 		}
 
