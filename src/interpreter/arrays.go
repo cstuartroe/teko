@@ -97,6 +97,28 @@ func ArrayToStrExecutor(receiverElements []*TekoObject) executorType {
 	}
 }
 
+func ArrayForEachExecutor(receiveElements []*TekoObject) executorType {
+	return func(function TekoFunction, evaluatedArgs map[string]*TekoObject) *TekoObject {
+		elements := []*TekoObject{}
+
+		var f TekoFunction
+		switch fp := (*evaluatedArgs["f"]).(type) {
+		case TekoFunction:
+			f = fp
+		default:
+			panic("something other than a function passed to forEach")
+		}
+
+		argname := f.argdefs[0].Name
+
+		for _, e := range receiveElements {
+			elements = append(elements, f.executor(f, map[string]*TekoObject{argname: e}))
+		}
+
+		return tp(newArray(elements))
+	}
+}
+
 // TODO get argames from checker
 func (a Array) getFieldValue(name string) *TekoObject {
 	return a.symbolTable.cached_get(name, func() *TekoObject {
@@ -115,6 +137,9 @@ func (a Array) getFieldValue(name string) *TekoObject {
 
 		case "to_str":
 			return tp(customExecutedFunction(ArrayToStrExecutor(a.elements), checker.NoDefaults()))
+
+		case "forEach":
+			return tp(customExecutedFunction(ArrayForEachExecutor(a.elements), checker.NoDefaults("f")))
 
 		default:
 			panic("Unknown array function: " + name)

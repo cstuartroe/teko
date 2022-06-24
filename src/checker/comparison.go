@@ -73,7 +73,6 @@ func (a TekoTypeWithAncestry) getField(name string) TekoTypeWithAncestry {
 func (a TekoTypeWithAncestry) degenericize() TekoTypeWithAncestry {
 	switch p := a.ttype.(type) {
 	case *GenericType:
-		fmt.Println(p.ttype.tekotypeToString())
 		return TekoTypeWithAncestry{
 			ttype:     p.ttype,
 			ancestors: a.ancestors,

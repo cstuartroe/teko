@@ -6,7 +6,7 @@ println(arr$)
 
 fn int_to_str(e: int) -> e.to_str()
 
-arr.forEach(fn(e: int) -> e.to_str()).forEach(println)
+arr.forEach(fn(e: int) -> e.to_str())$ |> println
 
 /* EXPECT
 1
