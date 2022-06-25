@@ -128,3 +128,12 @@ func degenericize(ttype TekoType, generic_resolutions map[*GenericType]TekoType)
 		return ttype
 	}
 }
+
+func isGeneric(t TekoType) bool {
+	switch t.(type) {
+	case *GenericType:
+		return true
+	default:
+		return false
+	}
+}

@@ -70,7 +70,7 @@ func (c *Checker) checkExpressionAllowingVar(expr lexparse.Expression, expectedT
 
 	case lexparse.FunctionExpression:
 		// TODO use expected type in function definitions
-		ttype = c.checkFunctionDefinition(p)
+		ttype = c.checkFunctionDefinition(p, expectedType)
 
 	case lexparse.DoExpression:
 		ttype = c.checkDoExpression(p, expectedType)
@@ -80,9 +80,6 @@ func (c *Checker) checkExpressionAllowingVar(expr lexparse.Expression, expectedT
 
 	case lexparse.WhileExpression:
 		ttype = c.checkWhileExpression(p)
-
-	case lexparse.ForExpression:
-		ttype = c.checkForLoop(p)
 
 	case lexparse.ScopeExpression:
 		ttype = c.checkScopeExpression(p)
@@ -104,7 +101,7 @@ func (c *Checker) checkExpressionAllowingVar(expr lexparse.Expression, expectedT
 	if expectedType == nil {
 		return ttype
 	} else {
-		return expectedType
+		return degenericize(expectedType, c.generic_resolutions)
 	}
 }
 
@@ -355,7 +352,7 @@ func (c *Checker) checkObjectExpression(expr lexparse.ObjectExpression, expected
 		}
 
 		var expectedFieldType TekoType = nil
-		if expectedType != nil {
+		if expectedType != nil && !isGeneric(expectedType) {
 			expectedFieldType = getField(expectedType, field_name)
 			if expectedFieldType == nil {
 				of.Symbol.Raise(shared.TypeError, "Object literal cannot have unreachable field")
@@ -376,7 +373,13 @@ func (c *Checker) checkObjectExpression(expr lexparse.ObjectExpression, expected
 	}
 }
 
-func (c *Checker) checkFunctionDefinition(expr lexparse.FunctionExpression) TekoType {
+func (c *Checker) checkFunctionDefinition(expr lexparse.FunctionExpression, expectedType TekoType) TekoType {
+	var expectedFType *FunctionType = nil
+	switch fp := expectedType.(type) {
+	case *FunctionType:
+		expectedFType = fp
+	}
+
 	blockChecker := NewChecker(c)
 	blockChecker.declared_generics = map[*GenericType]bool{}
 
@@ -389,18 +392,20 @@ func (c *Checker) checkFunctionDefinition(expr lexparse.FunctionExpression) Teko
 
 	argdefs := []FunctionArgDef{}
 
-	for _, ad := range expr.Argdefs {
+	for i, ad := range expr.Argdefs {
 		var ttype TekoType
 
-		if ad.Tekotype == nil {
-			g := newGenericType("")
-			blockChecker.declareGeneric(g)
-			ttype = g
-		} else {
+		if ad.Tekotype != nil {
 			ttype = blockChecker.evaluateType(ad.Tekotype)
 			if isvar(ttype) {
 				ad.Tekotype.Token().Raise(shared.TypeError, "Function arguments cannot be mutable. Complain to Conor if you hate this fact.")
 			}
+		} else if expectedFType != nil && len(expectedFType.argdefs) > i {
+			ttype = expectedFType.argdefs[i].ttype
+		} else {
+			g := newGenericType("")
+			blockChecker.declareGeneric(g)
+			ttype = g
 		}
 
 		blockChecker.declareFieldType(ad.Symbol, ttype)
@@ -416,6 +421,8 @@ func (c *Checker) checkFunctionDefinition(expr lexparse.FunctionExpression) Teko
 	var rtype TekoType = nil
 	if expr.Rtype != nil {
 		rtype = blockChecker.evaluateType(expr.Rtype)
+	} else if expectedFType != nil {
+		rtype = expectedFType.rtype
 	}
 
 	ftype := &FunctionType{
@@ -454,25 +461,6 @@ func (c *Checker) checkWhileExpression(expr lexparse.WhileExpression) TekoType {
 	c.checkExpression(expr.Condition, BoolType)
 
 	return newArrayType(c.checkExpression(expr.Body, nil))
-}
-
-func (c *Checker) checkForLoop(expr lexparse.ForExpression) TekoType {
-	etype := c.generalEtype(c.checkExpression(expr.Iterator, nil))
-
-	if expr.Tekotype != nil {
-		stated_etype := c.evaluateType(expr.Tekotype)
-
-		if !c.isTekoSubtype(stated_etype, etype) {
-			expr.Iterator.Token().Raise(shared.TypeError, "Iterator does not have element type "+stated_etype.tekotypeToString())
-		} else {
-			etype = stated_etype
-		}
-	}
-
-	blockChecker := NewChecker(c)
-	blockChecker.declareFieldType(expr.Iterand, etype)
-
-	return newArrayType(blockChecker.checkExpression(expr.Body, nil))
 }
 
 func (c *Checker) checkScopeExpression(expr lexparse.ScopeExpression) TekoType {

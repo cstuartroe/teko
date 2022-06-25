@@ -803,19 +803,50 @@ func (parser *Parser) grabWhileExpression(prec int) WhileExpression {
 	}
 }
 
-func (parser *Parser) grabForLoop(prec int) ForExpression {
+func (parser *Parser) grabForLoop(prec int) Expression {
 	for_t := *parser.expect(ForT)
 	iterand := *parser.expect(SymbolT)
 	ttype := parser.grabOptionalType(min_prec)
+	in := parser.expect(InT)
+	iterator := parser.grabExpression(prec)
+	body := parser.grabControlBlock(prec)
 
-	parser.expect(InT)
-
-	return ForExpression{
-		ForToken: for_t,
-		Iterand:  iterand,
-		Tekotype: ttype,
-		Iterator: parser.grabExpression(prec),
-		Body:     parser.grabControlBlock(prec),
+	if parser.Transform {
+		return CallExpression{
+			Receiver: AttributeExpression{
+				Left: iterator,
+				Symbol: Token{
+					Line:  in.Line,
+					Col:   in.Col,
+					TType: SymbolT,
+					Value: []rune("forEach"),
+				},
+			},
+			Args: []Expression{
+				FunctionExpression{
+					FnToken: Token{
+						Line:  in.Line,
+						Col:   in.Col,
+						TType: ForT,
+					},
+					Argdefs: []ArgdefNode{
+						{
+							Symbol:   iterand,
+							Tekotype: ttype,
+						},
+					},
+					Right: body,
+				},
+			},
+		}
+	} else {
+		return ForExpression{
+			ForToken: for_t,
+			Iterand:  iterand,
+			Tekotype: ttype,
+			Iterator: iterator,
+			Body:     body,
+		}
 	}
 }
 

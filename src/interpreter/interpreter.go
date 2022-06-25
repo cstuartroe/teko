@@ -82,9 +82,6 @@ func (m InterpreterModule) evaluateExpression(expr lexparse.Expression) *TekoObj
 	case lexparse.WhileExpression:
 		return m.evaluateWhile(p)
 
-	case lexparse.ForExpression:
-		return m.evaluateFor(p)
-
 	case lexparse.ScopeExpression:
 		return m.evaluateScope(p)
 
@@ -292,43 +289,6 @@ func (m InterpreterModule) evaluateWhile(expr lexparse.WhileExpression) *TekoObj
 
 	for m.isTrue(expr.Condition) {
 		elements = append(elements, m.evaluateExpression(expr.Body))
-	}
-
-	return tp(newArray(elements))
-}
-
-func (m *InterpreterModule) evaluateFor(expr lexparse.ForExpression) *TekoObject {
-	elements := []*TekoObject{}
-
-	iterator := *m.evaluateExpression(expr.Iterator)
-
-	var size int
-	sizeObj := *iterator.getFieldValue("size")
-	switch p := sizeObj.(type) {
-	case Integer:
-		size = p.value
-	default:
-		expr.Iterator.Token().Raise(shared.UnexpectedIssue, "Did not evaluate to an int object")
-	}
-
-	var at TekoFunction
-	atObj := *iterator.getFieldValue("at")
-
-	switch fp := atObj.(type) {
-	case TekoFunction:
-		at = fp
-	default:
-		panic("Iterator does not have at function")
-	}
-
-	for i := 0; i < size; i++ {
-		el := at.executor(at, map[string]*TekoObject{at.argdefs[0].Name: tp(getInteger(i))})
-
-		blockInterpreter := New(m)
-
-		blockInterpreter.scope.symbolTable.set(string(expr.Iterand.Value), el)
-
-		elements = append(elements, blockInterpreter.evaluateExpression(expr.Body))
 	}
 
 	return tp(newArray(elements))

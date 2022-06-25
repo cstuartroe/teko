@@ -29,19 +29,6 @@ for e in l {
 
 println(o.name)
 
-// You don't have to loop over an array
-// as long as it has .size and .at()
-
-fakeArray := scope {
-    size := 10
-
-    fn at(i: int) -> i - 3
-}
-
-for n in fakeArray {
-    println(n$)
-}
-
 /* EXPECT
 1
 9
@@ -52,14 +39,4 @@ for n in fakeArray {
 3
 4
 7
-Susan
--3
--2
--1
-0
-1
-2
-3
-4
-5
-6 */
+Susan */
