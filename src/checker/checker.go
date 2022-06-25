@@ -48,10 +48,6 @@ func (ctype CheckerType) allFields() map[string]TekoType {
 	}
 
 	for name, ttype := range ctype.fields {
-		if _, ok := out[name]; ok {
-			panic("Field somehow got declared twice: " + name)
-		}
-
 		out[name] = ttype
 	}
 
@@ -98,21 +94,15 @@ func (c *Checker) getFieldType(name string) TekoType {
 	return getField(c.ctype, name)
 }
 
-func (c *Checker) declareFieldType(token lexparse.Token, tekotype TekoType) {
-	name := string(token.Value)
-
-	if c.getFieldType(name) != nil {
-		token.Raise(shared.NameError, "Field has already been declared: "+name)
-	}
-
-	c.ctype.setField(name, tekotype)
+func (c *Checker) declareFieldType(token *lexparse.Token, tekotype TekoType) {
+	c.ctype.setField(string(token.Value), tekotype)
 }
 
 func (c *Checker) getTypeByName(name string) TekoType {
 	return c.typeTable.get(name)
 }
 
-func (c *Checker) declareNamedType(token lexparse.Token, tekotype TekoType) {
+func (c *Checker) declareNamedType(token *lexparse.Token, tekotype TekoType) {
 	name := string(token.Value)
 
 	if c.typeTable.get(name) != nil {

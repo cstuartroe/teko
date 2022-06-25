@@ -1,13 +1,18 @@
 package interpreter
 
+import "github.com/cstuartroe/teko/src/checker"
+
 type TekoObject interface {
 	getFieldValue(name string) *TekoObject
+	getUnderlyingType() checker.TekoType
 }
 
 // This function is necessitated by dumb Go pointer semantics
 func tp(t TekoObject) *TekoObject {
 	return &t
 }
+
+//---
 
 type SymbolTable struct {
 	parent *SymbolTable
@@ -49,6 +54,8 @@ func (stable *SymbolTable) cached_get(name string, f func() *TekoObject) *TekoOb
 	}
 }
 
+//---
+
 type BasicObject struct {
 	symbolTable SymbolTable
 }
@@ -57,13 +64,29 @@ func (o BasicObject) getFieldValue(name string) *TekoObject {
 	return o.symbolTable.get(name)
 }
 
+func (o BasicObject) getUnderlyingType() checker.TekoType {
+	return nil // TODO
+}
+
+//---
+
 type Integer struct {
 	value       int // TODO: arbitrary-precision integer
 	symbolTable SymbolTable
 }
 
+func (i Integer) getUnderlyingType() checker.TekoType {
+	return checker.NewConstantIntType(i.value)
+}
+
+//---
+
 type Boolean struct {
 	value bool
+}
+
+func (b Boolean) getUnderlyingType() checker.TekoType {
+	return checker.BoolType
 }
 
 var True *TekoObject = tp(Boolean{

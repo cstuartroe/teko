@@ -9,7 +9,7 @@ var primitives map[*BasicType]bool = map[*BasicType]bool{
 	StringType: true,
 }
 
-func (c *Checker) isTekoSubtype(sub TekoType, sup TekoType) bool {
+func (c *Checker) IsTekoSubtype(sub TekoType, sup TekoType) bool {
 	return c.isTekoSubtypeWithAncestry(newAncestry(sub), newAncestry(sup))
 }
 
@@ -253,5 +253,5 @@ func (c *Checker) isUnionSubtype(usub *UnionType, asub Ancestors, usup *UnionTyp
 }
 
 func (c *Checker) isTekoEqType(t1 TekoType, t2 TekoType) bool {
-	return c.isTekoSubtype(t1, t2) && c.isTekoSubtype(t2, t1)
+	return c.IsTekoSubtype(t1, t2) && c.IsTekoSubtype(t2, t1)
 }

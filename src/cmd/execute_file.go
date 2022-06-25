@@ -19,7 +19,7 @@ func ExecuteFile(filename string) {
 	c.CheckTree(p.Codeblock)
 
 	i := interpreter.New(&interpreter.StdLibModule)
-	i.Execute(&p.Codeblock)
+	i.Execute(p.Codeblock)
 }
 
 func ExecuteFileSafe(filename string) {

@@ -27,6 +27,10 @@ const (
 	SetT = "Set"
 	MapT = "Map"
 
+	SwitchT  = "switch"
+	CaseT    = "case"
+	DefaultT = "default"
+
 	BinopT      = "binary operation" // + - * / ^ % & |
 	ComparisonT = "comparison"       // == != < > <= >=
 	UpdaterT    = "updater"          // <- += -= *= /= ^= %= &= |=

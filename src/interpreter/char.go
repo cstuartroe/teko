@@ -7,6 +7,10 @@ type TekoChar struct {
 	symbolTable SymbolTable
 }
 
+func (c TekoChar) getUnderlyingType() checker.TekoType {
+	return checker.CharType
+}
+
 func newChar(c rune) TekoChar {
 	return TekoChar{
 		value:       c,

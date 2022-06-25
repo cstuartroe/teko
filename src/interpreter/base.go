@@ -67,5 +67,5 @@ var StdLibModule InterpreterModule = InterpreterModule{
 }
 
 func SetupStdLibModule() {
-	StdLibModule.Execute(&lexparse.StdLibParser.Codeblock)
+	StdLibModule.Execute(lexparse.StdLibParser.Codeblock)
 }

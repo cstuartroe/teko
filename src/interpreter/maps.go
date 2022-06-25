@@ -7,6 +7,10 @@ type TekoMap struct {
 	symbolTable SymbolTable
 }
 
+func (m TekoMap) getUnderlyingType() checker.TekoType {
+	return nil // TODO
+}
+
 func tekoHash(o *TekoObject) int {
 	hash_function := (*o).getFieldValue("hash")
 	var hash *TekoObject

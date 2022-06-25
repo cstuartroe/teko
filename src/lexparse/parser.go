@@ -15,11 +15,20 @@ var simpleExprTokenTypes map[tokenType]bool = map[tokenType]bool{
 	BoolT:   true,
 }
 
+func fakeToken(t *Token, ttype tokenType, value string) *Token {
+	return &Token{
+		Line:  t.Line,
+		Col:   t.Col,
+		TType: ttype,
+		Value: []rune(value),
+	}
+}
+
 type Parser struct {
 	Tokens    []Token
 	position  int
 	Transform bool
-	Codeblock Codeblock
+	Codeblock *Codeblock
 }
 
 func (parser *Parser) ParseFile(filename string) {
@@ -30,7 +39,7 @@ func (parser *Parser) ParseFile(filename string) {
 
 func (parser *Parser) Parse(tokens []Token) {
 	parser.Tokens = tokens
-	parser.Codeblock = Codeblock{}
+	parser.Codeblock = &Codeblock{}
 	parser.skipComments()
 	for parser.HasMore() {
 		parser.Codeblock.Statements = append(
@@ -102,12 +111,12 @@ func (parser *Parser) grabStatement() Statement {
 	}
 }
 
-func (parser *Parser) grabTypeStatement() TypeStatement {
-	tt := *parser.expect(TypeT)
-	name := *parser.expect(SymbolT)
+func (parser *Parser) grabTypeStatement() *TypeStatement {
+	tt := parser.expect(TypeT)
+	name := parser.expect(SymbolT)
 	parser.expect(EqualT)
 
-	return TypeStatement{
+	return &TypeStatement{
 		TypeToken:      tt,
 		Name:           name,
 		TypeExpression: parser.grabTypeExpression(min_prec),
@@ -115,8 +124,8 @@ func (parser *Parser) grabTypeStatement() TypeStatement {
 	}
 }
 
-func (parser *Parser) grabExpressionStmt() ExpressionStatement {
-	return ExpressionStatement{
+func (parser *Parser) grabExpressionStmt() *ExpressionStatement {
+	return &ExpressionStatement{
 		Expression: parser.grabExpression(min_prec),
 		semicolon:  parser.optionalSemicolon(),
 	}
@@ -162,6 +171,9 @@ func (parser *Parser) grabExpression(prec int) Expression {
 	case ScopeT:
 		expr = parser.grabScopeExpression()
 
+	case SwitchT:
+		expr = parser.grabSwitchExpression()
+
 	default:
 		expr = parser.grabSimpleExpression()
 	}
@@ -181,15 +193,15 @@ func (parser *Parser) grabTypeExpression(prec int) Expression {
 	return out
 }
 
-func (parser *Parser) grabSimpleExpression() SimpleExpression {
+func (parser *Parser) grabSimpleExpression() *SimpleExpression {
 	t := parser.currentToken()
 	if _, ok := simpleExprTokenTypes[t.TType]; ok {
-		n := SimpleExpression{token: *t}
+		n := &SimpleExpression{token: t}
 		parser.advance()
 		return n
 	} else {
 		parser.currentToken().Raise(shared.SyntaxError, "Illegal start to expression")
-		return SimpleExpression{} // unreachable code that the compiler requires
+		return nil // unreachable code that the compiler requires
 	}
 }
 
@@ -219,9 +231,9 @@ func (parser *Parser) continueExpression(expr Expression, prec int) Expression {
 				tekotype = parser.grabTypeExpression(prec)
 			}
 
-			setter := *parser.expect(EqualT)
+			setter := parser.expect(EqualT)
 
-			out = DeclarationExpression{
+			out = &DeclarationExpression{
 				Symbol:   expr.Token(),
 				Tekotype: tekotype,
 				Setter:   setter,
@@ -238,26 +250,21 @@ func (parser *Parser) continueExpression(expr Expression, prec int) Expression {
 	case BinopT:
 		op_prec := binop_precs[binops[value]]
 		if prec <= op_prec {
-			op := *parser.currentToken()
+			op := parser.currentToken()
 			parser.advance()
 			right := parser.grabExpression(op_prec + 1)
 
 			if parser.Transform {
-				out = CallExpression{
-					Receiver: AttributeExpression{
-						Left: expr,
-						Symbol: Token{
-							Line:  op.Line,
-							Col:   op.Col,
-							TType: SymbolT,
-							Value: []rune(binops[value]),
-						},
+				out = &CallExpression{
+					Receiver: &AttributeExpression{
+						Left:   expr,
+						Symbol: fakeToken(op, SymbolT, binops[value]),
 					},
 					Args: []Expression{right},
 				}
 
 			} else {
-				out = BinopExpression{
+				out = &BinopExpression{
 					Left:      expr,
 					Operation: op,
 					Right:     right,
@@ -266,23 +273,18 @@ func (parser *Parser) continueExpression(expr Expression, prec int) Expression {
 		}
 
 	case SuffixT:
-		suffix := *parser.currentToken()
+		suffix := parser.currentToken()
 		parser.advance()
 
 		if parser.Transform {
-			out = CallExpression{
-				Receiver: AttributeExpression{
-					Left: expr,
-					Symbol: Token{
-						Line:  suffix.Line,
-						Col:   suffix.Col,
-						TType: SymbolT,
-						Value: []rune(suffixes[value]),
-					},
+			out = &CallExpression{
+				Receiver: &AttributeExpression{
+					Left:   expr,
+					Symbol: fakeToken(suffix, SymbolT, suffixes[value]),
 				},
 			}
 		} else {
-			out = SuffixExpression{
+			out = &SuffixExpression{
 				Left:   expr,
 				Suffix: suffix,
 			}
@@ -297,15 +299,10 @@ func (parser *Parser) continueExpression(expr Expression, prec int) Expression {
 		if prec <= setter_prec {
 			setter := *parser.expect(EqualT)
 
-			out = CallExpression{
-				Receiver: AttributeExpression{
-					Left: expr,
-					Symbol: Token{
-						Line:  setter.Line,
-						Col:   setter.Col,
-						TType: SymbolT,
-						Value: []rune("="),
-					},
+			out = &CallExpression{
+				Receiver: &AttributeExpression{
+					Left:   expr,
+					Symbol: fakeToken(&setter, SymbolT, "="),
 				},
 				Args: []Expression{
 					parser.grabExpression(setter_prec + 1),
@@ -315,25 +312,25 @@ func (parser *Parser) continueExpression(expr Expression, prec int) Expression {
 
 	case ComparisonT:
 		if prec <= comparison_prec {
-			return ComparisonExpression{
+			return &ComparisonExpression{
 				Left:       expr,
-				Comparator: *parser.expect(ComparisonT),
+				Comparator: parser.expect(ComparisonT),
 				Right:      parser.grabExpression(comparison_prec + 1),
 			}
 		}
 
 	case PipeT:
 		if prec <= setter_prec {
-			pipe := *parser.expect(PipeT)
+			pipe := parser.expect(PipeT)
 			function := parser.grabExpression(setter_prec + 1)
 
 			if parser.Transform {
-				out = CallExpression{
+				out = &CallExpression{
 					Receiver: function,
 					Args:     []Expression{expr},
 				}
 			} else {
-				out = PipeExpression{
+				out = &PipeExpression{
 					PipeToken: pipe,
 					Arg:       expr,
 					Function:  function,
@@ -342,7 +339,7 @@ func (parser *Parser) continueExpression(expr Expression, prec int) Expression {
 		}
 
 	case LSquareBrT:
-		br := *parser.expect(LSquareBrT)
+		br := parser.expect(LSquareBrT)
 
 		var inside Expression = nil
 		if parser.currentToken().TType != RSquareBrT {
@@ -356,23 +353,18 @@ func (parser *Parser) continueExpression(expr Expression, prec int) Expression {
 				br.Raise(shared.SyntaxError, "Empty slice")
 			}
 
-			out = CallExpression{
-				Receiver: AttributeExpression{
-					Left: expr,
-					Symbol: Token{
-						Line:  br.Line,
-						Col:   br.Col,
-						TType: SymbolT,
-						Value: []rune("at"),
-					},
+			out = &CallExpression{
+				Receiver: &AttributeExpression{
+					Left:   expr,
+					Symbol: fakeToken(br, SymbolT, "at"),
 				},
 				Args: []Expression{
 					inside,
 				},
-				Kwargs: []FunctionKwarg{},
+				Kwargs: []*FunctionKwarg{},
 			}
 		} else {
-			out = SliceExpression{
+			out = &SliceExpression{
 				Left:   expr,
 				Inside: inside,
 			}
@@ -388,7 +380,7 @@ func (parser *Parser) continueExpression(expr Expression, prec int) Expression {
 
 func isValidDeclared(declared Expression) bool {
 	switch (declared).(type) {
-	case SimpleExpression:
+	case *SimpleExpression:
 		switch declared.Token().TType {
 		case SymbolT:
 			return true
@@ -400,11 +392,11 @@ func isValidDeclared(declared Expression) bool {
 	}
 }
 
-func (parser *Parser) makeCallExpression(receiver Expression) CallExpression {
+func (parser *Parser) makeCallExpression(receiver Expression) *CallExpression {
 	parser.expect(LParT)
 
 	args := []Expression{}
-	kwargs := []FunctionKwarg{}
+	kwargs := []*FunctionKwarg{}
 	on_kwargs := false
 	cont := parser.currentToken().TType != RParT
 
@@ -413,7 +405,7 @@ func (parser *Parser) makeCallExpression(receiver Expression) CallExpression {
 
 		if parser.currentToken().TType == EqualT {
 			switch p := arg.(type) {
-			case SimpleExpression:
+			case *SimpleExpression:
 				if p.token.TType != SymbolT {
 					p.token.Raise(shared.SyntaxError, "Left-hand side of keyword argument cannot be a value")
 				}
@@ -424,7 +416,7 @@ func (parser *Parser) makeCallExpression(receiver Expression) CallExpression {
 			parser.advance()
 			on_kwargs = true
 
-			kwargs = append(kwargs, FunctionKwarg{
+			kwargs = append(kwargs, &FunctionKwarg{
 				Symbol: arg.Token(),
 				Value:  parser.grabExpression(add_sub_prec),
 			})
@@ -446,21 +438,19 @@ func (parser *Parser) makeCallExpression(receiver Expression) CallExpression {
 
 	parser.expect(RParT)
 
-	return CallExpression{
+	return &CallExpression{
 		Receiver: receiver,
 		Args:     args,
 		Kwargs:   kwargs,
 	}
 }
 
-func (parser *Parser) makeAttributeExpression(left Expression) AttributeExpression {
+func (parser *Parser) makeAttributeExpression(left Expression) *AttributeExpression {
 	parser.expect(DotT)
 
-	symbol := *parser.expect(SymbolT)
-
-	return AttributeExpression{
+	return &AttributeExpression{
 		Left:   left,
-		Symbol: symbol,
+		Symbol: parser.expect(SymbolT),
 	}
 }
 
@@ -483,7 +473,7 @@ func (parser *Parser) grabSequence(closingType tokenType) []Expression {
 }
 
 func (parser *Parser) grabTuple() Expression {
-	lpar := *parser.expect(LParT)
+	lpar := parser.expect(LParT)
 
 	seq := parser.grabSequence(RParT)
 	switch len(seq) {
@@ -493,39 +483,39 @@ func (parser *Parser) grabTuple() Expression {
 	case 1:
 		return seq[0]
 	default:
-		return TupleExpression{
+		return &TupleExpression{
 			Elements: seq,
 			LPar:     lpar,
 		}
 	}
 }
 
-func (parser *Parser) grabArray() SequenceExpression {
-	open := *parser.expect(LSquareBrT)
+func (parser *Parser) grabArray() *SequenceExpression {
+	open := parser.expect(LSquareBrT)
 
-	return SequenceExpression{
+	return &SequenceExpression{
 		OpenBrace: open,
 		Stype:     ArraySeqType,
 		Elements:  parser.grabSequence(RSquareBrT),
 	}
 }
 
-func (parser *Parser) grabSet() SequenceExpression {
-	open := *parser.expect(SetT)
+func (parser *Parser) grabSet() *SequenceExpression {
+	open := parser.expect(SetT)
 
 	// TODO: Typehints for sets would be nice
 
 	parser.expect(LCurlyBrT)
 
-	return SequenceExpression{
+	return &SequenceExpression{
 		OpenBrace: open,
 		Stype:     SetSeqType,
 		Elements:  parser.grabSequence(RCurlyBrT),
 	}
 }
 
-func (parser *Parser) grabMap() MapExpression {
-	map_token := *parser.expect(MapT)
+func (parser *Parser) grabMap() *MapExpression {
+	map_token := parser.expect(MapT)
 
 	var ktype, vtype Expression = nil, nil
 	if parser.currentToken().TType == LSquareBrT {
@@ -536,7 +526,7 @@ func (parser *Parser) grabMap() MapExpression {
 		parser.expect(RSquareBrT)
 	}
 
-	kvpairs := []KVPair{}
+	kvpairs := []*KVPair{}
 	has_braces := false
 
 	if parser.currentToken().TType == LCurlyBrT {
@@ -548,7 +538,7 @@ func (parser *Parser) grabMap() MapExpression {
 			parser.expect(ColonT)
 			value := parser.grabExpression(min_prec)
 
-			kvpairs = append(kvpairs, KVPair{Key: key, Value: value})
+			kvpairs = append(kvpairs, &KVPair{Key: key, Value: value})
 
 			if parser.currentToken().TType == CommaT {
 				parser.advance()
@@ -560,7 +550,7 @@ func (parser *Parser) grabMap() MapExpression {
 		parser.expect(RCurlyBrT)
 	}
 
-	return MapExpression{
+	return &MapExpression{
 		MapToken:  map_token,
 		Ktype:     ktype,
 		Vtype:     vtype,
@@ -571,7 +561,7 @@ func (parser *Parser) grabMap() MapExpression {
 
 func (parser *Parser) grabControlBlock(prec int) Expression {
 	if parser.currentToken().TType == LCurlyBrT {
-		return DoExpression{
+		return &DoExpression{
 			DoToken:   nil,
 			Codeblock: parser.grabCodeblock(),
 		}
@@ -584,8 +574,8 @@ func (parser *Parser) grabControlBlock(prec int) Expression {
 	}
 }
 
-func (parser *Parser) grabIf(prec int) IfExpression {
-	if_token := *parser.expect(IfT)
+func (parser *Parser) grabIf(prec int) *IfExpression {
+	if_token := parser.expect(IfT)
 
 	cond := parser.grabExpression(prec)
 
@@ -601,7 +591,7 @@ func (parser *Parser) grabIf(prec int) IfExpression {
 		else_expr = parser.grabControlBlock(prec)
 	}
 
-	return IfExpression{
+	return &IfExpression{
 		If:        if_token,
 		Condition: cond,
 		Then:      then,
@@ -609,10 +599,10 @@ func (parser *Parser) grabIf(prec int) IfExpression {
 	}
 }
 
-func (parser *Parser) grabObject() ObjectExpression {
-	open := *parser.expect(LCurlyBrT)
+func (parser *Parser) grabObject() *ObjectExpression {
+	open := parser.expect(LCurlyBrT)
 
-	fields := []ObjectField{}
+	fields := []*ObjectField{}
 
 	for parser.currentToken().TType != RCurlyBrT {
 		fields = append(fields, parser.grabObjectField())
@@ -626,14 +616,14 @@ func (parser *Parser) grabObject() ObjectExpression {
 
 	parser.expect(RCurlyBrT)
 
-	return ObjectExpression{
+	return &ObjectExpression{
 		OpenBrace: open,
 		Fields:    fields,
 	}
 }
 
-func (parser *Parser) grabObjectField() ObjectField {
-	symbol := *parser.expect(SymbolT)
+func (parser *Parser) grabObjectField() *ObjectField {
+	symbol := parser.expect(SymbolT)
 	var value Expression
 
 	if parser.currentToken().TType == ColonT {
@@ -641,12 +631,12 @@ func (parser *Parser) grabObjectField() ObjectField {
 
 		value = parser.grabExpression(min_prec)
 	} else if parser.Transform {
-		value = SimpleExpression{symbol}
+		value = &SimpleExpression{symbol}
 	} else {
 		symbol.Raise(shared.SyntaxError, "object property shorthand cannot be used in no-transform context")
 	}
 
-	return ObjectField{
+	return &ObjectField{
 		Symbol: symbol,
 		Value:  value,
 	}
@@ -661,11 +651,11 @@ func (parser *Parser) grabOptionalType(prec int) Expression {
 	}
 }
 
-func (parser *Parser) grabArgdefs() []ArgdefNode {
-	argdefs := []ArgdefNode{}
+func (parser *Parser) grabArgdefs() []*ArgdefNode {
+	argdefs := []*ArgdefNode{}
 
 	for parser.currentToken().TType != RParT {
-		symbol := *parser.expect(SymbolT)
+		symbol := parser.expect(SymbolT)
 
 		tekotype := parser.grabOptionalType(min_prec)
 
@@ -675,7 +665,7 @@ func (parser *Parser) grabArgdefs() []ArgdefNode {
 			dft = parser.grabExpression(max_prec)
 		}
 
-		argdefs = append(argdefs, ArgdefNode{
+		argdefs = append(argdefs, &ArgdefNode{
 			Symbol:   symbol,
 			Tekotype: tekotype,
 			Default:  dft,
@@ -693,7 +683,7 @@ func (parser *Parser) grabArgdefs() []ArgdefNode {
 
 func (parser *Parser) grabFunctionRight(prec int) Expression {
 	if parser.currentToken().TType == LCurlyBrT {
-		return DoExpression{
+		return &DoExpression{
 			DoToken:   nil,
 			Codeblock: parser.grabCodeblock(),
 		}
@@ -704,13 +694,13 @@ func (parser *Parser) grabFunctionRight(prec int) Expression {
 	}
 }
 
-func (parser *Parser) grabGenericDeclarationList() GenericDeclarationList {
-	out := GenericDeclarationList{
-		OpenBrace: *parser.expect(LSquareBrT),
+func (parser *Parser) grabGenericDeclarationList() *GenericDeclarationList {
+	out := &GenericDeclarationList{
+		OpenBrace: parser.expect(LSquareBrT),
 	}
 
 	for parser.currentToken().TType != RSquareBrT {
-		name := *parser.expect(SymbolT)
+		name := parser.expect(SymbolT)
 
 		var supertype Expression = nil
 		if parser.currentToken().TType == SubtypeT {
@@ -732,15 +722,15 @@ func (parser *Parser) grabGenericDeclarationList() GenericDeclarationList {
 	return out
 }
 
-func (parser *Parser) grabFunctionDefinition(prec int) FunctionExpression {
-	fn := *parser.expect(FnT)
+func (parser *Parser) grabFunctionDefinition(prec int) *FunctionExpression {
+	fn := parser.expect(FnT)
 
 	var name *Token = nil
 	if parser.currentToken().TType == SymbolT {
 		name = parser.expect(SymbolT)
 	}
 
-	var gdl GenericDeclarationList
+	var gdl *GenericDeclarationList
 	if parser.currentToken().TType == LSquareBrT {
 		gdl = parser.grabGenericDeclarationList()
 	}
@@ -754,7 +744,7 @@ func (parser *Parser) grabFunctionDefinition(prec int) FunctionExpression {
 	rtype := parser.grabOptionalType(prec)
 	right := parser.grabFunctionRight(prec)
 
-	return FunctionExpression{
+	return &FunctionExpression{
 		FnToken: fn,
 		Name:    name,
 		GDL:     gdl,
@@ -764,8 +754,8 @@ func (parser *Parser) grabFunctionDefinition(prec int) FunctionExpression {
 	}
 }
 
-func (parser *Parser) grabCodeblock() Codeblock {
-	openBr := *parser.expect(LCurlyBrT)
+func (parser *Parser) grabCodeblock() *Codeblock {
+	openBr := parser.expect(LCurlyBrT)
 
 	statements := []Statement{}
 
@@ -775,61 +765,52 @@ func (parser *Parser) grabCodeblock() Codeblock {
 
 	parser.expect(RCurlyBrT)
 
-	return Codeblock{
+	return &Codeblock{
 		OpenBr:     openBr,
 		Statements: statements,
 	}
 }
 
-func (parser *Parser) grabDoExpression() DoExpression {
-	return DoExpression{
+func (parser *Parser) grabDoExpression() *DoExpression {
+	return &DoExpression{
 		DoToken:   parser.expect(DoT),
 		Codeblock: parser.grabCodeblock(),
 	}
 }
 
-func (parser *Parser) grabVarExpression(prec int) VarExpression {
-	return VarExpression{
-		VarToken: *parser.expect(VarT),
+func (parser *Parser) grabVarExpression(prec int) *VarExpression {
+	return &VarExpression{
+		VarToken: parser.expect(VarT),
 		Right:    parser.grabExpression(prec),
 	}
 }
 
-func (parser *Parser) grabWhileExpression(prec int) WhileExpression {
-	return WhileExpression{
-		WhileToken: *parser.expect(WhileT),
+func (parser *Parser) grabWhileExpression(prec int) *WhileExpression {
+	return &WhileExpression{
+		WhileToken: parser.expect(WhileT),
 		Condition:  parser.grabExpression(prec),
 		Body:       parser.grabControlBlock(prec),
 	}
 }
 
 func (parser *Parser) grabForLoop(prec int) Expression {
-	for_t := *parser.expect(ForT)
-	iterand := *parser.expect(SymbolT)
+	for_t := parser.expect(ForT)
+	iterand := parser.expect(SymbolT)
 	ttype := parser.grabOptionalType(min_prec)
 	in := parser.expect(InT)
 	iterator := parser.grabExpression(prec)
 	body := parser.grabControlBlock(prec)
 
 	if parser.Transform {
-		return CallExpression{
-			Receiver: AttributeExpression{
-				Left: iterator,
-				Symbol: Token{
-					Line:  in.Line,
-					Col:   in.Col,
-					TType: SymbolT,
-					Value: []rune("forEach"),
-				},
+		return &CallExpression{
+			Receiver: &AttributeExpression{
+				Left:   iterator,
+				Symbol: fakeToken(in, SymbolT, "forEach"),
 			},
 			Args: []Expression{
-				FunctionExpression{
-					FnToken: Token{
-						Line:  in.Line,
-						Col:   in.Col,
-						TType: ForT,
-					},
-					Argdefs: []ArgdefNode{
+				&FunctionExpression{
+					FnToken: in,
+					Argdefs: []*ArgdefNode{
 						{
 							Symbol:   iterand,
 							Tekotype: ttype,
@@ -840,7 +821,7 @@ func (parser *Parser) grabForLoop(prec int) Expression {
 			},
 		}
 	} else {
-		return ForExpression{
+		return &ForExpression{
 			ForToken: for_t,
 			Iterand:  iterand,
 			Tekotype: ttype,
@@ -850,27 +831,66 @@ func (parser *Parser) grabForLoop(prec int) Expression {
 	}
 }
 
-func (parser *Parser) grabScopeExpression() ScopeExpression {
-	return ScopeExpression{
-		ScopeToken: *parser.expect(ScopeT),
+func (parser *Parser) grabScopeExpression() *ScopeExpression {
+	return &ScopeExpression{
+		ScopeToken: parser.expect(ScopeT),
 		Codeblock:  parser.grabCodeblock(),
 	}
 }
 
-func ComparisonCallExpression(expr ComparisonExpression) CallExpression {
-	return CallExpression{
-		Receiver: AttributeExpression{
-			Left: expr.Left,
-			Symbol: Token{
-				Line:  expr.Comparator.Line,
-				Col:   expr.Comparator.Col,
-				TType: expr.Comparator.TType,
-				Value: []rune("compare"),
-			},
+func (parser *Parser) grabCaseBlock() *CaseBlock {
+	case_token := parser.expect(CaseT)
+	ttype := parser.grabTypeExpression(min_prec)
+
+	if parser.currentToken().TType == ColonT {
+		parser.advance()
+	}
+
+	body := parser.grabControlBlock(min_prec)
+
+	return &CaseBlock{
+		Case:  case_token,
+		TType: ttype,
+		Body:  body,
+	}
+}
+
+func (parser *Parser) grabSwitchExpression() *SwitchExpression {
+	Switch := parser.expect(SwitchT)
+	Symbol := parser.expect(SymbolT)
+	parser.expect(LCurlyBrT)
+
+	Cases := []*CaseBlock{}
+
+	for parser.currentToken().TType == CaseT {
+		Cases = append(Cases, parser.grabCaseBlock())
+	}
+
+	var Default Expression = nil
+	if parser.currentToken().TType == DefaultT {
+		parser.advance()
+		Default = parser.grabDoExpression()
+	}
+
+	parser.expect(RCurlyBrT)
+
+	return &SwitchExpression{
+		Switch:  Switch,
+		Symbol:  Symbol,
+		Cases:   Cases,
+		Default: Default,
+	}
+}
+
+func ComparisonCallExpression(expr *ComparisonExpression) *CallExpression {
+	return &CallExpression{
+		Receiver: &AttributeExpression{
+			Left:   expr.Left,
+			Symbol: fakeToken(expr.Comparator, expr.Comparator.TType, "compare"),
 		},
 		Args: []Expression{
 			expr.Right,
 		},
-		Kwargs: []FunctionKwarg{},
+		Kwargs: []*FunctionKwarg{},
 	}
 }

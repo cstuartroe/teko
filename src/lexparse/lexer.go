@@ -9,8 +9,6 @@ import (
 	"github.com/cstuartroe/teko/src/shared"
 )
 
-const INDENT_AMOUNT int = 2
-
 type Line struct {
 	Num      int
 	Value    []rune
@@ -27,15 +25,11 @@ type Token struct {
 func (t Token) ToStr() string {
 	return fmt.Sprintf(
 		"{line: %d, col: %d, type: %s, value: %s}",
-		t.Line.Num,
-		t.Col,
+		t.Line.Num+1,
+		t.Col+1,
 		t.TType,
 		string(t.Value),
 	)
-}
-
-func (t Token) to_indented_str(indent int) string {
-	return strings.Repeat(" ", indent*INDENT_AMOUNT) + t.ToStr() + "\n"
 }
 
 func raiseTekoError(line *Line, col int, errorClass shared.TekoErrorClass, message string) {
@@ -204,6 +198,10 @@ var keywords map[string]tokenType = map[string]tokenType{
 
 	"Set": SetT,
 	"Map": MapT,
+
+	"switch":  SwitchT,
+	"case":    CaseT,
+	"default": DefaultT,
 }
 
 func (lexer *Lexer) grabSymbol() {

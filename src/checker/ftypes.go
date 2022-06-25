@@ -59,7 +59,7 @@ func containsName(argdefs []FunctionArgDef, name string) bool {
 	return false
 }
 
-func ResolveArgs(argdefs []FunctionArgDef, expr lexparse.CallExpression) map[string]lexparse.Expression {
+func ResolveArgs(argdefs []FunctionArgDef, expr *lexparse.CallExpression) map[string]lexparse.Expression {
 	args_by_name := map[string]lexparse.Expression{}
 
 	if len(expr.Args) > len(argdefs) {

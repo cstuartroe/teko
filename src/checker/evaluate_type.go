@@ -13,22 +13,22 @@ func (c *Checker) evaluateType(expr lexparse.Expression) TekoType {
 	}
 
 	switch p := (expr).(type) {
-	case lexparse.SimpleExpression:
+	case *lexparse.SimpleExpression:
 		return c.evaluateSimpleType(p)
 
-	case lexparse.ObjectExpression:
+	case *lexparse.ObjectExpression:
 		return c.evaluateObjectType(p)
 
-	case lexparse.BinopExpression:
+	case *lexparse.BinopExpression:
 		return c.evaluateUnionType(p)
 
-	case lexparse.VarExpression:
+	case *lexparse.VarExpression:
 		return c.evaluateVarType(p)
 
-	case lexparse.SliceExpression:
+	case *lexparse.SliceExpression:
 		return c.evaluateSliceType(p)
 
-	case lexparse.MapExpression:
+	case *lexparse.MapExpression:
 		return c.evaluateMapType(p)
 
 	default:
@@ -36,16 +36,16 @@ func (c *Checker) evaluateType(expr lexparse.Expression) TekoType {
 	}
 }
 
-func (c *Checker) evaluateConstantIntType(token lexparse.Token) TekoType {
+func (c *Checker) evaluateConstantIntType(token *lexparse.Token) TekoType {
 	n, err := strconv.Atoi(string(token.Value))
 	if err == nil {
-		return newConstantIntType(n)
+		return NewConstantIntType(n)
 	} else {
 		panic("Invalid int")
 	}
 }
 
-func (c *Checker) evaluateSimpleType(expr lexparse.SimpleExpression) TekoType {
+func (c *Checker) evaluateSimpleType(expr *lexparse.SimpleExpression) TekoType {
 	switch expr.Token().TType {
 
 	case lexparse.SymbolT:
@@ -60,7 +60,7 @@ func (c *Checker) evaluateSimpleType(expr lexparse.SimpleExpression) TekoType {
 		return c.evaluateConstantIntType(expr.Token())
 
 	case lexparse.StringT:
-		return newConstantStringType(expr.Token().Value)
+		return NewConstantStringType(expr.Token().Value)
 
 	// TODO: bool, chars and floats
 
@@ -71,7 +71,7 @@ func (c *Checker) evaluateSimpleType(expr lexparse.SimpleExpression) TekoType {
 	return nil
 }
 
-func (c *Checker) evaluateObjectType(expr lexparse.ObjectExpression) *BasicType {
+func (c *Checker) evaluateObjectType(expr *lexparse.ObjectExpression) *BasicType {
 	out := newBasicType("") // TODO: Do we need object type name? If so, set it.
 
 	for _, field := range expr.Fields {
@@ -81,7 +81,7 @@ func (c *Checker) evaluateObjectType(expr lexparse.ObjectExpression) *BasicType 
 	return out
 }
 
-func (c *Checker) evaluateUnionType(expr lexparse.BinopExpression) TekoType {
+func (c *Checker) evaluateUnionType(expr *lexparse.BinopExpression) TekoType {
 	if string(expr.Operation.Value) != "|" {
 		expr.Operation.Raise(shared.SyntaxError, "Invalid type expression")
 	}
@@ -94,11 +94,11 @@ func (c *Checker) evaluateUnionType(expr lexparse.BinopExpression) TekoType {
 	)
 }
 
-func (c *Checker) evaluateVarType(expr lexparse.VarExpression) *VarType {
+func (c *Checker) evaluateVarType(expr *lexparse.VarExpression) *VarType {
 	return newVarType(c.evaluateType(expr.Right))
 }
 
-func (c *Checker) evaluateSliceType(expr lexparse.SliceExpression) TekoType {
+func (c *Checker) evaluateSliceType(expr *lexparse.SliceExpression) TekoType {
 	if expr.Inside != nil {
 		panic("Still need to implement fixed-size arrays") // TODO
 	}
@@ -106,7 +106,7 @@ func (c *Checker) evaluateSliceType(expr lexparse.SliceExpression) TekoType {
 	return newArrayType(c.evaluateType(expr.Left))
 }
 
-func (c *Checker) evaluateMapType(expr lexparse.MapExpression) TekoType {
+func (c *Checker) evaluateMapType(expr *lexparse.MapExpression) TekoType {
 	if expr.Ktype == nil || expr.Vtype == nil {
 		expr.Token().Raise(shared.SyntaxError, "Map type must specify both key and value type")
 	} else if expr.HasBraces {

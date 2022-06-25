@@ -7,6 +7,10 @@ type Array struct {
 	symbolTable SymbolTable
 }
 
+func (a Array) getUnderlyingType() checker.TekoType {
+	return nil // TODO
+}
+
 func ArrayAddExecutor(receiverElements []*TekoObject) executorType {
 	return func(function TekoFunction, evaluatedArgs map[string]*TekoObject) *TekoObject {
 		switch p := (*evaluatedArgs["other"]).(type) {

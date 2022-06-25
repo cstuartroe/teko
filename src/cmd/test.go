@@ -113,7 +113,7 @@ func RunTest(filepath string, test_outcome *TestOutcome) {
 	c.CheckTree(p.Codeblock)
 
 	i := interpreter.New(&interpreter.StdLibModule)
-	i.Execute(&p.Codeblock)
+	i.Execute(p.Codeblock)
 
 	actual_output := program_log.String()
 
@@ -164,16 +164,12 @@ func RunTests() {
 		switch *outcome {
 		case test_errored:
 			errored_tests++
-			break
 		case test_passed:
 			passed_tests++
-			break
 		case test_failed:
 			failed_tests++
-			break
 		case test_skipped:
 			skipped_tests++
-			break
 		}
 	}
 

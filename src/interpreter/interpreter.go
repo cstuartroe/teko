@@ -31,10 +31,10 @@ func (m InterpreterModule) Execute(codeblock *lexparse.Codeblock) *TekoObject {
 
 func (m InterpreterModule) executeStatement(stmt lexparse.Statement) *TekoObject {
 	switch p := stmt.(type) {
-	case lexparse.ExpressionStatement:
+	case *lexparse.ExpressionStatement:
 		return m.evaluateExpression(p.Expression)
 
-	case lexparse.TypeStatement:
+	case *lexparse.TypeStatement:
 		return nil // it's only for the type checker
 
 	default:
@@ -46,47 +46,50 @@ func (m InterpreterModule) executeStatement(stmt lexparse.Statement) *TekoObject
 func (m InterpreterModule) evaluateExpression(expr lexparse.Expression) *TekoObject {
 	switch p := expr.(type) {
 
-	case lexparse.SimpleExpression:
+	case *lexparse.SimpleExpression:
 		return m.evaluateSimpleExpression(p)
 
-	case lexparse.DeclarationExpression:
+	case *lexparse.DeclarationExpression:
 		return m.evaluateDeclaration(p)
 
-	case lexparse.CallExpression:
+	case *lexparse.CallExpression:
 		return m.evaluateFunctionCall(p)
 
-	case lexparse.AttributeExpression:
+	case *lexparse.AttributeExpression:
 		return m.evaluateAttributeExpression(p)
 
-	case lexparse.IfExpression:
+	case *lexparse.IfExpression:
 		return m.evaluateIfExpression(p)
 
-	case lexparse.SequenceExpression:
+	case *lexparse.SequenceExpression:
 		return m.evaluateSequenceExpression(p)
 
-	case lexparse.MapExpression:
+	case *lexparse.MapExpression:
 		return m.evaluateMapExpression(p)
 
-	case lexparse.ObjectExpression:
+	case *lexparse.ObjectExpression:
 		return m.evaluateObjectExpression(p)
 
-	case lexparse.FunctionExpression:
+	case *lexparse.FunctionExpression:
 		return m.evaluateFunctionDefinition(p)
 
-	case lexparse.DoExpression:
+	case *lexparse.DoExpression:
 		return m.evaluateDoExpression(p)
 
-	case lexparse.VarExpression:
+	case *lexparse.VarExpression:
 		return m.evaluateExpression(p.Right)
 
-	case lexparse.WhileExpression:
+	case *lexparse.WhileExpression:
 		return m.evaluateWhile(p)
 
-	case lexparse.ScopeExpression:
+	case *lexparse.ScopeExpression:
 		return m.evaluateScope(p)
 
-	case lexparse.ComparisonExpression:
+	case *lexparse.ComparisonExpression:
 		return m.evaluateComparisonExpression(p)
+
+	case *lexparse.SwitchExpression:
+		return m.evaluateSwitchExpression(p)
 
 	default:
 		expr.Token().Raise(shared.NotImplementedError, "Intepretation of expression type not implemented")
@@ -94,7 +97,7 @@ func (m InterpreterModule) evaluateExpression(expr lexparse.Expression) *TekoObj
 	}
 }
 
-func (m InterpreterModule) evaluateSimpleExpression(expr lexparse.SimpleExpression) *TekoObject {
+func (m InterpreterModule) evaluateSimpleExpression(expr *lexparse.SimpleExpression) *TekoObject {
 	ttype := expr.Token().TType
 	value := expr.Token().Value
 
@@ -139,7 +142,7 @@ func (m InterpreterModule) evaluateSimpleExpression(expr lexparse.SimpleExpressi
 	}
 }
 
-func (m InterpreterModule) evaluateFunctionCall(call lexparse.CallExpression) *TekoObject {
+func (m InterpreterModule) evaluateFunctionCall(call *lexparse.CallExpression) *TekoObject {
 	receiver := m.evaluateExpression(call.Receiver)
 	switch p := (*receiver).(type) {
 	case TekoFunction:
@@ -151,14 +154,14 @@ func (m InterpreterModule) evaluateFunctionCall(call lexparse.CallExpression) *T
 	}
 }
 
-func (m InterpreterModule) evaluateDeclaration(decl lexparse.DeclarationExpression) *TekoObject {
+func (m InterpreterModule) evaluateDeclaration(decl *lexparse.DeclarationExpression) *TekoObject {
 	name := string(decl.Symbol.Value)
 	val := *m.evaluateExpression(decl.Right)
 	m.scope.symbolTable.set(name, &val)
 	return &val
 }
 
-func (m InterpreterModule) evaluateAttributeExpression(expr lexparse.AttributeExpression) *TekoObject {
+func (m InterpreterModule) evaluateAttributeExpression(expr *lexparse.AttributeExpression) *TekoObject {
 	left := m.evaluateExpression(expr.Left)
 
 	if string(expr.Symbol.Value) == "=" {
@@ -179,7 +182,7 @@ func (m InterpreterModule) evaluateAttributeExpression(expr lexparse.AttributeEx
 	}
 }
 
-func (m InterpreterModule) evaluateIfExpression(expr lexparse.IfExpression) *TekoObject {
+func (m InterpreterModule) evaluateIfExpression(expr *lexparse.IfExpression) *TekoObject {
 	cond := m.evaluateExpression(expr.Condition)
 
 	var cond_value bool
@@ -198,7 +201,7 @@ func (m InterpreterModule) evaluateIfExpression(expr lexparse.IfExpression) *Tek
 	}
 }
 
-func (m InterpreterModule) evaluateSequenceExpression(expr lexparse.SequenceExpression) *TekoObject {
+func (m InterpreterModule) evaluateSequenceExpression(expr *lexparse.SequenceExpression) *TekoObject {
 	switch expr.Stype {
 	case lexparse.ArraySeqType:
 		return tp(m.evaluateArray(expr))
@@ -209,7 +212,7 @@ func (m InterpreterModule) evaluateSequenceExpression(expr lexparse.SequenceExpr
 	}
 }
 
-func (m InterpreterModule) evaluateArray(expr lexparse.SequenceExpression) Array {
+func (m InterpreterModule) evaluateArray(expr *lexparse.SequenceExpression) Array {
 	elements := []*TekoObject{}
 	for _, e := range expr.Elements {
 		o := m.evaluateExpression(e)
@@ -218,7 +221,7 @@ func (m InterpreterModule) evaluateArray(expr lexparse.SequenceExpression) Array
 	return newArray(elements)
 }
 
-func (m InterpreterModule) evaluateSet(expr lexparse.SequenceExpression) Set {
+func (m InterpreterModule) evaluateSet(expr *lexparse.SequenceExpression) Set {
 	elements := []*TekoObject{}
 	for _, e := range expr.Elements {
 		o := m.evaluateExpression(e)
@@ -227,7 +230,7 @@ func (m InterpreterModule) evaluateSet(expr lexparse.SequenceExpression) Set {
 	return Set{elements}
 }
 
-func (m InterpreterModule) evaluateMapExpression(expr lexparse.MapExpression) *TekoObject {
+func (m InterpreterModule) evaluateMapExpression(expr *lexparse.MapExpression) *TekoObject {
 	tmap := newTekoMap()
 
 	for _, kvpair := range expr.KVPairs {
@@ -237,7 +240,7 @@ func (m InterpreterModule) evaluateMapExpression(expr lexparse.MapExpression) *T
 	return tp(tmap)
 }
 
-func (m InterpreterModule) evaluateObjectExpression(expr lexparse.ObjectExpression) *TekoObject {
+func (m InterpreterModule) evaluateObjectExpression(expr *lexparse.ObjectExpression) *TekoObject {
 	symbolTable := newSymbolTable(nil)
 	for _, of := range expr.Fields {
 		o := m.evaluateExpression(of.Value)
@@ -246,7 +249,7 @@ func (m InterpreterModule) evaluateObjectExpression(expr lexparse.ObjectExpressi
 	return tp(BasicObject{symbolTable})
 }
 
-func (m *InterpreterModule) evaluateFunctionDefinition(expr lexparse.FunctionExpression) *TekoObject {
+func (m *InterpreterModule) evaluateFunctionDefinition(expr *lexparse.FunctionExpression) *TekoObject {
 	argdefs := []checker.FunctionArgDef{}
 	for _, ad := range expr.Argdefs {
 		ad := checker.FunctionArgDef{
@@ -270,8 +273,8 @@ func (m *InterpreterModule) evaluateFunctionDefinition(expr lexparse.FunctionExp
 	return f
 }
 
-func (m *InterpreterModule) evaluateDoExpression(expr lexparse.DoExpression) *TekoObject {
-	return New(m).Execute(&expr.Codeblock)
+func (m *InterpreterModule) evaluateDoExpression(expr *lexparse.DoExpression) *TekoObject {
+	return New(m).Execute(expr.Codeblock)
 }
 
 func (m *InterpreterModule) isTrue(expr lexparse.Expression) bool {
@@ -284,7 +287,7 @@ func (m *InterpreterModule) isTrue(expr lexparse.Expression) bool {
 	}
 }
 
-func (m InterpreterModule) evaluateWhile(expr lexparse.WhileExpression) *TekoObject {
+func (m InterpreterModule) evaluateWhile(expr *lexparse.WhileExpression) *TekoObject {
 	elements := []*TekoObject{}
 
 	for m.isTrue(expr.Condition) {
@@ -294,9 +297,9 @@ func (m InterpreterModule) evaluateWhile(expr lexparse.WhileExpression) *TekoObj
 	return tp(newArray(elements))
 }
 
-func (m *InterpreterModule) evaluateScope(expr lexparse.ScopeExpression) *TekoObject {
+func (m *InterpreterModule) evaluateScope(expr *lexparse.ScopeExpression) *TekoObject {
 	interpreter := New(m)
-	interpreter.Execute(&expr.Codeblock)
+	interpreter.Execute(expr.Codeblock)
 	return tp(*interpreter.scope)
 }
 
@@ -309,7 +312,7 @@ var comparisons map[string]func(int) bool = map[string]func(int) bool{
 	">=": func(n int) bool { return n >= 0 },
 }
 
-func (m *InterpreterModule) evaluateComparisonExpression(expr lexparse.ComparisonExpression) *TekoObject {
+func (m *InterpreterModule) evaluateComparisonExpression(expr *lexparse.ComparisonExpression) *TekoObject {
 	comparison_int := m.evaluateFunctionCall(lexparse.ComparisonCallExpression(expr))
 
 	switch p := (*comparison_int).(type) {
@@ -324,4 +327,23 @@ func (m *InterpreterModule) evaluateComparisonExpression(expr lexparse.Compariso
 	default:
 		panic("Not an int. What trickery is this?")
 	}
+}
+
+func (m *InterpreterModule) evaluateSwitchExpression(expr *lexparse.SwitchExpression) *TekoObject {
+	switch_value := m.scope.getFieldValue(string(expr.Symbol.Value))
+
+	for _, case_block := range expr.Cases {
+		gate_type := case_block.GateType.(checker.TekoType)
+
+		if checker.BaseChecker.IsTekoSubtype((*switch_value).getUnderlyingType(), gate_type) {
+			return m.evaluateExpression(case_block.Body)
+		}
+	}
+
+	if expr.Default != nil {
+		return m.evaluateExpression(expr.Default)
+	}
+
+	expr.Token().Raise(shared.NotImplementedError, "No case clause matched. The type checker will be updated to make this impossible in future.")
+	return nil
 }

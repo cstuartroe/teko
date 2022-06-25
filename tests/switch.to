@@ -1,0 +1,9 @@
+o : int | str = 3
+
+switch o {
+    case 3:   0-3
+    case int: o
+    case str: o.size
+}$ |> println
+
+/* EXPECT -3 */

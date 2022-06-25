@@ -7,6 +7,10 @@ type String struct {
 	symbolTable SymbolTable
 }
 
+func (s String) getUnderlyingType() checker.TekoType {
+	return checker.NewConstantStringType(s.runes)
+}
+
 func newTekoString(runes []rune) String {
 	return String{
 		runes:       runes,

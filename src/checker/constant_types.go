@@ -45,7 +45,7 @@ func copyFields(baseType TekoType) map[string]TekoType {
 
 var constantIntTypeCache map[int]*ConstantType = map[int]*ConstantType{}
 
-func newConstantIntType(n int) TekoType {
+func NewConstantIntType(n int) TekoType {
 	if ct, ok := constantIntTypeCache[n]; ok {
 		return ct
 	}
@@ -65,7 +65,7 @@ func newConstantIntType(n int) TekoType {
 
 var constantStringTypeCache map[string]*ConstantType = map[string]*ConstantType{}
 
-func newConstantStringType(s []rune) TekoType {
+func NewConstantStringType(s []rune) TekoType {
 	if ct, ok := constantStringTypeCache[string(s)]; ok {
 		return ct
 	}

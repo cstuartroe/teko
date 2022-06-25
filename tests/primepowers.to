@@ -1,9 +1,9 @@
 /* EXPECT ERROR
 
-Syntax Error (tests/primepowers.to:23:9)
-        {to_str: fn(): str}: val$,
-        ^
-Expected symbol    */
+Syntax Error (tests/primepowers.to:23:32)
+        case {to_str: fn(): str}: val$,
+                               ^
+Expected ->    */
 
 // Eventually I'd like this to pass but first I need to implement generics, switch-case, and string interpolation
 
@@ -20,7 +20,7 @@ fn object_str[T](t: T) {
   "".join(
     members(t).map(fn(name: str, val: {}) {
       val_str := switch val {
-        {to_str: fn(): str}: val$,
+        case {to_str: fn(): str}: val$,
         default: object_str(val)
       }
 

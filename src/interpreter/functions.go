@@ -15,9 +15,13 @@ type TekoFunction struct {
 	executor executorType
 }
 
+func (f TekoFunction) getUnderlyingType() checker.TekoType {
+	return nil // TODO
+}
+
 func (f TekoFunction) getFieldValue(name string) *TekoObject { return nil }
 
-func (t TekoFunction) execute(callingContext InterpreterModule, call lexparse.CallExpression) *TekoObject {
+func (t TekoFunction) execute(callingContext InterpreterModule, call *lexparse.CallExpression) *TekoObject {
 	resolvedArgs := checker.ResolveArgs(t.argdefs, call)
 	evaluatedArgs := t.evaluateArgs(callingContext, resolvedArgs)
 	return t.executor(t, evaluatedArgs)
@@ -44,7 +48,7 @@ func defaultFunctionExecutor(function TekoFunction, evaluatedArgs map[string]*Te
 
 	codeblock := &lexparse.Codeblock{
 		Statements: []lexparse.Statement{
-			lexparse.ExpressionStatement{
+			&lexparse.ExpressionStatement{
 				Expression: function.body,
 			},
 		},
