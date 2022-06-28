@@ -10,10 +10,8 @@ import (
 )
 
 func ExecuteFile(filename string) {
-	p := lexparse.Parser{
-		Transform: true,
-	}
-	p.ParseFile(filename)
+	p := lexparse.Parser{}
+	p.ParseFile(filename, true)
 
 	c := checker.NewBaseChecker()
 	c.CheckTree(p.Codeblock)

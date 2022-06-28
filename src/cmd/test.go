@@ -104,10 +104,8 @@ func RunTest(filepath string, test_outcome *TestOutcome) {
 		tokens = append(tokens, t)
 	}
 
-	p := lexparse.Parser{
-		Transform: true,
-	}
-	p.Parse(tokens)
+	p := lexparse.Parser{}
+	p.Parse(tokens, true)
 
 	c := checker.NewBaseChecker()
 	c.CheckTree(p.Codeblock)

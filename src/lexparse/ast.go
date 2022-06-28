@@ -1,5 +1,18 @@
 package lexparse
 
+import "github.com/cstuartroe/teko/src/shared"
+
+func fakeToken(t *Token, ttype tokenType, value string) *Token {
+	return &Token{
+		Line:  t.Line,
+		Col:   t.Col,
+		TType: ttype,
+		Value: []rune(value),
+	}
+}
+
+//---
+
 type Node interface {
 	Token() *Token
 }
@@ -7,11 +20,31 @@ type Node interface {
 type Expression interface {
 	Node
 	expressionNode()
+	Transform() Expression
+}
+
+func transformNullable(e Expression) Expression {
+	if e == nil {
+		return nil
+	} else {
+		return e.Transform()
+	}
+}
+
+func transformEach(nodes []Expression) []Expression {
+	out := []Expression{}
+
+	for _, n := range nodes {
+		out = append(out, n.Transform())
+	}
+
+	return out
 }
 
 type Statement interface {
 	Node
 	Semicolon() *Token
+	Transform() Statement
 }
 
 //---
@@ -23,6 +56,19 @@ type Codeblock struct {
 
 func (c Codeblock) Token() *Token {
 	return c.OpenBr
+}
+
+func (c Codeblock) Transform() *Codeblock {
+	statements := []Statement{}
+
+	for _, s := range c.Statements {
+		statements = append(statements, s.Transform())
+	}
+
+	return &Codeblock{
+		OpenBr:     c.OpenBr,
+		Statements: statements,
+	}
 }
 
 //---
@@ -38,6 +84,13 @@ func (s ExpressionStatement) Token() *Token {
 
 func (s ExpressionStatement) Semicolon() *Token {
 	return s.semicolon
+}
+
+func (s ExpressionStatement) Transform() Statement {
+	return &ExpressionStatement{
+		Expression: s.Expression.Transform(),
+		semicolon:  s.semicolon,
+	}
 }
 
 //---
@@ -57,6 +110,10 @@ func (s TypeStatement) Semicolon() *Token {
 	return s.semicolon
 }
 
+func (s *TypeStatement) Transform() Statement {
+	return s
+}
+
 //---
 
 type SimpleExpression struct {
@@ -68,6 +125,10 @@ func (e SimpleExpression) Token() *Token {
 }
 
 func (e SimpleExpression) expressionNode() {}
+
+func (e *SimpleExpression) Transform() Expression {
+	return e
+}
 
 //---
 
@@ -84,6 +145,15 @@ func (e DeclarationExpression) Token() *Token {
 
 func (e DeclarationExpression) expressionNode() {}
 
+func (e DeclarationExpression) Transform() Expression {
+	return &DeclarationExpression{
+		Symbol:   e.Symbol,
+		Tekotype: e.Tekotype,
+		Setter:   e.Setter,
+		Right:    e.Right.Transform(),
+	}
+}
+
 //---
 
 type CallExpression struct {
@@ -98,6 +168,20 @@ func (e CallExpression) Token() *Token {
 
 func (e CallExpression) expressionNode() {}
 
+func (e CallExpression) Transform() Expression {
+	kwargs := []*FunctionKwarg{}
+
+	for _, kw := range e.Kwargs {
+		kwargs = append(kwargs, kw.Transform())
+	}
+
+	return &CallExpression{
+		Receiver: e.Receiver.Transform(),
+		Args:     transformEach(e.Args),
+		Kwargs:   kwargs,
+	}
+}
+
 type FunctionKwarg struct {
 	Symbol *Token
 	Value  Expression
@@ -105,6 +189,13 @@ type FunctionKwarg struct {
 
 func (k FunctionKwarg) Token() *Token {
 	return k.Symbol
+}
+
+func (k FunctionKwarg) Transform() *FunctionKwarg {
+	return &FunctionKwarg{
+		Symbol: k.Symbol,
+		Value:  k.Value.Transform(),
+	}
 }
 
 //---
@@ -121,6 +212,16 @@ func (e BinopExpression) Token() *Token {
 
 func (e BinopExpression) expressionNode() {}
 
+func (e BinopExpression) Transform() Expression {
+	return &CallExpression{
+		Receiver: &AttributeExpression{
+			Left:   e.Left.Transform(),
+			Symbol: fakeToken(e.Operation, SymbolT, binops[string(e.Operation.Value)]),
+		},
+		Args: []Expression{e.Right.Transform()},
+	}
+}
+
 //---
 
 type ComparisonExpression struct {
@@ -135,6 +236,14 @@ func (e ComparisonExpression) Token() *Token {
 
 func (e ComparisonExpression) expressionNode() {}
 
+func (e ComparisonExpression) Transform() Expression {
+	return &ComparisonExpression{
+		Left:       e.Left.Transform(),
+		Comparator: e.Comparator,
+		Right:      e.Right.Transform(),
+	}
+}
+
 //---
 
 type AttributeExpression struct {
@@ -147,6 +256,13 @@ func (e AttributeExpression) Token() *Token {
 }
 
 func (e AttributeExpression) expressionNode() {}
+
+func (e AttributeExpression) Transform() Expression {
+	return &AttributeExpression{
+		Left:   e.Left.Transform(),
+		Symbol: e.Token(),
+	}
+}
 
 //---
 
@@ -161,6 +277,13 @@ func (e TupleExpression) Token() *Token {
 
 func (e TupleExpression) expressionNode() {}
 
+func (e TupleExpression) Transform() Expression {
+	return &TupleExpression{
+		Elements: transformEach(e.Elements),
+		LPar:     e.LPar,
+	}
+}
+
 //--
 
 type SuffixExpression struct {
@@ -173,6 +296,15 @@ func (e SuffixExpression) Token() *Token {
 }
 
 func (e SuffixExpression) expressionNode() {}
+
+func (e SuffixExpression) Transform() Expression {
+	return &CallExpression{
+		Receiver: &AttributeExpression{
+			Left:   e.Left.Transform(),
+			Symbol: fakeToken(e.Suffix, SymbolT, suffixes[string(e.Suffix.Value)]),
+		},
+	}
+}
 
 //---
 
@@ -188,6 +320,15 @@ func (e IfExpression) Token() *Token {
 }
 
 func (e IfExpression) expressionNode() {}
+
+func (e IfExpression) Transform() Expression {
+	return &IfExpression{
+		If:        e.If,
+		Condition: e.Condition.Transform(),
+		Then:      e.Then.Transform(),
+		Else:      transformNullable(e.Else),
+	}
+}
 
 //---
 
@@ -207,6 +348,14 @@ func (e SequenceExpression) Token() *Token {
 }
 
 func (e SequenceExpression) expressionNode() {}
+
+func (e SequenceExpression) Transform() Expression {
+	return &SequenceExpression{
+		OpenBrace: e.OpenBrace,
+		Stype:     e.Stype,
+		Elements:  transformEach(e.Elements),
+	}
+}
 
 //---
 
@@ -229,6 +378,25 @@ func (e MapExpression) Token() *Token {
 
 func (e MapExpression) expressionNode() {}
 
+func (e MapExpression) Transform() Expression {
+	kvpairs := []*KVPair{}
+
+	for _, p := range e.KVPairs {
+		kvpairs = append(kvpairs, &KVPair{
+			Key:   p.Key.Transform(),
+			Value: p.Value.Transform(),
+		})
+	}
+
+	return &MapExpression{
+		MapToken:  e.MapToken,
+		Ktype:     e.Ktype,
+		Vtype:     e.Vtype,
+		HasBraces: e.HasBraces,
+		KVPairs:   kvpairs,
+	}
+}
+
 //---
 
 type ObjectField struct {
@@ -250,6 +418,28 @@ func (e ObjectExpression) Token() *Token {
 }
 
 func (e ObjectExpression) expressionNode() {}
+
+func (e ObjectExpression) Transform() Expression {
+	fields := []*ObjectField{}
+
+	for _, f := range e.Fields {
+		var value Expression = f.Value
+
+		// if value == nil {
+		// 	value = &SimpleExpression{f.Symbol}
+		// }
+
+		fields = append(fields, &ObjectField{
+			Symbol: f.Symbol,
+			Value:  value.Transform(),
+		})
+	}
+
+	return &ObjectExpression{
+		OpenBrace: e.OpenBrace,
+		Fields:    fields,
+	}
+}
 
 //---
 
@@ -278,6 +468,27 @@ func (e FunctionExpression) Token() *Token {
 
 func (e FunctionExpression) expressionNode() {}
 
+func (e FunctionExpression) Transform() Expression {
+	argdefs := []*ArgdefNode{}
+
+	for _, ad := range e.Argdefs {
+		argdefs = append(argdefs, &ArgdefNode{
+			Symbol:   ad.Symbol,
+			Tekotype: ad.Tekotype,
+			Default:  transformNullable(ad.Default),
+		})
+	}
+
+	return &FunctionExpression{
+		FnToken: e.FnToken,
+		Name:    e.Name,
+		GDL:     e.GDL,
+		Argdefs: argdefs,
+		Rtype:   e.Rtype,
+		Right:   e.Right.Transform(),
+	}
+}
+
 //---
 
 type DoExpression struct {
@@ -295,6 +506,13 @@ func (e DoExpression) Token() *Token {
 
 func (e DoExpression) expressionNode() {}
 
+func (e DoExpression) Transform() Expression {
+	return &DoExpression{
+		DoToken:   e.DoToken,
+		Codeblock: e.Codeblock.Transform(),
+	}
+}
+
 //---
 
 type VarExpression struct {
@@ -307,6 +525,13 @@ func (e VarExpression) Token() *Token {
 }
 
 func (e VarExpression) expressionNode() {}
+
+func (e VarExpression) Transform() Expression {
+	return &VarExpression{
+		VarToken: e.VarToken,
+		Right:    e.Right.Transform(),
+	}
+}
 
 //---
 
@@ -321,6 +546,14 @@ func (e WhileExpression) Token() *Token {
 }
 
 func (e WhileExpression) expressionNode() {}
+
+func (e WhileExpression) Transform() Expression {
+	return &WhileExpression{
+		WhileToken: e.WhileToken,
+		Condition:  e.Condition.Transform(),
+		Body:       e.Body.Transform(),
+	}
+}
 
 //---
 
@@ -338,6 +571,27 @@ func (e ForExpression) Token() *Token {
 
 func (e ForExpression) expressionNode() {}
 
+func (e ForExpression) Transform() Expression {
+	return &CallExpression{
+		Receiver: &AttributeExpression{
+			Left:   e.Iterator.Transform(),
+			Symbol: fakeToken(e.ForToken, SymbolT, "forEach"),
+		},
+		Args: []Expression{
+			&FunctionExpression{
+				FnToken: e.ForToken,
+				Argdefs: []*ArgdefNode{
+					{
+						Symbol:   e.Iterand,
+						Tekotype: e.Tekotype,
+					},
+				},
+				Right: e.Body.Transform(),
+			},
+		},
+	}
+}
+
 //---
 
 type ScopeExpression struct {
@@ -350,6 +604,13 @@ func (e ScopeExpression) Token() *Token {
 }
 
 func (e ScopeExpression) expressionNode() {}
+
+func (e ScopeExpression) Transform() Expression {
+	return &ScopeExpression{
+		ScopeToken: e.ScopeToken,
+		Codeblock:  e.Codeblock.Transform(),
+	}
+}
 
 //---
 
@@ -364,6 +625,13 @@ func (e PipeExpression) Token() *Token {
 }
 
 func (e PipeExpression) expressionNode() {}
+
+func (e PipeExpression) Transform() Expression {
+	return &CallExpression{
+		Receiver: e.Function.Transform(),
+		Args:     []Expression{e.Arg.Transform()},
+	}
+}
 
 //---
 
@@ -389,6 +657,7 @@ func (gd GenericDeclarationList) Token() *Token {
 
 type SliceExpression struct {
 	Left   Expression
+	OpenBr *Token
 	Inside Expression
 }
 
@@ -397,6 +666,20 @@ func (e SliceExpression) Token() *Token {
 }
 
 func (e SliceExpression) expressionNode() {}
+
+func (e SliceExpression) Transform() Expression {
+	if e.Inside == nil {
+		e.OpenBr.Raise(shared.SyntaxError, "Empty slice")
+	}
+
+	return &CallExpression{
+		Receiver: &AttributeExpression{
+			Left:   e.Left,
+			Symbol: fakeToken(e.OpenBr, SymbolT, "at"),
+		},
+		Args: []Expression{e.Inside},
+	}
+}
 
 //---
 
@@ -425,3 +708,23 @@ func (e SwitchExpression) Token() *Token {
 }
 
 func (e SwitchExpression) expressionNode() {}
+
+func (e SwitchExpression) Transform() Expression {
+	cases := []*CaseBlock{}
+
+	for _, c := range e.Cases {
+		cases = append(cases, &CaseBlock{
+			Case:     c.Case,
+			TType:    c.TType,
+			GateType: c.GateType,
+			Body:     c.Body.Transform(),
+		})
+	}
+
+	return &SwitchExpression{
+		Switch:  e.Switch,
+		Symbol:  e.Symbol,
+		Cases:   cases,
+		Default: transformNullable(e.Default),
+	}
+}
