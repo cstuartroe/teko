@@ -31,12 +31,15 @@ var IntBinopType *FunctionType = &FunctionType{}
 var BoolType *BasicType = &BasicType{
 	name: "bool",
 	fields: map[string]TekoType{
-		"and": BoolBinopType,
-		"or":  BoolBinopType,
+		"and":    BoolBinopType,
+		"or":     BoolBinopType,
+		"not":    NotType,
+		"to_str": ToStrType,
 	},
 }
 
 var BoolBinopType *FunctionType = &FunctionType{}
+var NotType *FunctionType = &FunctionType{}
 
 var CharType *BasicType = &BasicType{
 	name: "char",
@@ -64,4 +67,5 @@ func SetupFunctionTypes() {
 	*IntBinopType = *makeBinopType(IntType)
 
 	*BoolBinopType = *makeBinopType(BoolType)
+	NotType.rtype = BoolType
 }

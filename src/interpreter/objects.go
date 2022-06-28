@@ -70,38 +70,4 @@ func (o BasicObject) getUnderlyingType() checker.TekoType {
 
 //---
 
-type Integer struct {
-	value       int // TODO: arbitrary-precision integer
-	symbolTable SymbolTable
-}
-
-func (i Integer) getUnderlyingType() checker.TekoType {
-	return checker.NewConstantIntType(i.value)
-}
-
-//---
-
-type Boolean struct {
-	value bool
-}
-
-func (b Boolean) getUnderlyingType() checker.TekoType {
-	return checker.BoolType
-}
-
-var True *TekoObject = tp(Boolean{
-	value: true,
-})
-
-var False *TekoObject = tp(Boolean{
-	value: false,
-})
-
-func (b Boolean) getFieldValue(name string) *TekoObject {
-	switch name {
-	default:
-		panic("Attributes haven't been implemented for bools yet")
-	}
-}
-
 var Null *TekoObject = tp(BasicObject{})

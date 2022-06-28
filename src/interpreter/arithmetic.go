@@ -1,10 +1,20 @@
 package interpreter
 
 import (
-	"github.com/cstuartroe/teko/src/checker"
 	"math"
 	"strconv"
+
+	"github.com/cstuartroe/teko/src/checker"
 )
+
+type Integer struct {
+	value       int // TODO: arbitrary-precision integer
+	symbolTable SymbolTable
+}
+
+func (i Integer) getUnderlyingType() checker.TekoType {
+	return checker.NewConstantIntType(i.value)
+}
 
 func getInteger(n int) Integer {
 	return Integer{

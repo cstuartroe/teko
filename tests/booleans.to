@@ -1,0 +1,29 @@
+b1 := true
+
+b2 := false
+
+if b1 & b2 {
+    println("Both")
+} else {
+    println("Not both")
+}
+
+if b1 | b2 {
+    println("At least one")
+} else {
+    println("Neither")
+}
+
+if b2.not() {
+    println("b2 is false")
+} else {
+    println("b2 is true")
+}
+
+println([b1, b2]$)
+
+/* EXPECT
+Not both
+At least one
+b2 is false
+[true, false] */
