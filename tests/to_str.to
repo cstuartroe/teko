@@ -1,11 +1,8 @@
-/* EXPECT ERROR
+/* EXPECT
 
-Syntax Error (tests/to_str.to:11:20)
-  to_str: fn(): str,
-                   ^
-Expected ->     */
-
-// I'm gonna need function type annotations and switch cases for this one
+3
+true
+"{a: 1}"    */
 
 type Stringable = {
   to_str: fn(): str,
@@ -15,14 +12,21 @@ fn to_str(o: {}): str {
   switch o {
     case Stringable: o.to_str()
 
-    default: do {
-      mut out := "{"
+    default: {
+      "unknown"
+      // out : var str = "{"
 
-      members(o).map(fn(name, val) {
-        out += "${name}: ${val >> to_str}, "
-      })
+      // members(o).map(fn(name, val) {
+      //   out += "${name}: ${val |> to_str}, "
+      // });
 
-      return (out >> until(i=-2)) + "}"
+      // (out |> until(i=2)) + "}"
     }
   }
 }
+
+println(to_str(3))
+println(to_str(true))
+
+o := "{a: 1}"
+println(to_str(o))

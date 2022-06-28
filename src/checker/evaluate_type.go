@@ -31,6 +31,9 @@ func (c *Checker) evaluateType(expr lexparse.Expression) TekoType {
 	case *lexparse.MapExpression:
 		return c.evaluateMapType(p)
 
+	case *lexparse.FunctionExpression:
+		return c.evaluateFunctionType(p)
+
 	default:
 		panic("Unknown type format!")
 	}
@@ -114,4 +117,30 @@ func (c *Checker) evaluateMapType(expr *lexparse.MapExpression) TekoType {
 	}
 
 	return newMapType(c.evaluateType(expr.Ktype), c.evaluateType(expr.Vtype))
+}
+
+func (c *Checker) evaluateFunctionType(expr *lexparse.FunctionExpression) TekoType {
+	if expr.Name != nil {
+		expr.Name.Raise(shared.SyntaxError, "Function type cannot have name")
+	}
+
+	if expr.Right != nil {
+		expr.Right.Token().Raise(shared.SyntaxError, "Function type cannot have body")
+	}
+
+	// TODO: take defaults and GDL into account
+
+	argdefs := []FunctionArgDef{}
+
+	for _, ad := range expr.Argdefs {
+		argdefs = append(argdefs, FunctionArgDef{
+			Name:  string(ad.Symbol.Value),
+			ttype: c.evaluateType(ad.Tekotype),
+		})
+	}
+
+	return &FunctionType{
+		rtype:   c.evaluateType(expr.Rtype),
+		argdefs: argdefs,
+	}
 }

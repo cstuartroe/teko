@@ -469,6 +469,10 @@ func (e FunctionExpression) Token() *Token {
 func (e FunctionExpression) expressionNode() {}
 
 func (e FunctionExpression) Transform() Expression {
+	if e.Right == nil {
+		e.Token().Raise(shared.SyntaxError, "Expected ->")
+	}
+
 	argdefs := []*ArgdefNode{}
 
 	for _, ad := range e.Argdefs {

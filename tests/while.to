@@ -1,5 +1,3 @@
-// Until I implement equality checks my options for while loops are pretty ugly
-
 i : var int = 90
 
 a := while i != 1 {

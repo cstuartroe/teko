@@ -222,12 +222,10 @@ func (parser *Parser) continueExpression(expr Expression, prec int) Expression {
 				tekotype = parser.grabTypeExpression(prec)
 			}
 
-			setter := parser.expect(EqualT)
-
 			out = &DeclarationExpression{
 				Symbol:   expr.Token(),
 				Tekotype: tekotype,
-				Setter:   setter,
+				Setter:   parser.expect(EqualT),
 				Right:    parser.grabExpression(prec),
 			}
 		}
@@ -241,24 +239,17 @@ func (parser *Parser) continueExpression(expr Expression, prec int) Expression {
 	case BinopT:
 		op_prec := binop_precs[binops[value]]
 		if prec <= op_prec {
-			op := parser.currentToken()
-			parser.advance()
-			right := parser.grabExpression(op_prec + 1)
-
 			out = &BinopExpression{
 				Left:      expr,
-				Operation: op,
-				Right:     right,
+				Operation: parser.expect(BinopT),
+				Right:     parser.grabExpression(op_prec + 1),
 			}
 		}
 
 	case SuffixT:
-		suffix := parser.currentToken()
-		parser.advance()
-
 		out = &SuffixExpression{
 			Left:   expr,
-			Suffix: suffix,
+			Suffix: parser.expect(SuffixT),
 		}
 
 	case UpdaterT, EqualT:
@@ -284,13 +275,10 @@ func (parser *Parser) continueExpression(expr Expression, prec int) Expression {
 
 	case PipeT:
 		if prec <= setter_prec {
-			pipe := parser.expect(PipeT)
-			function := parser.grabExpression(setter_prec + 1)
-
 			out = &PipeExpression{
-				PipeToken: pipe,
+				PipeToken: parser.expect(PipeT),
 				Arg:       expr,
-				Function:  function,
+				Function:  parser.grabExpression(setter_prec + 1),
 			}
 		}
 
@@ -625,10 +613,12 @@ func (parser *Parser) grabFunctionRight(prec int) Expression {
 			DoToken:   nil,
 			Codeblock: parser.grabCodeblock(),
 		}
-	} else {
-		parser.expect(ArrowT)
+	} else if parser.currentToken().TType == ArrowT {
+		parser.advance()
 
 		return parser.grabExpression(prec)
+	} else {
+		return nil
 	}
 }
 
@@ -786,7 +776,12 @@ func (parser *Parser) grabSwitchExpression() *SwitchExpression {
 	var Default Expression = nil
 	if parser.currentToken().TType == DefaultT {
 		parser.advance()
-		Default = parser.grabDoExpression()
+
+		if parser.currentToken().TType == ColonT {
+			parser.advance()
+		}
+
+		Default = parser.grabControlBlock(min_prec)
 	}
 
 	parser.expect(RCurlyBrT)
