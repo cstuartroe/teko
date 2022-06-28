@@ -7,34 +7,62 @@ import (
 	"github.com/cstuartroe/teko/src/shared"
 )
 
-func (c Checker) CheckTree(codeblock *lexparse.Codeblock) {
+func (c *Checker) CheckTree(codeblock *lexparse.Codeblock) {
+	type_statements := []*lexparse.TypeStatement{}
+	expression_statements := []*lexparse.ExpressionStatement{}
+
 	for _, stmt := range codeblock.Statements {
-		c.checkStatement(stmt)
+		switch p := stmt.(type) {
+		case *lexparse.TypeStatement:
+			type_statements = append(type_statements, p)
+
+		case *lexparse.ExpressionStatement:
+			expression_statements = append(expression_statements, p)
+
+		default:
+			stmt.Token().Raise(shared.NotImplementedError, "Unknown statement type")
+		}
+	}
+
+	c.checkTypeStatements(type_statements)
+
+	for _, stmt := range expression_statements {
+		c.checkExpressionStatement(stmt)
 	}
 }
 
-func (c *Checker) checkStatement(stmt lexparse.Statement) {
-	switch p := stmt.(type) {
-	case *lexparse.ExpressionStatement:
-		c.checkExpressionStatement(p)
+func (c *Checker) checkTypeStatements(stmts []*lexparse.TypeStatement) {
+	for _, stmt := range stmts {
+		c.declareNamedType(
+			stmt.Name,
+			&DeferredType{},
+		)
+	}
 
-	case *lexparse.TypeStatement:
-		c.checkTypeStatement(p)
+	for _, stmt := range stmts {
+		name := string(stmt.Name.Value)
 
-	default:
-		stmt.Token().Raise(shared.NotImplementedError, "Unknown statement type")
+		ttype := c.evaluateType(stmt.TypeExpression)
+
+		switch p := ttype.(type) {
+		case *BasicType:
+			if p.name == "" {
+				p.name = name
+			}
+		}
+
+		c.getTypeByName(name).(*DeferredType).ttype = ttype
 	}
 }
 
 func (c *Checker) checkExpressionStatement(stmt *lexparse.ExpressionStatement) {
-	c.checkExpression(stmt.Expression, nil)
-}
+	ttype := c.checkExpression(stmt.Expression, nil)
 
-func (c *Checker) checkTypeStatement(stmt *lexparse.TypeStatement) {
-	c.declareNamedType(
-		stmt.Name,
-		c.evaluateType(stmt.TypeExpression),
-	)
+	if stmt.Semicolon() != nil {
+		c.current_rtype = NullType
+	} else {
+		c.current_rtype = ttype
+	}
 }
 
 func (c *Checker) checkExpression(expr lexparse.Expression, expectedType TekoType) TekoType {
@@ -362,7 +390,8 @@ func (c *Checker) checkObjectExpression(expr *lexparse.ObjectExpression, expecte
 		}
 
 		var expectedFieldType TekoType = nil
-		if expectedType != nil && !isGeneric(expectedType) {
+		switch expectedType.(type) {
+		case *BasicType:
 			expectedFieldType = getField(expectedType, field_name)
 			if expectedFieldType == nil {
 				of.Symbol.Raise(shared.TypeError, "Object literal cannot have unreachable field")
@@ -450,23 +479,11 @@ func (c *Checker) checkFunctionDefinition(expr *lexparse.FunctionExpression, exp
 }
 
 func (c *Checker) checkDoExpression(expr *lexparse.DoExpression, expectedType TekoType) TekoType {
-	var out TekoType = NullType
 	blockChecker := NewChecker(c)
 
-	for i, stmt := range expr.Codeblock.Statements {
-		if (i == len(expr.Codeblock.Statements)-1) && stmt.Semicolon() == nil {
-			switch p := stmt.(type) {
-			case *lexparse.ExpressionStatement:
-				out = blockChecker.checkExpression(p.Expression, expectedType)
-			default:
-				blockChecker.checkStatement(stmt)
-			}
-		} else {
-			blockChecker.checkStatement(stmt)
-		}
-	}
+	blockChecker.CheckTree(expr.Codeblock)
 
-	return out
+	return blockChecker.current_rtype
 }
 
 func (c *Checker) checkWhileExpression(expr *lexparse.WhileExpression) TekoType {
@@ -478,9 +495,7 @@ func (c *Checker) checkWhileExpression(expr *lexparse.WhileExpression) TekoType 
 func (c *Checker) checkScopeExpression(expr *lexparse.ScopeExpression) TekoType {
 	blockChecker := NewChecker(c)
 
-	for _, stmt := range expr.Codeblock.Statements {
-		blockChecker.checkStatement(stmt)
-	}
+	blockChecker.CheckTree(expr.Codeblock)
 
 	return &BasicType{
 		fields: blockChecker.ctype.fields,

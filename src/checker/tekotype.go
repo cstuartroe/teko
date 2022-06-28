@@ -8,7 +8,7 @@ type TekoType interface {
 func getField(ttype TekoType, name string) TekoType {
 	val, ok := ttype.allFields()[name]
 	if ok {
-		return val
+		return undefer(val)
 	} else {
 		return nil
 	}

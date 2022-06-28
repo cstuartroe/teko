@@ -10,6 +10,16 @@ var primitives map[*BasicType]bool = map[*BasicType]bool{
 }
 
 func (c *Checker) IsTekoSubtype(sub TekoType, sup TekoType) bool {
+	switch sub.(type) {
+	case *DeferredType:
+		panic("ah!")
+	}
+
+	switch sup.(type) {
+	case *DeferredType:
+		panic("oh!")
+	}
+
 	return c.isTekoSubtypeWithAncestry(newAncestry(sub), newAncestry(sup))
 }
 

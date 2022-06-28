@@ -1,19 +1,10 @@
-/* EXPECT ERROR
-
-Name Error (tests/ast.to:28:9)
-  left: Expression,
-        ^
-No type called Expression    */
-
-// I need to figure out a hoisting solution for this to work
-
 type TokenType = "symbol" | "number" | "binop"
 
 type Token = {
   line: int,
   col: int,
   value: str,
-  toktype: TokenType,
+  ttype: TokenType,
 }
 
 type SimpleExpression = {
@@ -33,3 +24,26 @@ type BinOpExpression = {
 type Expression =
   SimpleExpression
   | BinOpExpression
+
+expr : Expression = {
+  etype: "binop",
+  left: {
+    etype: "simple",
+    t: {
+      line: 1,
+      col: 1,
+      value: "foo",
+      ttype: "symbol",
+    }
+  },
+  binop: "+",
+  right: {
+    etype: "simple",
+    t: {
+      line: 1,
+      col: 5,
+      value: "bar",
+      ttype: "symbol",
+    }
+  }
+}

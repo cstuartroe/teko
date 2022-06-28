@@ -67,6 +67,7 @@ type Checker struct {
 	ctype               *CheckerType
 	declared_generics   map[*GenericType]bool
 	generic_resolutions map[*GenericType]TekoType
+	current_rtype       TekoType
 }
 
 func NewChecker(parent *Checker) Checker {
