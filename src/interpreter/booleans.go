@@ -8,7 +8,7 @@ type Boolean struct {
 }
 
 func (b Boolean) getUnderlyingType() checker.TekoType {
-	return checker.BoolType
+	return checker.ConstantBoolTypeCache[b.value]
 }
 
 var True *TekoObject = tp(Boolean{

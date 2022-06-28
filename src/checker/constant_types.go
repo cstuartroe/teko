@@ -9,6 +9,7 @@ type ConstantTypeType int
 const (
 	IntConstant ConstantTypeType = iota
 	StringConstant
+	BoolConstant
 )
 
 type ConstantType struct {
@@ -83,6 +84,28 @@ func NewConstantStringType(s []rune) TekoType {
 	return out
 }
 
+func makeConstantIntType(b bool) *ConstantType {
+	name := "false"
+	if b {
+		name = "true"
+	}
+
+	out := &ConstantType{
+		name:   name,
+		fields: copyFields(BoolType),
+		ctype:  BoolConstant,
+	}
+
+	out.setField("?"+name, NullType)
+
+	return out
+}
+
+var ConstantBoolTypeCache map[bool]*ConstantType = map[bool]*ConstantType{
+	true:  makeConstantIntType(true),
+	false: makeConstantIntType(false),
+}
+
 func deconstantize(ttype TekoType) TekoType {
 	switch p := ttype.(type) {
 	case *ConstantType:
@@ -91,6 +114,8 @@ func deconstantize(ttype TekoType) TekoType {
 			return IntType
 		case StringConstant:
 			return StringType
+		case BoolConstant:
+			return BoolType
 		default:
 			panic("Unknown constant type: " + ttype.tekotypeToString())
 		}

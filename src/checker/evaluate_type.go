@@ -65,7 +65,15 @@ func (c *Checker) evaluateSimpleType(expr *lexparse.SimpleExpression) TekoType {
 	case lexparse.StringT:
 		return NewConstantStringType(expr.Token().Value)
 
-	// TODO: bool, chars and floats
+	case lexparse.BoolT:
+		b := false
+		if string(expr.Token().Value) == "true" {
+			b = true
+		}
+
+		return ConstantBoolTypeCache[b]
+
+	// TODO: chars and floats
 
 	default:
 		expr.Token().Raise(shared.TypeError, "Invalid type expression")

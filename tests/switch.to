@@ -1,9 +1,33 @@
-o : int | str = 3
+fn print_size(o: int | str) {
+    switch o {
+        case int: if o >= 0 then o else 0-o
+        case str: o.size
+    }$ |> println
+}
 
-switch o {
-    case 3:   0-3
-    case int: o
-    case str: o.size
-}$ |> println
+print_size(5)
+print_size(0-4)
+print_size("Hello, World!")
 
-/* EXPECT -3 */
+fn switcheroo(o: int | bool) {
+    switch o {
+        case true: "Sure"
+        case false: "No way"
+        case 0: "That's nothing"
+        default: "That's some number"
+    } |> println
+}
+
+switcheroo(5)
+switcheroo(false)
+switcheroo(true)
+switcheroo(0)
+
+/* EXPECT
+5
+4
+13
+That's some number
+No way
+Sure
+That's nothing   */
