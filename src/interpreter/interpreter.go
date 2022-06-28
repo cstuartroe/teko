@@ -197,7 +197,11 @@ func (m InterpreterModule) evaluateIfExpression(expr *lexparse.IfExpression) *Te
 	if cond_value {
 		return m.evaluateExpression(expr.Then)
 	} else {
-		return m.evaluateExpression(expr.Else)
+		if expr.Else == nil {
+			return Null
+		} else {
+			return m.evaluateExpression(expr.Else)
+		}
 	}
 }
 

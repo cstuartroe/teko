@@ -235,6 +235,11 @@ func (c *Checker) checkIfExpression(expr *lexparse.IfExpression, expectedType Te
 	c.checkExpression(expr.Condition, BoolType)
 
 	then_tekotype := c.checkExpression(expr.Then, expectedType)
+
+	if expr.Else == nil {
+		return c.unionTypes(then_tekotype, NullType)
+	}
+
 	else_tekotype := c.checkExpression(expr.Else, expectedType)
 
 	if then_tekotype != else_tekotype {

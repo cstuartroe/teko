@@ -534,7 +534,7 @@ func (parser *Parser) grabIf(prec int) *IfExpression {
 	then := parser.grabControlBlock(prec)
 	var else_expr Expression = nil
 
-	if parser.currentToken().TType == ElseT {
+	if parser.HasMore() && parser.currentToken().TType == ElseT {
 		parser.advance()
 		else_expr = parser.grabControlBlock(prec)
 	}
