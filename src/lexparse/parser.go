@@ -261,23 +261,15 @@ func (parser *Parser) continueExpression(expr Expression, prec int) Expression {
 			Suffix: suffix,
 		}
 
-	case UpdaterT:
+	case UpdaterT, EqualT:
 		if prec <= setter_prec {
-			panic("Other updaters not supported yet")
-		}
+			setter := parser.currentToken()
+			parser.advance()
 
-	case EqualT:
-		if prec <= setter_prec {
-			setter := *parser.expect(EqualT)
-
-			out = &CallExpression{
-				Receiver: &AttributeExpression{
-					Left:   expr,
-					Symbol: fakeToken(&setter, SymbolT, "="),
-				},
-				Args: []Expression{
-					parser.grabExpression(setter_prec + 1),
-				},
+			return &SetterExpression{
+				Left:   expr,
+				Setter: setter,
+				Right:  parser.grabExpression(setter_prec + 1),
 			}
 		}
 

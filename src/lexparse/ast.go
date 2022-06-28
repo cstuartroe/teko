@@ -728,3 +728,45 @@ func (e SwitchExpression) Transform() Expression {
 		Default: transformNullable(e.Default),
 	}
 }
+
+//---
+
+type SetterExpression struct {
+	Left   Expression
+	Setter *Token
+	Right  Expression
+}
+
+func (e SetterExpression) Token() *Token {
+	return e.Setter
+}
+
+func (e SetterExpression) expressionNode() {}
+
+func (e SetterExpression) Transform() Expression {
+	if e.Setter.TType == EqualT {
+		return &CallExpression{
+			Receiver: &AttributeExpression{
+				Left:   e.Left.Transform(),
+				Symbol: fakeToken(e.Setter, SymbolT, "="),
+			},
+			Args: []Expression{
+				e.Right.Transform(),
+			},
+		}
+	} else {
+		be := &BinopExpression{
+			Left:      e.Left,
+			Operation: fakeToken(e.Setter, BinopT, updaters[string(e.Setter.Value)]),
+			Right:     e.Right,
+		}
+
+		se := &SetterExpression{
+			Left:   e.Left,
+			Setter: fakeToken(e.Setter, EqualT, "="),
+			Right:  be,
+		}
+
+		return se.Transform()
+	}
+}

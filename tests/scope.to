@@ -2,7 +2,7 @@ fn counter(start: int) -> scope {
   count : var int = start
 
   fn increment(): int {
-    count = count + 1
+    count += 1
   }
 }
 

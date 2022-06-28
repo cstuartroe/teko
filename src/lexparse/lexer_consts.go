@@ -105,14 +105,14 @@ var comparisons map[string]bool = map[string]bool{
 }
 
 var updaters map[string]string = map[string]string{
-	"+=": "add",
-	"-=": "sub",
-	"*=": "mult",
-	"/=": "div",
-	"^=": "exp",
-	"%=": "mod",
-	"&=": "and",
-	"|=": "or",
+	"+=": "+",
+	"-=": "-",
+	"*=": "*",
+	"/=": "/",
+	"^=": "^",
+	"%=": "%",
+	"&=": "&",
+	"|=": "|",
 }
 
 var prefixes map[string]string = map[string]string{
