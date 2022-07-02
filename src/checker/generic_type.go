@@ -6,6 +6,11 @@ type GenericType struct {
 	ttype TekoType
 }
 
+func (t *GenericType) isDeferred() bool {
+	// TODO I don't think we want generic types to be deferrable, but needs more thought
+	return false
+}
+
 func (t *GenericType) tekotypeToString() string {
 	var s string
 	if t.ttype == nil {
@@ -68,25 +73,37 @@ func (c *Checker) declareGeneric(g *GenericType) {
 	c.typeTable.declared_generics[g] = true
 }
 
-func degenericize(ttype TekoType, generic_resolutions map[*GenericType]TekoType) TekoType {
+func degenericize(ttype TekoType, generic_resolutions map[*GenericType]TekoType, ancestors map[TekoType]bool) TekoType {
+	if ancestors == nil {
+		ancestors = map[TekoType]bool{}
+	}
+
+	if ancestors[ttype] {
+		return ttype
+	}
+
+	ancestors[ttype] = true
+
+	var out TekoType
+
 	switch p := ttype.(type) {
 	case *GenericType:
 		if res, ok := generic_resolutions[p]; ok { // TODO what about declared generics?
-			return res
+			out = res
 		} else {
-			return ttype
+			out = ttype
 		}
 
 	case *TemplateType:
-		return p.degenericize(generic_resolutions)
+		out = p.degenericize(generic_resolutions)
 
 	case *UnionType:
 		types := []TekoType{}
 		for _, ttype := range p.types {
-			types = append(types, degenericize(ttype, generic_resolutions))
+			types = append(types, degenericize(ttype, generic_resolutions, ancestors))
 		}
 
-		return &UnionType{
+		out = &UnionType{
 			types: types,
 		}
 
@@ -96,44 +113,39 @@ func degenericize(ttype TekoType, generic_resolutions map[*GenericType]TekoType)
 		for _, argdef := range p.argdefs {
 			argdefs = append(argdefs, FunctionArgDef{
 				Name:  argdef.Name,
-				ttype: degenericize(argdef.ttype, generic_resolutions),
+				ttype: degenericize(argdef.ttype, generic_resolutions, ancestors),
 			})
 		}
 
-		return &FunctionType{
-			rtype:   degenericize(p.rtype, generic_resolutions),
+		out = &FunctionType{
+			rtype:   degenericize(p.rtype, generic_resolutions, ancestors),
 			argdefs: argdefs,
 		}
 
 	case *BasicType:
 		if _, ok := primitives[p]; ok {
-			return ttype
-		}
+			out = ttype
+		} else {
+			fields := map[string]TekoType{}
 
-		fields := map[string]TekoType{}
+			for name, ttype := range p.fields {
+				fields[name] = degenericize(ttype, generic_resolutions, ancestors)
+			}
 
-		for name, ttype := range p.fields {
-			fields[name] = degenericize(ttype, generic_resolutions)
-		}
-
-		return &BasicType{
-			name:   p.name,
-			fields: fields,
+			out = &BasicType{
+				name:   p.name,
+				fields: fields,
+			}
 		}
 
 	case *ArrayType:
-		return newArrayType(degenericize(p.etype, generic_resolutions))
+		out = newArrayType(degenericize(p.etype, generic_resolutions, ancestors))
 
 	default:
-		return ttype
+		out = ttype
 	}
-}
 
-func isGeneric(t TekoType) bool {
-	switch t.(type) {
-	case *GenericType:
-		return true
-	default:
-		return false
-	}
+	delete(ancestors, ttype)
+
+	return out
 }

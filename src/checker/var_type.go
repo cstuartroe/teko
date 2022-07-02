@@ -4,6 +4,10 @@ type VarType struct {
 	ttype TekoType
 }
 
+func (t VarType) isDeferred() bool {
+	return false
+}
+
 func (t VarType) tekotypeToString() string {
 	return "var " + t.ttype.tekotypeToString()
 }

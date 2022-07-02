@@ -34,6 +34,11 @@ type FunctionType struct {
 	argdefs []FunctionArgDef
 }
 
+func (ftype FunctionType) isDeferred() bool {
+	// TODO function types should be deferrable
+	return false
+}
+
 func (ftype FunctionType) tekotypeToString() string {
 	out := "fn("
 	for _, argdef := range ftype.argdefs {

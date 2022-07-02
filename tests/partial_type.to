@@ -1,0 +1,27 @@
+type Bar = {
+    bar: str,
+}
+
+type Foo = {
+    foo: int,
+}
+
+f : FooBar = {
+    foo: {
+        foo: 0,
+    },
+    bar: {
+        bar: "",
+    },
+}
+
+type FooBar = {
+    foo: Foo,
+    bar: Bar,
+}
+
+/* EXPECT ERROR
+Type Error (tests/partial_type.to:9:1)
+f : FooBar = {
+^
+FooBar is only partially defined */

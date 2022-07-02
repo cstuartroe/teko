@@ -6,6 +6,11 @@ type TemplateType struct {
 	generic_resolutions map[*GenericType]TekoType
 }
 
+func (t TemplateType) isDeferred() bool {
+	// TODO we may actually want template types to be deferrable at some point
+	return false
+}
+
 func (t TemplateType) tekotypeToString() string {
 	out := t.template.tekotypeToString()
 
@@ -26,7 +31,7 @@ func (t TemplateType) allFields() map[string]TekoType {
 	if t.generic_resolutions == nil {
 		panic("Unresolved template")
 	} else {
-		return degenericize(t.template, t.generic_resolutions).allFields()
+		return degenericize(t.template, t.generic_resolutions, nil).allFields()
 	}
 }
 

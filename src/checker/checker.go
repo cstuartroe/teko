@@ -34,6 +34,10 @@ type CheckerType struct {
 	parent *CheckerType
 }
 
+func (ctype CheckerType) isDeferred() bool {
+	return false
+}
+
 func (ctype CheckerType) tekotypeToString() string {
 	return tekoObjectTypeShowFields(ctype)
 }
@@ -65,8 +69,8 @@ func (ctype *CheckerType) setField(name string, tekotype TekoType) {
 type Checker struct {
 	typeTable           *TypeTable
 	ctype               *CheckerType
-	declared_generics   map[*GenericType]bool
 	generic_resolutions map[*GenericType]TekoType
+	deferral_allowed    bool
 }
 
 func NewChecker(parent *Checker) Checker {

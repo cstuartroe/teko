@@ -70,21 +70,13 @@ func (a TekoTypeWithAncestry) getField(name string) TekoTypeWithAncestry {
 	}
 }
 
-func (a TekoTypeWithAncestry) degenericize() TekoTypeWithAncestry {
-	switch p := a.ttype.(type) {
-	case *GenericType:
-		return TekoTypeWithAncestry{
-			ttype:     p.ttype,
-			ancestors: a.ancestors,
-		}
-	default:
-		panic("Not a generic type")
-	}
-}
-
 func (c *Checker) isTekoSubtypeWithAncestry(sub TekoTypeWithAncestry, sup TekoTypeWithAncestry) bool {
 	if sub.ttype == sup.ttype {
 		return true
+	}
+
+	if sup.ttype.isDeferred() {
+		panic(TypeError{sup.ttype.tekotypeToString() + " is only partially defined"})
 	}
 
 	switch psub := sub.ttype.(type) {
@@ -97,7 +89,7 @@ func (c *Checker) isTekoSubtypeWithAncestry(sub TekoTypeWithAncestry, sup TekoTy
 
 	switch psup := sup.ttype.(type) {
 	case *GenericType:
-		if !(psup.ttype == nil || c.isTekoSubtypeWithAncestry(sub, sup.degenericize())) {
+		if !(psup.ttype == nil || c.isTekoSubtypeWithAncestry(sub, TekoTypeWithAncestry{ttype: psup.ttype, ancestors: sup.ancestors})) {
 			return false
 		}
 

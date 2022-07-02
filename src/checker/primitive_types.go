@@ -50,6 +50,10 @@ var CharType *BasicType = &BasicType{
 
 type _NullType struct{}
 
+func (n _NullType) isDeferred() bool {
+	return false
+}
+
 func (n _NullType) allFields() map[string]TekoType {
 	return map[string]TekoType{}
 }

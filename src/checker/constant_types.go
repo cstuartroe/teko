@@ -18,6 +18,10 @@ type ConstantType struct {
 	ctype  ConstantTypeType
 }
 
+func (t ConstantType) isDeferred() bool {
+	return false
+}
+
 func (t ConstantType) tekotypeToString() string {
 	return t.name
 }

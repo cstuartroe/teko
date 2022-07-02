@@ -45,6 +45,10 @@ type SetType struct {
 	fields map[string]TekoType
 }
 
+func (t SetType) isDeferred() bool {
+	return false
+}
+
 func (t SetType) tekotypeToString() string {
 	return t.etype.tekotypeToString() + "{}"
 }
@@ -97,6 +101,10 @@ type MapType struct {
 	fields map[string]TekoType
 }
 
+func (t MapType) isDeferred() bool {
+	return false
+}
+
 func (t MapType) tekotypeToString() string {
 	return t.vtype.tekotypeToString() + "[" + t.ktype.tekotypeToString() + "]"
 }
@@ -145,6 +153,10 @@ var Hashable TekoType = &BasicType{
 type ArrayType struct {
 	etype TekoType
 	ttype *TemplateType
+}
+
+func (t ArrayType) isDeferred() bool {
+	return false
 }
 
 func (t ArrayType) tekotypeToString() string {

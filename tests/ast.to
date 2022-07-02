@@ -13,7 +13,7 @@ type Token = {
   line: int,
   col: int,
   value: str,
-  toktype: TokenType,
+  ttype: TokenType,
 }
 
 type SimpleExpression = {
@@ -33,3 +33,26 @@ type BinOpExpression = {
 type Expression =
   SimpleExpression
   | BinOpExpression
+
+expr : Expression = {
+  etype: "binop",
+  left: {
+    etype: "simple",
+    t: {
+      line: 1,
+      col: 1,
+      value: "foo",
+      ttype: "symbol",
+    }
+  },
+  binop: "+",
+  right: {
+    etype: "simple",
+    t: {
+      line: 1,
+      col: 5,
+      value: "bar",
+      ttype: "symbol",
+    }
+  }
+}

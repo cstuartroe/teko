@@ -3,6 +3,7 @@ package checker
 type TekoType interface {
 	tekotypeToString() string
 	allFields() map[string]TekoType
+	isDeferred() bool
 }
 
 func getField(ttype TekoType, name string) TekoType {
@@ -15,8 +16,9 @@ func getField(ttype TekoType, name string) TekoType {
 }
 
 type BasicType struct {
-	name   string
-	fields map[string]TekoType
+	name     string
+	fields   map[string]TekoType
+	deferred bool
 }
 
 func newBasicType(name string) *BasicType {
@@ -24,6 +26,10 @@ func newBasicType(name string) *BasicType {
 		name:   name,
 		fields: map[string]TekoType{},
 	}
+}
+
+func (ttype BasicType) isDeferred() bool {
+	return ttype.deferred
 }
 
 func tekoObjectTypeShowFields(otype TekoType) string {

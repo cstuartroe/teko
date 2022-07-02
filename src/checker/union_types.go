@@ -1,7 +1,12 @@
 package checker
 
 type UnionType struct {
-	types []TekoType
+	types    []TekoType
+	deferred bool
+}
+
+func (ut UnionType) isDeferred() bool {
+	return ut.deferred
 }
 
 func (ut UnionType) tekotypeToString() string {
@@ -42,5 +47,7 @@ func (c *Checker) unionTypes(t1 TekoType, t2 TekoType) TekoType {
 		types = append(types, t2)
 	}
 
-	return &UnionType{types}
+	return &UnionType{
+		types: types,
+	}
 }

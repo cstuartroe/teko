@@ -53,6 +53,7 @@ func (c *Checker) evaluateSimpleType(expr *lexparse.SimpleExpression) TekoType {
 
 	case lexparse.SymbolT:
 		ttype := c.getTypeByName(string(expr.Token().Value))
+
 		if ttype == nil {
 			expr.Token().Raise(shared.NameError, "No type called "+string(expr.Token().Value))
 		} else {

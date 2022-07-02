@@ -9,11 +9,45 @@ import (
 
 func (c Checker) CheckTree(codeblock *lexparse.Codeblock) {
 	for _, stmt := range codeblock.Statements {
+		c.maybeHoist(stmt)
+	}
+
+	for _, stmt := range codeblock.Statements {
 		c.checkStatement(stmt)
 	}
 }
 
+func (c *Checker) maybeHoist(stmt lexparse.Statement) {
+	switch p := stmt.(type) {
+	case *lexparse.TypeStatement:
+		c.maybeHoistType(p)
+	}
+}
+
+func (c *Checker) maybeHoistType(stmt *lexparse.TypeStatement) {
+	name := string(stmt.Name.Value)
+
+	switch stmt.TypeExpression.(type) {
+	case *lexparse.ObjectExpression:
+		c.declareNamedType(stmt.Name, &BasicType{name: name, deferred: true})
+	case *lexparse.BinopExpression:
+		c.declareNamedType(stmt.Name, &UnionType{deferred: true})
+	}
+}
+
 func (c *Checker) checkStatement(stmt lexparse.Statement) {
+	defer func() {
+		r := recover()
+
+		switch e := r.(type) {
+		case TypeError:
+			stmt.Token().Raise(shared.TypeError, e.message)
+		case nil:
+		default:
+			panic(r)
+		}
+	}()
+
 	switch p := stmt.(type) {
 	case *lexparse.ExpressionStatement:
 		c.checkExpressionStatement(p)
@@ -27,14 +61,49 @@ func (c *Checker) checkStatement(stmt lexparse.Statement) {
 }
 
 func (c *Checker) checkExpressionStatement(stmt *lexparse.ExpressionStatement) {
+	c.deferral_allowed = false
 	c.checkExpression(stmt.Expression, nil)
 }
 
 func (c *Checker) checkTypeStatement(stmt *lexparse.TypeStatement) {
-	c.declareNamedType(
-		stmt.Name,
-		c.evaluateType(stmt.TypeExpression),
-	)
+	c.deferral_allowed = true
+
+	tekotype := c.evaluateType(stmt.TypeExpression)
+
+	name := string(stmt.Name.Value)
+
+	switch p := tekotype.(type) {
+	case *BasicType:
+		p.name = name
+	}
+
+	existing_type := c.getTypeByName(name)
+
+	if existing_type != nil && existing_type.isDeferred() {
+		c.fillDeferredType(name, tekotype)
+	} else {
+		c.declareNamedType(
+			stmt.Name,
+			tekotype,
+		)
+	}
+}
+
+func (c *Checker) fillDeferredType(name string, tekotype TekoType) {
+	empty_type := c.getTypeByName(name)
+
+	if !empty_type.isDeferred() {
+		panic("Not deferred")
+	}
+
+	switch p := empty_type.(type) {
+	case *BasicType:
+		*p = *(tekotype.(*BasicType))
+	case *UnionType:
+		*p = *(tekotype.(*UnionType))
+	default:
+		return
+	}
 }
 
 func (c *Checker) checkExpression(expr lexparse.Expression, expectedType TekoType) TekoType {
@@ -106,7 +175,7 @@ func (c *Checker) checkExpressionAllowingVar(expr lexparse.Expression, expectedT
 	if expectedType == nil {
 		return ttype
 	} else {
-		return degenericize(expectedType, c.generic_resolutions)
+		return degenericize(expectedType, c.generic_resolutions, nil)
 	}
 }
 
@@ -185,7 +254,7 @@ func (c *Checker) checkCallExpression(expr *lexparse.CallExpression) TekoType {
 			call_checker.checkExpression(arg, argdef.ttype)
 		}
 
-		return degenericize(ftype.rtype, call_checker.generic_resolutions)
+		return degenericize(ftype.rtype, call_checker.generic_resolutions, nil)
 
 	case FunctionType:
 		panic("Use *FunctionType instead of FunctionType")
@@ -362,10 +431,13 @@ func (c *Checker) checkObjectExpression(expr *lexparse.ObjectExpression, expecte
 		}
 
 		var expectedFieldType TekoType = nil
-		if expectedType != nil && !isGeneric(expectedType) {
-			expectedFieldType = getField(expectedType, field_name)
-			if expectedFieldType == nil {
-				of.Symbol.Raise(shared.TypeError, "Object literal cannot have unreachable field")
+		switch p := expectedType.(type) {
+		case *BasicType:
+			if !p.isDeferred() {
+				expectedFieldType = getField(expectedType, field_name)
+				if expectedFieldType == nil {
+					of.Symbol.Raise(shared.TypeError, "Object literal cannot have unreachable field")
+				}
 			}
 		}
 
@@ -391,7 +463,6 @@ func (c *Checker) checkFunctionDefinition(expr *lexparse.FunctionExpression, exp
 	}
 
 	blockChecker := NewChecker(c)
-	blockChecker.declared_generics = map[*GenericType]bool{}
 
 	if expr.GDL != nil {
 		for _, gd := range expr.GDL.Declarations {
