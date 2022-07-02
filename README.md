@@ -26,7 +26,7 @@ Make sure you have the [Go programming language](https://golang.org/dl/) install
 Then, simply run 
 
 ```sh
-go get github.com/cstuartroe/teko
+go install github.com/cstuartroe/teko@latest
 ```
 
 ## Acknowledgements
