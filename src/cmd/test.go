@@ -115,7 +115,7 @@ func RunTest(filepath string, test_outcome *TestOutcome) {
 
 	actual_output := program_log.String()
 
-	if actual_output == expected_output {
+	if actual_output == expected_output && expected_error == "" {
 		printGreen(fmt.Sprintf("%s passed\n", filepath))
 		*test_outcome = test_passed
 	} else {
