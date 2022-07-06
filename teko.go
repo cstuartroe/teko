@@ -39,9 +39,12 @@ func main() {
 
 	command_or_filename := os.Args[1]
 
+	// TODO better argument parsing
 	if f, ok := commands[command_or_filename]; ok {
 		f()
+	} else if command_or_filename == "-c" {
+		cmd.Safely(func() { cmd.ExecuteString(os.Args[2]) })
 	} else {
-		cmd.ExecuteFileSafe(command_or_filename)
+		cmd.Safely(func() { cmd.ExecuteFile(command_or_filename) })
 	}
 }

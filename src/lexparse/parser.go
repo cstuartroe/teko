@@ -21,6 +21,12 @@ type Parser struct {
 	Codeblock *Codeblock
 }
 
+func (parser *Parser) ParseString(mock_filename string, contents string, transform bool) {
+	lexer := NewLexer(mock_filename, contents)
+	tokens := lexer.Lex()
+	parser.Parse(tokens, transform)
+}
+
 func (parser *Parser) ParseFile(filename string, transform bool) {
 	lexer := FromFile(filename)
 	tokens := lexer.Lex()

@@ -12,7 +12,10 @@ import (
 func ExecuteFile(filename string) {
 	p := lexparse.Parser{}
 	p.ParseFile(filename, true)
+	ExecuteParser(p)
+}
 
+func ExecuteParser(p lexparse.Parser) {
 	c := checker.NewBaseChecker()
 	c.CheckTree(p.Codeblock)
 
@@ -20,7 +23,7 @@ func ExecuteFile(filename string) {
 	i.Execute(p.Codeblock)
 }
 
-func ExecuteFileSafe(filename string) {
+func Safely(f func()) {
 	defer func() {
 		if r := recover(); r == shared.TekoErrorMessage {
 			os.Exit(1)
@@ -29,5 +32,5 @@ func ExecuteFileSafe(filename string) {
 		}
 	}()
 
-	ExecuteFile(filename)
+	f()
 }
