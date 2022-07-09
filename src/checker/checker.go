@@ -1,6 +1,8 @@
 package checker
 
 import (
+	"fmt"
+
 	"github.com/cstuartroe/teko/src/lexparse"
 	"github.com/cstuartroe/teko/src/shared"
 )
@@ -99,7 +101,13 @@ func (c *Checker) getFieldType(name string) TekoType {
 }
 
 func (c *Checker) declareFieldType(token *lexparse.Token, tekotype TekoType) {
-	c.ctype.setField(string(token.Value), tekotype)
+	name := string(token.Value)
+
+	if c.getFieldType(name) != nil {
+		token.Raise(shared.NameError, fmt.Sprintf("Variable called %s has already been declared", name))
+	}
+
+	c.ctype.setField(name, tekotype)
 }
 
 func (c *Checker) getTypeByName(name string) TekoType {
