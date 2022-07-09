@@ -116,7 +116,7 @@ func (m InterpreterModule) evaluateSimpleExpression(expr *lexparse.SimpleExpress
 		return tp(newTekoString(value))
 
 	case lexparse.CharT:
-		return nil // TODO
+		return tp(newChar(value[0]))
 
 	case lexparse.IntT:
 		n, ok := strconv.Atoi(string(value))
