@@ -1,14 +1,13 @@
 package interpreter
 
 import (
-	"math"
-	"strconv"
+	"math/big"
 
 	"github.com/cstuartroe/teko/src/checker"
 )
 
 type Integer struct {
-	value       int // TODO: arbitrary-precision integer
+	value       *big.Int // TODO: arbitrary-precision integer
 	symbolTable SymbolTable
 }
 
@@ -16,16 +15,20 @@ func (i Integer) getUnderlyingType() checker.TekoType {
 	return checker.NewConstantIntType(i.value)
 }
 
-func getInteger(n int) Integer {
+func int2Integer(n int) Integer {
+	return getInteger(big.NewInt(int64(n)))
+}
+
+func getInteger(n *big.Int) Integer {
 	return Integer{
 		value:       n,
 		symbolTable: newSymbolTable(nil),
 	}
 }
 
-type intOpType func(n1 int, n2 int) int
+type intOpType func(n1 *big.Int, n2 *big.Int) *big.Int
 
-func IntBinopExecutor(receiverValue int, op intOpType) executorType {
+func IntBinopExecutor(receiverValue *big.Int, op intOpType) executorType {
 	return func(function TekoFunction, evaluatedArgs map[string]*TekoObject) *TekoObject {
 		other, ok := evaluatedArgs["other"]
 		if !ok {
@@ -42,18 +45,18 @@ func IntBinopExecutor(receiverValue int, op intOpType) executorType {
 }
 
 var intOps map[string]intOpType = map[string]intOpType{
-	"add":     func(n1 int, n2 int) int { return n1 + n2 },
-	"sub":     func(n1 int, n2 int) int { return n1 - n2 },
-	"mult":    func(n1 int, n2 int) int { return n1 * n2 },
-	"div":     func(n1 int, n2 int) int { return n1 / n2 },
-	"exp":     func(n1 int, n2 int) int { return int(math.Pow(float64(n1), float64(n2))) },
-	"mod":     func(n1 int, n2 int) int { return n1 % n2 },
-	"compare": func(n1 int, n2 int) int { return n1 - n2 },
+	"add":     func(n1 *big.Int, n2 *big.Int) *big.Int { return big.NewInt(0).Add(n1, n2) },
+	"sub":     func(n1 *big.Int, n2 *big.Int) *big.Int { return big.NewInt(0).Sub(n1, n2) },
+	"mult":    func(n1 *big.Int, n2 *big.Int) *big.Int { return big.NewInt(0).Mul(n1, n2) },
+	"div":     func(n1 *big.Int, n2 *big.Int) *big.Int { return big.NewInt(0).Div(n1, n2) },
+	"exp":     func(n1 *big.Int, n2 *big.Int) *big.Int { return big.NewInt(0).Exp(n1, n2, nil) },
+	"mod":     func(n1 *big.Int, n2 *big.Int) *big.Int { return big.NewInt(0).Mod(n1, n2) },
+	"compare": func(n1 *big.Int, n2 *big.Int) *big.Int { return big.NewInt(0).Sub(n1, n2) },
 }
 
-func IntToStrExecutor(receiverValue int) executorType {
+func IntToStrExecutor(receiverValue *big.Int) executorType {
 	return func(function TekoFunction, evaluatedArgs map[string]*TekoObject) *TekoObject {
-		return tp(newTekoString([]rune(strconv.Itoa(receiverValue))))
+		return tp(newTekoString([]rune(receiverValue.String())))
 	}
 }
 

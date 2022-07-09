@@ -27,7 +27,7 @@ func ArrayAtExecutor(receiverElements *[]*TekoObject) executorType {
 	return func(function TekoFunction, evaluatedArgs map[string]*TekoObject) *TekoObject {
 		switch p := (*evaluatedArgs["key"]).(type) {
 		case Integer:
-			return (*receiverElements)[p.value]
+			return (*receiverElements)[p.value.Int64()]
 		default:
 			panic("Non-integer somehow made it past the type checker as an argument to array at!")
 		}
@@ -141,7 +141,7 @@ func (a Array) getFieldValue(name string) *TekoObject {
 			return tp(customExecutedFunction(ArrayAtExecutor(a.elements), checker.NoDefaults("key")))
 
 		case "size":
-			return tp(getInteger(len(*a.elements)))
+			return tp(int2Integer(len(*a.elements)))
 
 		case "includes":
 			return tp(customExecutedFunction(ArrayIncludesExecutor(a.elements), checker.NoDefaults("element")))

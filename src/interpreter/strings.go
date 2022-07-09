@@ -1,6 +1,10 @@
 package interpreter
 
-import "github.com/cstuartroe/teko/src/checker"
+import (
+	"math/big"
+
+	"github.com/cstuartroe/teko/src/checker"
+)
 
 type String struct {
 	runes       []rune
@@ -35,7 +39,7 @@ func StringAtExecutor(receiverRunes []rune) executorType {
 	return func(function TekoFunction, evaluatedArgs map[string]*TekoObject) *TekoObject {
 		switch p := (*evaluatedArgs["key"]).(type) {
 		case Integer:
-			return tp(newChar(receiverRunes[p.value]))
+			return tp(newChar(receiverRunes[p.value.Int64()]))
 		default:
 			panic("Non-integer somehow made it past the type checker as an argument to string at!")
 		}
@@ -91,7 +95,7 @@ func StringHashExecutor(receiverRunes []rune) executorType {
 	return func(function TekoFunction, evaluatedArgs map[string]*TekoObject) *TekoObject {
 		// TODO on 32-bit systems this cast to int will lead to a possibility of collision
 		// but I won't bother converting everything to int64s because I should ultimately use variable-width integers anyway
-		return tp(getInteger(int(hash(receiverRunes))))
+		return tp(getInteger(big.NewInt(hash(receiverRunes))))
 	}
 }
 
@@ -106,7 +110,7 @@ func (s String) getFieldValue(name string) *TekoObject {
 			return tp(customExecutedFunction(StringAtExecutor(s.runes), checker.NoDefaults("key")))
 
 		case "size":
-			return tp(getInteger(len(s.runes)))
+			return tp(int2Integer(len(s.runes)))
 
 		case "to_str":
 			return tp(customExecutedFunction(StringToStrExecutor(s.runes), checker.NoDefaults()))

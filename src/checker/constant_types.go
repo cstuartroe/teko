@@ -1,7 +1,7 @@
 package checker
 
 import (
-	"strconv"
+	"math/big"
 )
 
 type ConstantTypeType int
@@ -48,22 +48,24 @@ func copyFields(baseType TekoType) map[string]TekoType {
 	return fields
 }
 
-var constantIntTypeCache map[int]*ConstantType = map[int]*ConstantType{}
+var constantIntTypeCache map[string]*ConstantType = map[string]*ConstantType{}
 
-func NewConstantIntType(n int) TekoType {
-	if ct, ok := constantIntTypeCache[n]; ok {
+func NewConstantIntType(n *big.Int) TekoType {
+	s := n.String()
+
+	if ct, ok := constantIntTypeCache[s]; ok {
 		return ct
 	}
 
 	out := &ConstantType{
-		name:   strconv.Itoa(n),
+		name:   s,
 		fields: copyFields(IntType),
 		ctype:  IntConstant,
 	}
 
-	out.setField(strconv.Itoa(n), NullType)
+	out.setField(s, NullType)
 
-	constantIntTypeCache[n] = out
+	constantIntTypeCache[s] = out
 
 	return out
 }

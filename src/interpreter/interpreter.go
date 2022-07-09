@@ -2,6 +2,7 @@ package interpreter
 
 import (
 	"fmt"
+	"math/big"
 	"strconv"
 
 	"github.com/cstuartroe/teko/src/checker"
@@ -120,7 +121,7 @@ func (m InterpreterModule) evaluateSimpleExpression(expr *lexparse.SimpleExpress
 	case lexparse.IntT:
 		n, ok := strconv.Atoi(string(value))
 		if ok == nil {
-			return tp(getInteger(n))
+			return tp(int2Integer(n))
 		} else {
 			expr.Token().Raise(shared.UnexpectedIssue, "Invalid integer - how did this make it past the lexer?")
 			return nil
@@ -323,7 +324,7 @@ func (m *InterpreterModule) evaluateComparisonExpression(expr *lexparse.Comparis
 	case Integer:
 		f := comparisons[string(expr.Comparator.Value)]
 
-		if f(p.value) {
+		if f(p.value.Cmp(big.NewInt(0))) {
 			return True
 		} else {
 			return False

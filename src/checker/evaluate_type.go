@@ -1,6 +1,7 @@
 package checker
 
 import (
+	"math/big"
 	"strconv"
 
 	"github.com/cstuartroe/teko/src/lexparse"
@@ -42,7 +43,7 @@ func (c *Checker) evaluateType(expr lexparse.Expression) TekoType {
 func (c *Checker) evaluateConstantIntType(token *lexparse.Token) TekoType {
 	n, err := strconv.Atoi(string(token.Value))
 	if err == nil {
-		return NewConstantIntType(n)
+		return NewConstantIntType(big.NewInt(int64(n)))
 	} else {
 		panic("Invalid int")
 	}

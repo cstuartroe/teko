@@ -3,7 +3,7 @@ package interpreter
 import "github.com/cstuartroe/teko/src/checker"
 
 type TekoMap struct {
-	kvpairs     map[int]*TekoObject
+	kvpairs     map[int64]*TekoObject
 	symbolTable SymbolTable
 }
 
@@ -11,7 +11,7 @@ func (m TekoMap) getUnderlyingType() checker.TekoType {
 	return nil // TODO
 }
 
-func tekoHash(o *TekoObject) int {
+func tekoHash(o *TekoObject) int64 {
 	hash_function := (*o).getFieldValue("hash")
 	var hash *TekoObject
 
@@ -25,7 +25,7 @@ func tekoHash(o *TekoObject) int {
 
 	switch p := (*hash).(type) {
 	case Integer:
-		return p.value
+		return p.value.Int64()
 
 	default:
 		panic("hash did not return an integer")
@@ -36,7 +36,7 @@ func (m *TekoMap) set(key *TekoObject, value *TekoObject) {
 	m.kvpairs[tekoHash(key)] = value
 }
 
-func MapAtExecutor(kvpairs map[int]*TekoObject) executorType {
+func MapAtExecutor(kvpairs map[int64]*TekoObject) executorType {
 	return func(function TekoFunction, evaluatedArgs map[string]*TekoObject) *TekoObject {
 		return kvpairs[tekoHash(evaluatedArgs["key"])]
 	}
@@ -50,7 +50,7 @@ func (m TekoMap) getFieldValue(name string) *TekoObject {
 			return tp(customExecutedFunction(MapAtExecutor(m.kvpairs), checker.NoDefaults("key")))
 
 		case "size":
-			return tp(getInteger(len(m.kvpairs)))
+			return tp(int2Integer(len(m.kvpairs)))
 
 		default:
 			panic("Unknown map function")
@@ -60,7 +60,7 @@ func (m TekoMap) getFieldValue(name string) *TekoObject {
 
 func newTekoMap() TekoMap {
 	return TekoMap{
-		kvpairs:     map[int]*TekoObject{},
+		kvpairs:     map[int64]*TekoObject{},
 		symbolTable: newSymbolTable(nil),
 	}
 }
