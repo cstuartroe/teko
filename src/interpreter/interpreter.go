@@ -222,7 +222,7 @@ func (m InterpreterModule) evaluateArray(expr *lexparse.SequenceExpression) Arra
 		o := m.evaluateExpression(e)
 		elements = append(elements, o)
 	}
-	return newArray(elements)
+	return newArray(&elements)
 }
 
 func (m InterpreterModule) evaluateSet(expr *lexparse.SequenceExpression) Set {
@@ -298,7 +298,7 @@ func (m InterpreterModule) evaluateWhile(expr *lexparse.WhileExpression) *TekoOb
 		elements = append(elements, m.evaluateExpression(expr.Body))
 	}
 
-	return tp(newArray(elements))
+	return tp(newArray(&elements))
 }
 
 func (m *InterpreterModule) evaluateScope(expr *lexparse.ScopeExpression) *TekoObject {

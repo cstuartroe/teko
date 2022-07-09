@@ -3,7 +3,7 @@ package interpreter
 import "github.com/cstuartroe/teko/src/checker"
 
 type Array struct {
-	elements    []*TekoObject
+	elements    *[]*TekoObject
 	symbolTable SymbolTable
 }
 
@@ -11,33 +11,32 @@ func (a Array) getUnderlyingType() checker.TekoType {
 	return nil // TODO
 }
 
-func ArrayAddExecutor(receiverElements []*TekoObject) executorType {
+func ArrayAddExecutor(receiverElements *[]*TekoObject) executorType {
 	return func(function TekoFunction, evaluatedArgs map[string]*TekoObject) *TekoObject {
 		switch p := (*evaluatedArgs["other"]).(type) {
 		case Array:
-			return tp(newArray(
-				append(append([]*TekoObject{}, receiverElements...), p.elements...),
-			))
+			elements := append(append([]*TekoObject{}, *receiverElements...), *p.elements...)
+			return tp(newArray(&elements))
 		default:
 			panic("Non-array somehow made it past the type checker as an argument to array add!")
 		}
 	}
 }
 
-func ArrayAtExecutor(receiverElements []*TekoObject) executorType {
+func ArrayAtExecutor(receiverElements *[]*TekoObject) executorType {
 	return func(function TekoFunction, evaluatedArgs map[string]*TekoObject) *TekoObject {
 		switch p := (*evaluatedArgs["key"]).(type) {
 		case Integer:
-			return receiverElements[p.value]
+			return (*receiverElements)[p.value]
 		default:
 			panic("Non-integer somehow made it past the type checker as an argument to array at!")
 		}
 	}
 }
 
-func ArrayIncludesExecutor(receiverElements []*TekoObject) executorType {
+func ArrayIncludesExecutor(receiverElements *[]*TekoObject) executorType {
 	return func(function TekoFunction, evaluatedArgs map[string]*TekoObject) *TekoObject {
-		for _, e := range receiverElements {
+		for _, e := range *receiverElements {
 			// TODO we need to do better than pointer equality
 			// It seems like maybe this shouldn't be a method of the array?
 			if e == evaluatedArgs["element"] {
@@ -62,11 +61,11 @@ func join(slices [][]rune, joiner []rune) []rune {
 	return out
 }
 
-func ArrayToStrExecutor(receiverElements []*TekoObject) executorType {
+func ArrayToStrExecutor(receiverElements *[]*TekoObject) executorType {
 	return func(function TekoFunction, evaluatedArgs map[string]*TekoObject) *TekoObject {
 		elements := [][]rune{}
 
-		for _, e := range receiverElements {
+		for _, e := range *receiverElements {
 			f := (*e).getFieldValue("to_str")
 
 			switch fp := (*f).(type) {
@@ -101,7 +100,7 @@ func ArrayToStrExecutor(receiverElements []*TekoObject) executorType {
 	}
 }
 
-func ArrayForEachExecutor(receiveElements []*TekoObject) executorType {
+func ArrayForEachExecutor(receiveElements *[]*TekoObject) executorType {
 	return func(function TekoFunction, evaluatedArgs map[string]*TekoObject) *TekoObject {
 		elements := []*TekoObject{}
 
@@ -115,11 +114,19 @@ func ArrayForEachExecutor(receiveElements []*TekoObject) executorType {
 
 		argname := f.argdefs[0].Name
 
-		for _, e := range receiveElements {
+		for _, e := range *receiveElements {
 			elements = append(elements, f.executor(f, map[string]*TekoObject{argname: e}))
 		}
 
-		return tp(newArray(elements))
+		return tp(newArray(&elements))
+	}
+}
+
+func ArrayPushExecutor(receiveElements *[]*TekoObject) executorType {
+	return func(function TekoFunction, evaluatedArgs map[string]*TekoObject) *TekoObject {
+		*receiveElements = append(*receiveElements, evaluatedArgs["element"])
+
+		return Null
 	}
 }
 
@@ -134,7 +141,7 @@ func (a Array) getFieldValue(name string) *TekoObject {
 			return tp(customExecutedFunction(ArrayAtExecutor(a.elements), checker.NoDefaults("key")))
 
 		case "size":
-			return tp(getInteger(len(a.elements)))
+			return tp(getInteger(len(*a.elements)))
 
 		case "includes":
 			return tp(customExecutedFunction(ArrayIncludesExecutor(a.elements), checker.NoDefaults("element")))
@@ -145,12 +152,15 @@ func (a Array) getFieldValue(name string) *TekoObject {
 		case "forEach":
 			return tp(customExecutedFunction(ArrayForEachExecutor(a.elements), checker.NoDefaults("f")))
 
+		case "push":
+			return tp(customExecutedFunction(ArrayPushExecutor(a.elements), checker.NoDefaults("element")))
+
 		default:
 			panic("Unknown array function: " + name)
 		}
 	})
 }
 
-func newArray(elements []*TekoObject) Array {
+func newArray(elements *[]*TekoObject) Array {
 	return Array{elements, newSymbolTable(nil)}
 }

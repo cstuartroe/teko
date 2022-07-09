@@ -324,8 +324,12 @@ func (c *Checker) checkSequenceExpression(expr *lexparse.SequenceExpression, exp
 
 	switch p := expectedType.(type) {
 	case *ArrayType:
+		if isvar(p.etype) && expr.Var == nil {
+			expr.Token().Raise(shared.TypeError, "Expected a mutable array")
+		}
+
 		if expr.Stype == lexparse.ArraySeqType {
-			etype = p.etype
+			etype = devar(p.etype)
 		} else {
 			return nil
 		}
@@ -342,10 +346,15 @@ func (c *Checker) checkSequenceExpression(expr *lexparse.SequenceExpression, exp
 		} else {
 			etype = deconstantize(c.checkExpression(expr.Elements[0], nil))
 
+			potentially_mutable_etype := etype
+			if expr.Var != nil {
+				potentially_mutable_etype = newVarType(etype)
+			}
+
 			if expr.Stype == lexparse.ArraySeqType {
-				seqtype = newArrayType(etype)
+				seqtype = newArrayType(potentially_mutable_etype)
 			} else if expr.Stype == lexparse.SetSeqType {
-				seqtype = newSetType(etype)
+				seqtype = newSetType(potentially_mutable_etype)
 			} else {
 				panic("Unknown sequence type: " + expr.Stype)
 			}

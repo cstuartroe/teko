@@ -8,9 +8,22 @@ fn int_to_str(e: int) -> e.to_str()
 
 arr.forEach(fn(e: int) -> e.to_str())$ |> println
 
+mut_ints := [var 1, 2, 3]
+ints : int[] = mut_ints
+println(ints$)
+
+mut_ints[1] = 5
+println(ints$)
+
+mut_ints.push(6)
+println(ints$)
+
 /* EXPECT
 1
 10
 nopers
 [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]     */
+["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
+[1, 2, 3]
+[1, 5, 3]
+[1, 5, 3, 6]     */

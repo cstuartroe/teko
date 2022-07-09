@@ -141,6 +141,9 @@ func degenericize(ttype TekoType, generic_resolutions map[*GenericType]TekoType,
 	case *ArrayType:
 		out = newArrayType(degenericize(p.etype, generic_resolutions, ancestors))
 
+	case *VarType:
+		out = newVarType(degenericize(p.ttype, generic_resolutions, ancestors))
+
 	default:
 		out = ttype
 	}

@@ -427,8 +427,14 @@ func (parser *Parser) grabTuple() Expression {
 func (parser *Parser) grabArray() *SequenceExpression {
 	open := parser.expect(LSquareBrT)
 
+	var Var *Token
+	if parser.currentToken().TType == VarT {
+		Var = parser.expect(VarT)
+	}
+
 	return &SequenceExpression{
 		OpenBrace: open,
+		Var:       Var,
 		Stype:     ArraySeqType,
 		Elements:  parser.grabSequence(RSquareBrT),
 	}

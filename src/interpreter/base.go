@@ -26,18 +26,18 @@ func TekoPrintExecutor(function TekoFunction, evaluatedArgs map[string]*TekoObje
 
 var TekoPrint TekoFunction = customExecutedFunction(TekoPrintExecutor, checker.NoDefaults("s"))
 
-func getProcessArgs() []*TekoObject {
+func getProcessArgs() *[]*TekoObject {
 	out := []*TekoObject{}
 
 	if len(os.Args) < 2 {
-		return out
+		return &out
 	}
 
 	for _, arg := range os.Args[2:] {
 		out = append(out, tp(newTekoString([]rune(arg))))
 	}
 
-	return out
+	return &out
 }
 
 var Process BasicObject = BasicObject{

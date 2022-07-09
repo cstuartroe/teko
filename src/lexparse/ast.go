@@ -339,6 +339,7 @@ const SetSeqType seqType = "set"
 
 type SequenceExpression struct {
 	OpenBrace *Token
+	Var       *Token
 	Stype     seqType
 	Elements  []Expression
 }
@@ -352,6 +353,7 @@ func (e SequenceExpression) expressionNode() {}
 func (e SequenceExpression) Transform() Expression {
 	return &SequenceExpression{
 		OpenBrace: e.OpenBrace,
+		Var:       e.Var,
 		Stype:     e.Stype,
 		Elements:  transformEach(e.Elements),
 	}

@@ -20,7 +20,7 @@ func includesType(etype TekoType) *FunctionType {
 		argdefs: []FunctionArgDef{
 			{
 				Name:  "element",
-				ttype: etype,
+				ttype: devar(etype),
 			},
 		},
 	}
@@ -32,7 +32,7 @@ func setAddType(etype TekoType) *FunctionType {
 		argdefs: []FunctionArgDef{
 			{
 				Name:  "element",
-				ttype: etype,
+				ttype: devar(etype),
 			},
 		},
 	}
@@ -175,22 +175,60 @@ var ArrayTemplate *TemplateType = &TemplateType{
 	template:          &BasicType{},
 }
 
-func constructArrayTemplate() {
+var MutableArrayTemplate *TemplateType = &TemplateType{
+	declared_generics: []*GenericType{sequenceGeneric},
+	template:          &BasicType{},
+}
+
+var arrayTypeCache map[TekoType]*ArrayType = map[TekoType]*ArrayType{}
+
+func newArrayType(etype TekoType) *ArrayType {
+	etype = deconstantize(etype)
+
+	if at, ok := arrayTypeCache[etype]; ok {
+		return at
+	}
+
+	var ttype *TemplateType
+
+	switch p := etype.(type) {
+	case *VarType:
+		ttype = MutableArrayTemplate.resolveByList(p.ttype)
+	default:
+		ttype = ArrayTemplate.resolveByList(etype)
+	}
+
+	at := &ArrayType{
+		etype: etype,
+		ttype: ttype,
+	}
+
+	arrayTypeCache[etype] = at
+
+	return at
+}
+
+func constructArrayTemplates() {
+	this_type := newArrayType(sequenceGeneric)
 	other_type := newArrayType(sequenceResolutionGeneric)
 
 	fields := makeMapFields(IntType, sequenceGeneric)
+	mutable_fields := makeMapFields(IntType, newVarType(sequenceGeneric))
 
-	fields["add"] = &FunctionType{
-		rtype: other_type,
+	addType := &FunctionType{
+		rtype: this_type,
 		argdefs: []FunctionArgDef{
 			{
 				Name:  "o",
-				ttype: other_type,
+				ttype: this_type,
 			},
 		},
 	}
 
-	fields["forEach"] = &FunctionType{
+	fields["add"] = addType
+	mutable_fields["add"] = addType
+
+	forEachType := &FunctionType{
 		rtype: other_type,
 		argdefs: []FunctionArgDef{
 			{
@@ -207,33 +245,25 @@ func constructArrayTemplate() {
 		},
 	}
 
-	switch p := ArrayTemplate.template.(type) {
-	case *BasicType:
-		p.fields = fields
-	}
-}
+	fields["forEach"] = forEachType
+	mutable_fields["forEach"] = forEachType
 
-var arrayTypeCache map[TekoType]*ArrayType = map[TekoType]*ArrayType{}
-
-func newArrayType(etype TekoType) *ArrayType {
-	etype = deconstantize(etype)
-
-	if at, ok := arrayTypeCache[etype]; ok {
-		return at
+	mutable_fields["push"] = &FunctionType{
+		rtype: NullType,
+		argdefs: []FunctionArgDef{
+			{
+				Name:  "element",
+				ttype: sequenceGeneric,
+			},
+		},
 	}
 
-	at := &ArrayType{
-		etype: etype,
-		ttype: ArrayTemplate.resolveByList(etype),
-	}
-
-	arrayTypeCache[etype] = at
-
-	return at
+	ArrayTemplate.template.(*BasicType).fields = fields
+	MutableArrayTemplate.template.(*BasicType).fields = mutable_fields
 }
 
 func SetupSequenceTypes() {
-	constructArrayTemplate()
+	constructArrayTemplates()
 }
 
 var StringType *BasicType = &BasicType{

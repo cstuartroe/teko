@@ -41,8 +41,11 @@ func (ftype FunctionType) isDeferred() bool {
 
 func (ftype FunctionType) tekotypeToString() string {
 	out := "fn("
-	for _, argdef := range ftype.argdefs {
-		out += argdef.Name + ": " + argdef.ttype.tekotypeToString() + ", "
+	for i, argdef := range ftype.argdefs {
+		if i > 0 {
+			out += ", "
+		}
+		out += argdef.Name + ": " + argdef.ttype.tekotypeToString()
 	}
 
 	out += "): "
