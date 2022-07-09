@@ -735,10 +735,22 @@ func (parser *Parser) grabWhileExpression(prec int) *WhileExpression {
 
 func (parser *Parser) grabForLoop(prec int) Expression {
 	for_t := parser.expect(ForT)
+
+	parens := false
+	if parser.currentToken().TType == LParT {
+		parens = true
+		parser.advance()
+	}
+
 	iterand := parser.expect(SymbolT)
 	ttype := parser.grabOptionalType(min_prec)
 	parser.expect(InT)
 	iterator := parser.grabExpression(prec)
+
+	if parens {
+		parser.expect(RParT)
+	}
+
 	body := parser.grabControlBlock(prec)
 
 	return &ForExpression{
