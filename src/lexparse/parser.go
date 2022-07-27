@@ -127,12 +127,12 @@ func (parser *Parser) grabTypeStatement() *TypeStatement {
 
 func (parser *Parser) grabExpressionStmt() *ExpressionStatement {
 	return &ExpressionStatement{
-		Expression: parser.grabExpression(min_prec),
+		Expression: parser.grabExpression(min_prec, false),
 		semicolon:  parser.optionalSemicolon(),
 	}
 }
 
-func (parser *Parser) grabExpression(prec int) Expression {
+func (parser *Parser) grabExpression(prec int, allowVar bool) Expression {
 	var expr Expression
 
 	switch parser.currentToken().TType {
@@ -161,7 +161,11 @@ func (parser *Parser) grabExpression(prec int) Expression {
 		expr = parser.grabDoExpression()
 
 	case VarT:
-		expr = parser.grabVarExpression(prec)
+		if allowVar {
+			expr = parser.grabVarExpression(prec)
+		} else {
+			parser.currentToken().Raise(shared.SyntaxError, "Illegal start to expression")
+		}
 
 	case WhileT:
 		expr = parser.grabWhileExpression(prec)
@@ -187,7 +191,7 @@ func (parser *Parser) grabTypeExpression(prec int) Expression {
 		prec = add_sub_prec
 	}
 
-	return parser.grabExpression(prec)
+	return parser.grabExpression(prec, true)
 }
 
 func (parser *Parser) grabSimpleExpression() *SimpleExpression {
@@ -232,7 +236,7 @@ func (parser *Parser) continueExpression(expr Expression, prec int) Expression {
 				Symbol:   expr.Token(),
 				Tekotype: tekotype,
 				Setter:   parser.expect(EqualT),
-				Right:    parser.grabExpression(prec),
+				Right:    parser.grabExpression(prec, false),
 			}
 		}
 
@@ -248,7 +252,7 @@ func (parser *Parser) continueExpression(expr Expression, prec int) Expression {
 			out = &BinopExpression{
 				Left:      expr,
 				Operation: parser.expect(BinopT),
-				Right:     parser.grabExpression(op_prec + 1),
+				Right:     parser.grabExpression(op_prec+1, false),
 			}
 		}
 
@@ -266,7 +270,7 @@ func (parser *Parser) continueExpression(expr Expression, prec int) Expression {
 			return &SetterExpression{
 				Left:   expr,
 				Setter: setter,
-				Right:  parser.grabExpression(setter_prec + 1),
+				Right:  parser.grabExpression(setter_prec+1, false),
 			}
 		}
 
@@ -275,7 +279,7 @@ func (parser *Parser) continueExpression(expr Expression, prec int) Expression {
 			return &ComparisonExpression{
 				Left:       expr,
 				Comparator: parser.expect(ComparisonT),
-				Right:      parser.grabExpression(comparison_prec + 1),
+				Right:      parser.grabExpression(comparison_prec+1, false),
 			}
 		}
 
@@ -284,7 +288,7 @@ func (parser *Parser) continueExpression(expr Expression, prec int) Expression {
 			out = &PipeExpression{
 				PipeToken: parser.expect(PipeT),
 				Arg:       expr,
-				Function:  parser.grabExpression(setter_prec + 1),
+				Function:  parser.grabExpression(setter_prec+1, false),
 			}
 		}
 
@@ -293,7 +297,7 @@ func (parser *Parser) continueExpression(expr Expression, prec int) Expression {
 
 		var inside Expression = nil
 		if parser.currentToken().TType != RSquareBrT {
-			inside = parser.grabExpression(min_prec)
+			inside = parser.grabExpression(min_prec, false)
 		}
 
 		parser.expect(RSquareBrT)
@@ -335,7 +339,7 @@ func (parser *Parser) makeCallExpression(receiver Expression) *CallExpression {
 	cont := parser.currentToken().TType != RParT
 
 	for cont {
-		arg := parser.grabExpression(add_sub_prec)
+		arg := parser.grabExpression(add_sub_prec, false)
 
 		if parser.currentToken().TType == ColonT {
 			switch p := arg.(type) {
@@ -352,7 +356,7 @@ func (parser *Parser) makeCallExpression(receiver Expression) *CallExpression {
 
 			kwargs = append(kwargs, &FunctionKwarg{
 				Symbol: arg.Token(),
-				Value:  parser.grabExpression(add_sub_prec),
+				Value:  parser.grabExpression(add_sub_prec, false),
 			})
 		} else {
 			if on_kwargs {
@@ -392,7 +396,7 @@ func (parser *Parser) grabSequence(closingType tokenType) []Expression {
 	seq := []Expression{}
 
 	for parser.currentToken().TType != closingType {
-		seq = append(seq, parser.grabExpression(min_prec))
+		seq = append(seq, parser.grabExpression(min_prec, true))
 
 		if parser.currentToken().TType == CommaT {
 			parser.advance()
@@ -427,14 +431,8 @@ func (parser *Parser) grabTuple() Expression {
 func (parser *Parser) grabArray() *SequenceExpression {
 	open := parser.expect(LSquareBrT)
 
-	var Var *Token
-	if parser.currentToken().TType == VarT {
-		Var = parser.expect(VarT)
-	}
-
 	return &SequenceExpression{
 		OpenBrace: open,
-		Var:       Var,
 		Stype:     ArraySeqType,
 		Elements:  parser.grabSequence(RSquareBrT),
 	}
@@ -474,9 +472,9 @@ func (parser *Parser) grabMap() *MapExpression {
 		has_braces = true
 
 		for parser.currentToken().TType != RCurlyBrT {
-			key := parser.grabExpression(setter_prec + 1)
+			key := parser.grabExpression(setter_prec+1, false)
 			parser.expect(ColonT)
-			value := parser.grabExpression(min_prec)
+			value := parser.grabExpression(min_prec, true)
 
 			kvpairs = append(kvpairs, &KVPair{Key: key, Value: value})
 
@@ -510,14 +508,14 @@ func (parser *Parser) grabControlBlock(prec int) Expression {
 			parser.currentToken().Raise(shared.SyntaxError, "Do keyword not needed in control block")
 		}
 
-		return parser.grabExpression(prec)
+		return parser.grabExpression(prec, false)
 	}
 }
 
 func (parser *Parser) grabIf(prec int) *IfExpression {
 	if_token := parser.expect(IfT)
 
-	cond := parser.grabExpression(prec)
+	cond := parser.grabExpression(prec, false)
 
 	if parser.currentToken().TType == ThenT {
 		parser.advance()
@@ -569,7 +567,7 @@ func (parser *Parser) grabObjectField() *ObjectField {
 	if parser.currentToken().TType == ColonT {
 		parser.advance()
 
-		value = parser.grabExpression(min_prec)
+		value = parser.grabExpression(min_prec, true)
 	} else {
 		value = &SimpleExpression{symbol}
 	}
@@ -600,7 +598,7 @@ func (parser *Parser) grabArgdefs() []*ArgdefNode {
 		var dft Expression = nil
 		if parser.currentToken().TType == EqualT {
 			parser.advance()
-			dft = parser.grabExpression(max_prec)
+			dft = parser.grabExpression(max_prec, false)
 		}
 
 		argdefs = append(argdefs, &ArgdefNode{
@@ -628,7 +626,7 @@ func (parser *Parser) grabFunctionRight(prec int) Expression {
 	} else if parser.currentToken().TType == ArrowT {
 		parser.advance()
 
-		return parser.grabExpression(prec)
+		return parser.grabExpression(prec, false)
 	} else {
 		return nil
 	}
@@ -645,7 +643,7 @@ func (parser *Parser) grabGenericDeclarationList() *GenericDeclarationList {
 		var supertype Expression = nil
 		if parser.currentToken().TType == SubtypeT {
 			parser.advance()
-			supertype = parser.grabExpression(add_sub_prec)
+			supertype = parser.grabTypeExpression(add_sub_prec)
 		}
 
 		out.Declarations = append(out.Declarations, GenericDeclaration{Name: name, Supertype: supertype})
@@ -721,14 +719,14 @@ func (parser *Parser) grabDoExpression() *DoExpression {
 func (parser *Parser) grabVarExpression(prec int) *VarExpression {
 	return &VarExpression{
 		VarToken: parser.expect(VarT),
-		Right:    parser.grabExpression(prec),
+		Right:    parser.grabExpression(prec, false),
 	}
 }
 
 func (parser *Parser) grabWhileExpression(prec int) *WhileExpression {
 	return &WhileExpression{
 		WhileToken: parser.expect(WhileT),
-		Condition:  parser.grabExpression(prec),
+		Condition:  parser.grabExpression(prec, false),
 		Body:       parser.grabControlBlock(prec),
 	}
 }
@@ -745,7 +743,7 @@ func (parser *Parser) grabForLoop(prec int) Expression {
 	iterand := parser.expect(SymbolT)
 	ttype := parser.grabOptionalType(min_prec)
 	parser.expect(InT)
-	iterator := parser.grabExpression(prec)
+	iterator := parser.grabExpression(prec, false)
 
 	if parens {
 		parser.expect(RParT)

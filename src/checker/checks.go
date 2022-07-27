@@ -147,7 +147,7 @@ func (c *Checker) checkExpressionAllowingVar(expr lexparse.Expression, expectedT
 		ttype = c.checkDoExpression(p, expectedType)
 
 	case *lexparse.VarExpression:
-		expr.Token().Raise(shared.SyntaxError, "Illegal start to expression")
+		ttype = newVarType(c.checkExpression(p.Right, devar(expectedType)))
 
 	case *lexparse.WhileExpression:
 		ttype = c.checkWhileExpression(p)
@@ -324,10 +324,6 @@ func (c *Checker) checkSequenceExpression(expr *lexparse.SequenceExpression, exp
 
 	switch p := expectedType.(type) {
 	case *ArrayType:
-		if isvar(p.etype) && expr.Var == nil {
-			expr.Token().Raise(shared.TypeError, "Expected a mutable array")
-		}
-
 		if expr.Stype == lexparse.ArraySeqType {
 			etype = devar(p.etype)
 		} else {
@@ -344,17 +340,12 @@ func (c *Checker) checkSequenceExpression(expr *lexparse.SequenceExpression, exp
 			// TODO see whether it's possible to defer inference
 			expr.Token().Raise(shared.TypeError, "With no expected type, sequence cannot be empty")
 		} else {
-			etype = deconstantize(c.checkExpression(expr.Elements[0], nil))
-
-			potentially_mutable_etype := etype
-			if expr.Var != nil {
-				potentially_mutable_etype = newVarType(etype)
-			}
+			etype = deconstantize(c.checkExpressionAllowingVar(expr.Elements[0], nil))
 
 			if expr.Stype == lexparse.ArraySeqType {
-				seqtype = newArrayType(potentially_mutable_etype)
+				seqtype = newArrayType(etype)
 			} else if expr.Stype == lexparse.SetSeqType {
-				seqtype = newSetType(potentially_mutable_etype)
+				seqtype = newSetType(etype)
 			} else {
 				panic("Unknown sequence type: " + expr.Stype)
 			}
@@ -412,7 +403,7 @@ func (c *Checker) checkMapExpression(expr *lexparse.MapExpression, expectedType 
 		}
 
 		ktype = deconstantize(c.checkExpression(expr.KVPairs[0].Key, nil))
-		vtype = c.checkExpression(expr.KVPairs[0].Value, nil)
+		vtype = c.checkExpressionAllowingVar(expr.KVPairs[0].Value, nil)
 		i += 1
 	}
 
