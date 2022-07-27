@@ -337,7 +337,7 @@ func (parser *Parser) makeCallExpression(receiver Expression) *CallExpression {
 	for cont {
 		arg := parser.grabExpression(add_sub_prec)
 
-		if parser.currentToken().TType == EqualT {
+		if parser.currentToken().TType == ColonT {
 			switch p := arg.(type) {
 			case *SimpleExpression:
 				if p.token.TType != SymbolT {
@@ -356,7 +356,7 @@ func (parser *Parser) makeCallExpression(receiver Expression) *CallExpression {
 			})
 		} else {
 			if on_kwargs {
-				parser.currentToken().Raise(shared.SyntaxError, "All positional arguments must be before all keyword arguments")
+				arg.Token().Raise(shared.SyntaxError, "All positional arguments must be before all keyword arguments")
 			}
 
 			args = append(args, arg)
